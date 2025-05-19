@@ -1,0 +1,246 @@
+{
+  "total_files": 46,
+  "avg_tokens": 361655.7826086957,
+  "all_tokens": [
+    19404,
+    21904,
+    21947,
+    22485,
+    27750,
+    36666,
+    37095,
+    39966,
+    48067,
+    63649,
+    81526,
+    84415,
+    88914,
+    90070,
+    93735,
+    99671,
+    105671,
+    120907,
+    128370,
+    144823,
+    151663,
+    155102,
+    156734,
+    161505,
+    176531,
+    183663,
+    198216,
+    201027,
+    220447,
+    229007,
+    246160,
+    272349,
+    308992,
+    518557,
+    579703,
+    586718,
+    639047,
+    715119,
+    715321,
+    905490,
+    908349,
+    1118830,
+    1197856,
+    1498717,
+    1559246,
+    1654782
+  ],
+  "files_info": [
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_19-20-13.txt",
+      "tokens": 2140196
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_13-29-28.txt",
+      "tokens": 1842007
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_23-11-31.txt",
+      "tokens": 1654782
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_19-12-37.txt",
+      "tokens": 1559246
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_18-24-17.txt",
+      "tokens": 1498717
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_15-02-35.txt",
+      "tokens": 1197856
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_20-14-56.txt",
+      "tokens": 1118830
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_12-45-00.txt",
+      "tokens": 908349
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_20-21-05.txt",
+      "tokens": 905490
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_14-36-42.txt",
+      "tokens": 715321
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_18-02-07.txt",
+      "tokens": 715119
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_21-54-51.txt",
+      "tokens": 639047
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_14-40-38.txt",
+      "tokens": 586718
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_19-29-58.txt",
+      "tokens": 579703
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_14-52-33.txt",
+      "tokens": 518557
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_18-09-53.txt",
+      "tokens": 308992
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_12-47-38.txt",
+      "tokens": 272349
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_13-31-39.txt",
+      "tokens": 246160
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_15-08-35.txt",
+      "tokens": 229007
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_17-32-08.txt",
+      "tokens": 220447
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_12-49-25.txt",
+      "tokens": 201027
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_18-39-03.txt",
+      "tokens": 198216
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_14-06-42.txt",
+      "tokens": 183663
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_13-59-40.txt",
+      "tokens": 176531
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_16-05-28.txt",
+      "tokens": 161505
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_13-52-59.txt",
+      "tokens": 156734
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_15-34-38.txt",
+      "tokens": 155102
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_16-02-53.txt",
+      "tokens": 151663
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_12-46-56.txt",
+      "tokens": 144823
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_15-54-30.txt",
+      "tokens": 128370
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_22-55-06.txt",
+      "tokens": 120907
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_19-22-41.txt",
+      "tokens": 105671
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_15-21-50.txt",
+      "tokens": 99671
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_14-47-00.txt",
+      "tokens": 93735
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_12-54-20.txt",
+      "tokens": 90070
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_13-24-18.txt",
+      "tokens": 88914
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_15-05-00.txt",
+      "tokens": 84415
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_14-37-49.txt",
+      "tokens": 81526
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_12-41-27.txt",
+      "tokens": 63649
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_14-12-09.txt",
+      "tokens": 48067
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_13-28-56.txt",
+      "tokens": 39966
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_13-32-36.txt",
+      "tokens": 37095
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_14-41-42.txt",
+      "tokens": 36666
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_15-06-07.txt",
+      "tokens": 27750
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_12-50-50.txt",
+      "tokens": 22485
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_15-03-26.txt",
+      "tokens": 21947
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_14-48-09.txt",
+      "tokens": 21904
+    },
+    {
+      "file": "/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/res/trace/code_analysis_2025-04-26_15-58-01.txt",
+      "tokens": 19404
+    }
+  ]
+}
