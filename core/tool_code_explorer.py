@@ -8,51 +8,11 @@ from core.tree_code import GlobalCodeTreeBuilder
 import ast
 from grep_ast import TreeContext
 import tiktoken
-import functools
 from core.code_utils import get_code_abs_token, should_ignore_path, ignored_dirs, ignored_file_patterns, cut_logs_by_token
 from utils.data_preview import file_tree, _parse_ipynb_file
 
 
-# 路径转换装饰器
-def path_converter(method):
-    """
-    装饰器，用于转换方法参数中的路径
-    
-    将Docker路径转换为本地路径，并在返回结果中将本地路径转换回Docker路径
-    """
-    @functools.wraps(method)
-    def wrapper(self, *args, **kwargs):
-        # 转换输入参数中的路径
-        new_args = []
-        for arg in args:
-            if isinstance(arg, str) and "/" in arg:
-                new_args.append(self._convert_to_local_path(arg))
-            else:
-                new_args.append(arg)
-        
-        # 转换关键字参数中的路径
-        new_kwargs = {}
-        for key, value in kwargs.items():
-            if isinstance(value, str) and "/" in value:
-                new_kwargs[key] = self._convert_to_local_path(value)
-            else:
-                new_kwargs[key] = value
-        
-        # 调用原始方法
-        result = method(self, *new_args, **new_kwargs)
-        
-        # 如果结果是字符串，转换其中的路径引用
-        if isinstance(result, str) and self.docker_work_dir:
-            # 替换结果中的本地路径为Docker路径
-            result = result.replace(self.work_dir, self.docker_work_dir)
-            if get_code_abs_token(result) > 5000:
-                lines = result.split('\n')
-                for idx, line in enumerate(lines):
-                    if get_code_abs_token(line) > 5000:
-                        result = '\n'.join(lines[:idx])
-                        break
-        return result
-    return wrapper
+
 
 
 class CodeExplorerTools:
@@ -62,13 +22,11 @@ class CodeExplorerTools:
         Args:
             repo_path: 代码仓库本地路径
             work_dir: 工作目录
-            docker_work_dir: Docker环境中的工作目录，用于路径转换(如"/workspace")
         """
         self.context_lines = 0
         
         self.repo_path = repo_path
         self.work_dir = work_dir.rstrip('/') if work_dir else ''
-        self.docker_work_dir = docker_work_dir.rstrip('/') if docker_work_dir else ''
         
         # 统一定义要忽略的目录和文件模式
         self.ignored_dirs = ignored_dirs
@@ -84,25 +42,6 @@ class CodeExplorerTools:
         
         if init_embeddings:
             self.retriever = self.init_embeddings()
-    
-    def _convert_to_local_path(self, path: str) -> str:
-        """将Docker路径转换为本地路径"""
-        if not self.docker_work_dir or not path or not path.startswith(self.docker_work_dir):
-            return path
-        
-        if not self.work_dir:
-            return path
-        
-        path = path.replace(self.docker_work_dir, self.work_dir)
-            
-        return path
-    
-    def _convert_to_docker_path(self, path: str) -> str:
-        """将本地路径转换为Docker路径"""
-        if not self.docker_work_dir or not path or not path.startswith(self.work_dir):
-            return path
-        
-        return path.replace(self.work_dir, self.docker_work_dir)
     
     def _build_new_tree(self):
         """构建新的代码树"""
@@ -198,15 +137,11 @@ class CodeExplorerTools:
     
     def _normalize_file_path(self, file_path: str, return_abs_path: bool = False) -> str:
         """标准化文件路径为模块ID格式"""
-        if '/workspace' in file_path:
-            file_path = file_path.replace('/workspace', '/'.join(self.repo_path.split('/')[:-1]))
         if return_abs_path:
             return file_path
             
         if file_path.startswith('/') and self.repo_path in file_path:
             file_path = os.path.relpath(file_path, self.repo_path)
-        elif (self.docker_work_dir) and (file_path.startswith('/') and self.docker_work_dir in file_path):   
-            file_path = os.path.relpath(file_path, self._convert_to_local_path(self.docker_work_dir))
 
         if file_path.endswith('.py'):
             file_path = file_path[:-3]
@@ -279,7 +214,6 @@ class CodeExplorerTools:
         
         return "\n".join(result)
 
-    @path_converter
     def list_repository_structure(self, path: Annotated[Optional[str], "要列出结构的路径（必须是绝对路径）。如果为None，则显示整个仓库结构。"] = None) -> Annotated[Union[str, Dict], "返回格式化的仓库结构字典结构"]:
         """列出仓库结构
         
@@ -376,20 +310,16 @@ class CodeExplorerTools:
             if dir_name == '':  # 处理根目录
                 dir_name = os.path.basename(os.path.dirname(path))
             
-            root_path = path
-            if self.docker_work_dir and path.startswith(self.work_dir):
-                root_path = self._convert_to_docker_path(path)
             return {
                 'name': dir_name,
                 'type': 'directory',
-                'root_path': root_path,  # 添加根目录绝对路径
+                'root_path': path,  # 添加根目录绝对路径
                 'children': build_dir_structure_dict(path)
             }
         else:
             # 返回字符串格式
             return "\n".join(format_dir_structure(path))
 
-    @path_converter
     def search_keyword_include_code(self, 
                                    keyword_or_code: Annotated[str, "要搜索匹配的关键词或代码片段"],
                                    query_intent: Annotated[Optional[str], "搜索意图，描述此次搜索想解决什么问题或查找什么内容"] = None
@@ -414,7 +344,6 @@ class CodeExplorerTools:
         
         return search_result
     
-    @path_converter
     def search_keyword_include_files(self, pattern: Annotated[str, "要搜索匹配的关键词"]) -> Annotated[str, "匹配的文件列表，每个文件都显示为完整的模块路径，如果没有匹配项则返回提示信息"]:
         """搜索匹配包含关键词的文件，在代码仓库中搜索文件名或路径包含指定模式的文件"""
         matches = []
@@ -430,7 +359,6 @@ class CodeExplorerTools:
         
         return "找到以下匹配文件或目录:\n" + "\n".join(sorted(matches))
     
-    @path_converter
     def view_filename_tree_sitter(self, 
                                  file_path: Annotated[str, "文件路径, only support python file"], 
                                  simplified: Annotated[bool, "是否使用简化视图。默认为True，仅显示结构而非完整代码"] = True
@@ -469,8 +397,8 @@ class CodeExplorerTools:
         
         if simplified:
             # 显示简化的结构
-            result = [f"# 模块: {module_id}"]
-            result.append(f"# 文件绝对路径: {self.repo_path}/{module_info['path']}")
+            result = [f"### 模块: {module_id}"]
+            result.append(f"**文件绝对路径: {self.repo_path}/{module_info['path']}**")
             
             # 添加文档字符串
             if module_info['docstring']:
@@ -516,7 +444,6 @@ class CodeExplorerTools:
                 return "\n".join(lines[:50]) + f"\n... [省略 {len(lines)-50} 行]"
             return module_info['content']
     
-    @path_converter
     def view_class_details(self, class_id: Annotated[str, "类的标识符，可以是完整路径（如'src.models.User'）或简单名称（如'User'）"]) -> Annotated[str, "格式化的类详细信息，包括所在模块、文档字符串、继承关系、方法列表和源代码"]:
         """查看类的详细信息
         
@@ -585,7 +512,6 @@ class CodeExplorerTools:
         
         return "\n".join(result)
     
-    @path_converter
     def view_function_details(self, function_id: Annotated[str, "函数的标识符，可以是完整路径（如'src.utils.format_data'）或简单名称（如'format_data'）"]) -> Annotated[str, "格式化的函数详细信息，包括函数类型、参数、返回类型、调用关系和源代码"]:
         """查看函数的详细信息
         
@@ -667,7 +593,6 @@ class CodeExplorerTools:
         result.append(func_info_summary)
         return "\n".join(result)
     
-    @path_converter
     def find_references(self, 
                        entity_id: Annotated[str, "实体的标识符，可以是完整路径或简单名称"], 
                        entity_type: Annotated[str, "实体类型，必须是 'function'、'class' 或 'module' 之一"]
@@ -745,7 +670,6 @@ class CodeExplorerTools:
         
         return f"不支持的实体类型: {entity_type}"
     
-    @path_converter
     def find_dependencies(self, 
                          entity_id: Annotated[str, "实体的标识符，可以是完整路径或简单名称"], 
                          entity_type: Annotated[str, "实体类型，必须是 'function'、'class' 或 'module' 之一"]
@@ -937,7 +861,6 @@ class CodeExplorerTools:
         
         return "\n".join(results_by_module), results_module_name
     
-    @path_converter
     def get_module_dependencies(self, module_path: Annotated[str, "模块路径，可以是绝对路径、相对路径或模块路径（如'src.utils'）"]) -> Annotated[str, "模块的依赖列表，包括所有导入语句对应的模块"]:
         """获取模块依赖
         
@@ -990,7 +913,6 @@ class CodeExplorerTools:
         
         return f"模块 {module_path} 的依赖:\n" + "\n".join(imports)
     
-    @path_converter
     def check_file_dir(self, file_path: Annotated[str, "可以是相对路径、文件名（如'src/utils.py或者utils.py、README.md'）"]):
         """检查文件或目录是否存在
         
@@ -1030,7 +952,6 @@ class CodeExplorerTools:
         return output
     
 
-    @path_converter
     def view_file_content(self, file_path: Annotated[str, "可以是文件路径、文件名"], query_intent: Annotated[Optional[str], "查看意图，描述查看此文件想解决什么问题或寻找什么内容"] = None) -> Annotated[str, "文件内容或其智能摘要（对于大文件）"]:
         """查看文件的完整内容, 但无法编辑文件
         
@@ -1135,7 +1056,7 @@ class CodeExplorerTools:
         
         # 格式化输出，加上查看意图
         if result:
-            output = "\n".join(result) + f"# 文件: {file_path}\n\n```{lang}\n{content}\n```"
+            output = "\n".join(result) + f"**文件: {file_path}**\n\n```{lang}\n{content}\n```"
         else:
             output = content
         
@@ -1178,7 +1099,7 @@ class CodeExplorerTools:
                 # return self._view_filename_tree_sitter(found_module_id, simplified=True)
                 # summary = self._get_code_summary(module_info['content'])
                 
-                return f"# 模块: {found_module_id}\n\n# 文件绝对路径: {self.repo_path}/{module_info['path']}\n\n文件大小: {len(module_info['content'])} 字符，约 {content_tokens} tokens\n\n```python {found_module_id}.py\n{summary}\n```"
+                return f"### 模块: {found_module_id}\n\n**文件绝对路径: {self.repo_path}/{module_info['path']}**\n\n文件大小: {len(module_info['content'])} 字符，约 {content_tokens} tokens\n\n```python {found_module_id}.py\n{summary}\n```"
         except Exception as e:
             print(f"Error: {e}")
             if len(module_info['content']) > 15000:  # 粗略估计15000字符约3000 tokens
@@ -1186,7 +1107,7 @@ class CodeExplorerTools:
                 return self._view_filename_tree_sitter(found_module_id, simplified=True)
         
         # 返回完整文件内容
-        return f"# 模块: {found_module_id}\n\n# 文件绝对路径: {self.repo_path}/{module_info['path']}\n\n```python\n{module_info['content']}\n```"
+        return f"### 模块: {found_module_id}\n\n**文件绝对路径: {self.repo_path}/{module_info['path']}**\n\n```python\n{module_info['content']}\n```"
     
     def get_code_abs_token(self, content):
         encoding = tiktoken.encoding_for_model("gpt-4o")
@@ -1346,7 +1267,6 @@ class CodeExplorerTools:
         return "\n".join(result)
             
 
-    @path_converter
     def view_reference_relationships(self, 
                                     entity_id: Annotated[str, "实体的标识符，可以是完整路径或简单名称"], 
                                     entity_type: Annotated[str, "实体类型，必须是 'function'、'class' 或 'module' 之一"]
@@ -1462,7 +1382,7 @@ class CodeExplorerTools:
                 result.append("\n- 类的方法没有被其他函数调用")
         
         elif entity_type == "module":
-            result.append(f"# 模块 {found_entity_id} 的引用关系")
+            result.append(f"### 模块 {found_entity_id} 的引用关系")
             
             # 查找导入当前模块的其他模块
             result.append("\n## 被以下模块导入:")
@@ -1495,7 +1415,6 @@ class CodeExplorerTools:
         
         return "\n".join(result)
     
-    @path_converter
     def read_files_index(
         self, 
         target_file: Annotated[str, "要读取的文件路径。可以使用相对于工作区的相对路径或绝对路径。"],
@@ -1544,7 +1463,6 @@ class CodeExplorerTools:
             print("-" * 50)
             if self.modules:
                 # first_module = next(iter(self.modules))
-                # first_module = "finance_framework"
                 first_module = "lyrapdf/convert.py"
                 first_module = "pre_proc"
                 print(f"查看模块: {first_module}")
@@ -1619,10 +1537,8 @@ def main():
     """主函数"""
     from dotenv import load_dotenv
     
-    load_dotenv("/mnt/ceph/huacan/Code/Tasks/envs/.env")
+    load_dotenv("configs/.env")
     
-    # explorer = CodeExplorerTools(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-    # explorer = CodeExplorerTools("git_repos/lyrapdf", work_dir="/mnt/ceph/huacan/Code/Tasks/code_tree/git_repos", docker_work_dir="/workspace")
     explorer = CodeExplorerTools("git_repos/fish-speech")
     
     # 运行示例
@@ -1698,6 +1614,16 @@ def main():
         else:
             print("无效的选择!")
     """
+def test_code_explorer():
+    """测试代码探索工具"""
+    from dotenv import load_dotenv
+    
+    load_dotenv("configs/.env")
+    
+    explorer = CodeExplorerTools("/mnt/ceph/huacan/Data/coding_run/gitbench_0520_1040/task_1/workspace/chat-ui")
+    print(explorer.view_file_content("/mnt/ceph/huacan/Data/coding_run/gitbench_0520_1040/task_1/workspace/chat-ui/README.md", "了解项目功能和使用方法"))
+
 
 if __name__ == "__main__":
-    main()
+    # main()
+    test_code_explorer()

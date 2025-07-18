@@ -1,7 +1,8 @@
 import json
 import os
 from core.code_explorer_tools import GlobalCodeTreeBuilder
-from core.code_utils import llm_generte_response, get_code_abs_token, parse_llm_response
+from core.code_utils import get_code_abs_token
+from utils.agent_gpt4 import AzureGPT4Chat
 import concurrent.futures
 import threading
 from tqdm import tqdm
@@ -102,15 +103,13 @@ def rate_repos_by_dimensions(task, repos_group, try_times=3):
     # import pdb; pdb.set_trace()
     
     try:
-        response = llm_generte_response([
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt}
-        ])
-        
-        scores = parse_llm_response(response)
-        
-        import time
-        time.sleep(4)
+        scores = AzureGPT4Chat().chat_with_message(
+            [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ], 
+            json_format=True
+        )
         
         for score_info in scores:
             idx = score_info["repo_index"] - 1
@@ -289,5 +288,5 @@ def main():
     
 if __name__ == "__main__":
     from dotenv import load_dotenv
-    load_dotenv('/mnt/ceph/huacan/Code/Tasks/envs/.env')
+    load_dotenv('configs/.env')
     main()

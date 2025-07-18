@@ -1,3 +1,4 @@
 grep_ast
 humanize
 genson
+nvidia_smi

@@ -1,6 +1,8 @@
 from typing import Annotated
 import json
-from core.code_utils import get_code_abs_token, llm_generte_response, parse_llm_response
+from core.code_utils import get_code_abs_token
+
+from utils.agent_gpt4 import AzureGPT4Chat
 
 
 def generate_repository_summary(
@@ -44,12 +46,12 @@ def generate_repository_summary(
             }}
         ]
         """
-        response = llm_generte_response([
+        messages = [
             {"role": "system", "content": judge_prompt},
             {"role": "user", "content": json.dumps(code_list, ensure_ascii=False, indent=2)}
-        ])
+        ]
         try:
-            response_dict = parse_llm_response(response)
+            response_dict = AzureGPT4Chat().chat_with_message(messages, json_format=True)
             print('response_dict: ', response_dict)
             if not isinstance(response_dict, list):
                 return code_list
@@ -146,8 +148,11 @@ def get_readme_summary(code_content: str, history_summary: dict):
     如果和history_summary中内容重复，则不需要重复输出。
     """
     
-    response = llm_generte_response([
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": prompt}
-    ])
+    response = AzureGPT4Chat().chat_with_message(
+        [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ],
+        json_format=True
+    )
     return response

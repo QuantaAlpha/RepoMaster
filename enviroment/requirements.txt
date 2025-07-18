@@ -1,0 +1,8 @@
+tree-sitter
+networkx
+tqdm
+tiktoken
+grep-ast
+dotenv
+nbformat
+autogen-agentchat~=0.2

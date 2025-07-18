@@ -1,0 +1,31 @@
+# 基础科学计算库
+numpy>=1.24.0,<2.0.0
+pandas>=2.0.0
+scikit-learn>=1.2.0
+scipy
+einops
+av
+librosa
+
+torch
+torchvision
+torchaudio
+
+# Transformers和NLP库
+transformers>=4.45.0,<=4.51.3,!=4.46.*,!=4.47.*,!=4.48.0
+tokenizers>=0.19.0,<=0.21.1
+datasets>=2.16.0,<=3.5.0
+accelerate>=0.34.0,<=1.6.0
+sentencepiece>=0.1.99
+peft>=0.14.0,<=0.15.1
+trl>=0.8.6,<=0.9.6
+tiktoken
+
+# LLM工具库
+huggingface_hub>=0.16.0
+
+# 开发和评估工具
+tqdm>=4.65.0
+pyyaml>=6.0
+rouge_score>=0.1.2
+nltk>=3.8.1 

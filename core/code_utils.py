@@ -194,40 +194,6 @@ def _get_code_abs(filename, source_code, max_token=3000, child_context=False):
     
     return formatted_code
 
-def llm_generte_response(messages: list, llm_config=None):
-    if llm_config is None:
-        llm_config = get_llm_config()
-    client = OpenAIWrapper(**llm_config)
-    response = client.create(
-        messages=messages
-    )
-    return response.choices[0].message.content
-
-def parse_llm_response(response_text: str):
-    """
-    Parse LLM response text into dictionary.
-    """
-    import ast
-    # Remove any markdown code block indicators
-    response_text = re.sub(r"```(?:json|python)?\s*", "", response_text)
-    response_text = response_text.strip("`")
-
-    try:
-        return json.loads(response_text)
-    except json.JSONDecodeError:
-        try:
-            return ast.literal_eval(response_text)
-        except (SyntaxError, ValueError):
-            result = {}
-            pattern = r'["\']?(\w+)["\']?\s*:\s*([^,}\n]+)'
-            matches = re.findall(pattern, response_text)
-            for key, value in matches:
-                try:
-                    result[key] = ast.literal_eval(value)
-                except (SyntaxError, ValueError):
-                    result[key] = value.strip("\"'")
-            return result
-
 
 def filter_pip_output(logs_all):
     """
@@ -455,10 +421,3 @@ def _create_virtual_env(venv_path):
     
     print(f"虚拟环境创建并安装完成: {venv_path}", flush=True)
     return venv_context
-
-if __name__ == "__main__":
-    out_res = cut_logs_by_token(open("/mnt/ceph/huacan/Code/Tasks/Code-Repo-Agent/coding/task58/chaii-hindi-and-tamil-question-answering/HarmanDotpy_Multilingual-Question-Answering-NLP/Multilingual-Question-Answering-NLP/rock-the-tim-submission.ipynb").read(), max_token=200)
-    print(out_res)
-    tokens = get_code_abs_token(out_res)
-    print(tokens)
-    

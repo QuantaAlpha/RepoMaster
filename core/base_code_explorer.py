@@ -3,19 +3,14 @@ import os
 import venv
 import shutil
 import subprocess
-import asyncio
 from datetime import datetime
 from textwrap import dedent
-from typing import Dict, List, Optional, Union, Any, Tuple, Annotated
 
 import autogen
-from autogen import Agent, AssistantAgent, UserProxyAgent, ConversableAgent
-from autogen.coding import DockerCommandLineCodeExecutor, LocalCommandLineCodeExecutor
 from autogen.code_utils import create_virtual_env
 
-from utils.autogen_upgrade.base_agent import ExtendedUserProxyAgent
-from core.code_utils import filter_pip_output, get_code_abs_token, get_llm_config, llm_generte_response, parse_llm_response
-
+from configs.oai_config import get_llm_config
+from utils.agent_gpt4 import AzureGPT4Chat
 
 class BaseCodeExplorer:
     """通用代理基类，提供虚拟环境管理和代理设置的基础功能"""
@@ -222,9 +217,8 @@ class BaseCodeExplorer:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ]
-        summary = llm_generte_response(messages, llm_config=self.llm_config or None)
         try:
-            parsed_summary = parse_llm_response(summary)
+            parsed_summary = AzureGPT4Chat().chat_with_message(messages, json_format=True)
             summary = json.dumps(parsed_summary, ensure_ascii=False)
         except Exception as e:
             print(f"ERR summary_chat_history: {e}")

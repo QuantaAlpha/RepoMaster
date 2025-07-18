@@ -1603,7 +1603,7 @@ class GlobalCodeTreeBuilder:
                 out_content_list.append("# 其他关键模块文件名\n")
                 out_content_list.append("```"+"\n".join(other_content_list)+"\n```\n")
 
-        return json.dumps(out_content_list, indent=2, ensure_ascii=False)           
+        return "```\n"+json.dumps(out_content_list, indent=2, ensure_ascii=False)+"\n```"           
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
@@ -1612,7 +1612,6 @@ if __name__ == "__main__":
     
     # 或者更详细的方式
     builder = GlobalCodeTreeBuilder('git_repos/fish-speech')
-    # builder = GlobalCodeTreeBuilder('/mnt/ceph/huacan/Code/Tasks/finance_agent/whc_Agent_Finance')
     
     builder.parse_repository()
     builder.save_code_tree('res/code_tree.pkl')

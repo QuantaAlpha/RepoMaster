@@ -63,5 +63,9 @@ __pycache__/
 .Python
 env/
 venv/
+.venvs/
 ENV/
 .pytest_cache/
+
+data/
+db/

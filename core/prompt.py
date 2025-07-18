@@ -162,22 +162,22 @@ def train_model(model, train_loader, criterion, optimizer, scheduler=None, num_e
 
 USER_EXPLORER_PROMPT = dedent("""我需要你分析以下提供的代码仓库和你强大的编程能力来完成用户任务：
 
-**任务描述**：
+**任务描述**:
 <task>
 {task}
 </task>
 
-**工作目录，运行代码的目录**：
+**工作目录，运行代码的目录**:
 <work_dir>
 {work_dir}
 </work_dir>
 
-**仓库地址**：
+**仓库地址**:
 <repo>
 {remote_repo_path}
 </repo>
 
-**代码库重要组件**：
+**代码库重要组件**:
 <code_importance>
 {code_importance}
 </code_importance>
@@ -248,7 +248,7 @@ If the result indicates there is an error, fix the error and output the code aga
       
       # 处理数据的代码
       # 注意：始终使用绝对路径
-      df = pd.read_csv('/mnt/ceph/huacan/data/data.csv')  # 正确：使用绝对路径
+      df = pd.read_csv('/root/workspace/RepoMaster/data/data.csv')  # 正确：使用绝对路径
       # df = pd.read_csv('./data.csv')  # 错误：使用相对路径
       print(df.head())
       ```
@@ -263,7 +263,7 @@ If the result indicates there is an error, fix the error and output the code aga
     *   如果多次尝试后仍无法解决或任务无法完成，分析原因并考虑替代方案。
 6.  **工具优先**: 
     *   **优先使用工具**: 如果现有工具的功能可以满足需求，**必须优先调用工具**，而不是生成代码块来执行相同或类似的操作（例如，不要用 `cat` 命令的代码块去读文件，而应该用 `read_file` 工具）。
-    *   **调用工具时必须使用绝对路径**: 例如 `<function_name>(file_path='/mnt/ceph/huacan/Code/file.txt')` 而非 `<function_name>(file_path='file.txt')`。
+    *   **调用工具时必须使用绝对路径**: 例如 `<function_name>(file_path='/root/workspace/RepoMaster/file.txt')` 而非 `<function_name>(file_path='file.txt')`。
     *   **如果需要依赖一些checkpoint模型文件，请先检查是否存在，如果存在，则直接使用，否则先下载checkpoint文件，再使用(需要自动下载)
 7.  **任务验证**:
     *   当代码执行成功后，你需要验证任务是否有被完成，最好写一个验证的脚本，验证任务是否完成。
@@ -275,18 +275,21 @@ If the result indicates there is an error, fix the error and output the code aga
 ## !! 关键约束与强制要求 !!
 
 - 错误反思和迭代: 如果修改了代码，请反思修改的原因，并根据修改后的代码重新生成代码，修改后请输出完整的代码，不要只输出修改的部分。
-    **切记：不要只输出修改的部分，请输出完整的代码**
+    - **切记：不要只输出修改的部分，请输出完整的代码**
 - 绝对路径必须: 在代码中处理文件时（如读写文件、加载数据、保存模型等），**必须且只能使用绝对路径**，严禁使用任何形式的相对路径。示例：
-    * 正确: `/mnt/ceph/huacan/Code/data/file.csv`
+    * 正确: `/root/workspace/RepoMaster/data/file.csv`
     * 错误: `./data/file.csv` 或 `data/file.csv` 或 `../data/file.csv`
 - 不要重复生成代码，比如：
-    ** 不要在同一步骤生成代码后再使用view_file_content查看一下生成的代码，这没必要，会自动保存**
-    ** 不要在生成代码后，再输出让我们执行代码： 不要先输出：```python <code>``` 再输出：让我们执行以下代码：```python <code>```，
-    ** 也不要输出：现在让我们并执行这个脚本：\n view_file_content: (arguments: file_path='<file_path>')**
+    - ** 不要在同一步骤生成代码后再使用view_file_content查看一下生成的代码，这没必要，会自动保存**
+    - ** 不要在生成代码后，再输出让我们执行代码： 不要先输出：```python <code>``` 再输出：让我们执行以下代码：```python <code>```，
+    - ** 也不要输出：现在让我们并执行这个脚本：\n view_file_content: (arguments: file_path='<file_path>')**
 - PyTorch 优先: 如果任务涉及深度学习且原始代码是 TensorFlow，**必须**将其转换为 **PyTorch** 实现。
 - PYTHONPATH: 确保代码仓库路径已添加到 `PYTHONPATH` 环境变量中。
 - 工具 + 代码: 现有工具能完成的任务，尽量优先使用工具，但是只能使用已经提供的工具，不要自己编造工具。同时也要注意不要一直反复使用工具，如果需要生成代码，请生成代码。
 - 代码生成和执行不要和工具调用在同一步骤执行和输出, 生成完代码后，不需要view_file_content查看一下，直接执行代码
+    - **不能使用Docker**: Agent没有运行Docker的能力，请不要尝试使用Docker相关命令或建议使用Docker容器。
+    - **不创建虚拟环境**: 请不要创建新的Python虚拟环境（如venv或conda环境），使用已有的环境进行操作。
+- 针对用户的执行结果文件需要移动到用户指定的位置，如果用户没有指定，则移动到工作目录下，并重命名。
 - 任务状态检查: 在结束任务之前务必检查任务是否完成，包括是否执行成功，是否有结果生成，结果是否符合任务要求，是否存在问题和遗漏，是否需要进一步优化，如果以上都完成，请提供一个清晰的总结。
 
 {additional_instructions}

@@ -36,6 +36,19 @@ SavePathType = Annotated[str, "Optional path to save the data. If None, data is 
 #         data.to_csv(save_path)
 #         print(f"{tag} saved to {save_path}")
 
+def get_autogen_message_history(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    # unroll tool_responses
+    all_messages = []
+    for message in messages:
+        tool_responses = message.get("tool_responses", [])
+        if tool_responses:
+            all_messages += tool_responses
+            # tool role on the parent message means the content is just concatenation of all of the tool_responses
+            if message.get("role") != "tool":
+                all_messages.append({key: message[key] for key in message if key != "tool_responses"})
+        else:
+            all_messages.append(message)
+    return all_messages
 
 def is_table_file(file_path):
     """
