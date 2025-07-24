@@ -69,3 +69,7 @@ ENV/
 
 data/
 db/
+tasks/git_bench/
+tasks/ml_bench/
+
+tasks/

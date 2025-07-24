@@ -19,6 +19,11 @@ from services.autogen_upgrade.file_monitor import get_directory_files, compare_a
 from autogen import Agent
 from autogen.agentchat.conversable_agent import logger
 
+
+from autogen.formatting_utils import colored
+from autogen.io.base import IOStream
+
+
 from services.agents.agent_client import TrackableAssistantAgent, TrackableUserProxyAgent
 
 
@@ -159,7 +164,7 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
 
         # 使用一个包装函数避免参数重复传递
         def wrapped_code_execution_func(agent, messages=None, sender=None, config=None):
-            return self._generate_code_execution_reply_using_executor(messages, sender, config) 
+            return self.generate_code_execution_reply_using_executor(messages, sender, config) 
         
         for i, func in enumerate(self._reply_func_list):
             if hasattr(func['reply_func'], '__name__') and '_generate_code_execution_reply_using_executor' in func['reply_func'].__name__:
@@ -322,7 +327,7 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
                         return self.process_import_error(args, retry_times=retry_times+1)
                     else:
                         
-                        is_exec_success, execute_result = super()._generate_code_execution_reply_using_executor(
+                        is_exec_success, execute_result = self.generate_code_execution_reply_using_executor(
                             messages=args['messages'],
                             sender=args['sender'],
                             config=args['config']
@@ -370,8 +375,77 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
         
         return exitcode, self.clean_execute_result(logs_all)
 
-
     def _generate_code_execution_reply_using_executor(
+        self,
+        messages: Optional[List[Dict]] = None,
+        sender: Optional[Agent] = None,
+        config: Optional[Union[Dict, Literal[False]]] = None,
+    ):
+        """Generate a reply using code executor."""
+        iostream = IOStream.get_default()
+
+        if config is not None:
+            raise ValueError("config is not supported for _generate_code_execution_reply_using_executor.")
+        if self._code_execution_config is False:
+            return False, None
+        if messages is None:
+            messages = self._oai_messages[sender]
+        last_n_messages = self._code_execution_config.get("last_n_messages", "auto")
+
+        if not (isinstance(last_n_messages, (int, float)) and last_n_messages >= 0) and last_n_messages != "auto":
+            raise ValueError("last_n_messages must be either a non-negative integer, or the string 'auto'.")
+
+        num_messages_to_scan = last_n_messages
+        if last_n_messages == "auto":
+            # Find when the agent last spoke
+            num_messages_to_scan = 0
+            for message in reversed(messages):
+                if "role" not in message:
+                    break
+                elif message["role"] != "user":
+                    break
+                else:
+                    num_messages_to_scan += 1
+        num_messages_to_scan = min(len(messages), num_messages_to_scan)
+        messages_to_scan = messages[-num_messages_to_scan:]
+
+        # iterate through the last n messages in reverse
+        # if code blocks are found, execute the code blocks and return the output
+        # if no code blocks are found, continue
+        for message in reversed(messages_to_scan):
+            if not message["content"]:
+                continue
+            code_blocks = self._code_executor.code_extractor.extract_code_blocks(message["content"])
+            if len(code_blocks) == 0:
+                continue
+
+            num_code_blocks = len(code_blocks)
+            if num_code_blocks == 1:
+                iostream.print(
+                    colored(
+                        f"\n>>>>>>>> EXECUTING CODE BLOCK (inferred language is {code_blocks[0].language})...",
+                        "red",
+                    ),
+                    flush=True,
+                )
+            else:
+                iostream.print(
+                    colored(
+                        f"\n>>>>>>>> EXECUTING {num_code_blocks} CODE BLOCKS (inferred languages are [{', '.join([x.language for x in code_blocks])}])...",
+                        "red",
+                    ),
+                    flush=True,
+                )
+
+            # found code blocks, execute code.
+            code_result = self._code_executor.execute_code_blocks(code_blocks)
+            exitcode2str = "execution succeeded" if code_result.exit_code == 0 else "execution failed"
+            return True, f"exitcode: {code_result.exit_code} ({exitcode2str})\nCode output: {code_result.output}"
+
+        return False, None    
+
+
+    def generate_code_execution_reply_using_executor(
         self,
         messages: Optional[list[dict[str, Any]]] = None,
         sender: Optional[Agent] = None,
@@ -392,7 +466,7 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
             print(f"Before execution: working directory {self.work_dir} contains {len(before_files)} files", flush=True)
         
         try:
-            is_exec_success, execute_result = super()._generate_code_execution_reply_using_executor(messages, sender, config)
+            is_exec_success, execute_result = self._generate_code_execution_reply_using_executor(messages, sender, config)
         except Exception as e:
             error_logs = traceback.format_exc()
             exit_code = 1

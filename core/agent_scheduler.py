@@ -165,7 +165,8 @@ The JSON format should be like this:
                 "task_description": task_description,
                 "input_data": input_data,
                 "root_path": self.work_dir,
-            }
+            },
+            root_path='coding',
         )
         
         task_info = TaskManager.initialize_tasks(args)
