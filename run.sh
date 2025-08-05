@@ -11,18 +11,16 @@
 
 # python3 main.py 
 
-export OPENAI_API_KEY="sk-1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
-# export OPENAI_BASE_URL="https://14c24822866b2a0640.gradio.live"
-export OPENAI_BASE_URL="http://claude0openai.a.pinggy.link/v1"
+
 
 # root_dir=/data/huacan/Code/workspace/finance_agent/whc_Agent_Finance
-# export PYTHONPATH=$(pwd):$root_dir:$PYTHONPATH
+export PYTHONPATH=$(pwd):$PYTHONPATH
 
 # python3 tasks/1_run_git.py --config config/sample_tasks.yaml
 # python3 tasks/1_run_git.py --config config/front_end_autogen.yaml
 
 # python3 core/tool_code_explorer.py
 
-python3 core/agent_scheduler.py > logs/agent_scheduler.md
+# python3 core/agent_scheduler.py > logs/agent_scheduler.md
 
-# streamlit run frontend_st/app_autogen_enhanced.py
+streamlit run frontend_st/app_autogen_enhanced.py

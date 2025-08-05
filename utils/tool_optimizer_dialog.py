@@ -85,10 +85,10 @@ def get_optimization(original_dialogue, optimiz_type, max_retries=5):
                 complete_prompt = Optimized_Task_Execution_Prompt.format(dialog_history=original_dialogue)
             
             # Get the response from GPT-4
-            response = gpt4_chat.chat(complete_prompt)
+            optimized_dialogue = gpt4_chat.chat(complete_prompt, json_format=False)
             
             # Parse the optimized dialogue
-            optimized_dialogue = parse_optimized_dialogue(response)
+            # optimized_dialogue = parse_optimized_dialogue(response)
             
             if optimized_dialogue is not None:
                 return optimized_dialogue

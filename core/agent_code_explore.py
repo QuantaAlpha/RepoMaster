@@ -1,3 +1,4 @@
+import time
 import json
 import autogen
 from typing import Dict, List, Optional, Union, Any, Tuple, Annotated
@@ -61,20 +62,31 @@ class CodeExplorer(BaseCodeExplorer):
                 is_clear_venv=False,
                 # base_venv_path='.venvs/base_venv'
             )
-
+        print("="*100)
+        time_start = time.time()
         self._setup_tool_library()
+        time_end = time.time()
+        print(f"init_tool_library time: {time_end - time_start} seconds")
+        print("="*100)
+        
         # 创建AutoGen代理
         self._setup_agents()
     
     def _setup_tool_library(self):
         """设置工具库"""
+        time_start = time.time()
         self.code_library = CodeExplorerTools(
             self.local_repo_path,
             work_dir=self.work_dir,
             docker_work_dir=self.docker_path_prefix
         )
+        time_end = time.time()
+        print(f"setup_tool_library time: {time_end - time_start} seconds")
         if self.args.get("repo_init", True):
+            time_start = time.time()
             self.code_importance = self.code_library.builder.generate_llm_important_modules(max_tokens=8000)
+            time_end = time.time()
+            print(f"generate_llm_important_modules time: {time_end - time_start} seconds")
         else:
             self.code_importance = ""
 

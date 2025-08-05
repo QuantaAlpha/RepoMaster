@@ -3,9 +3,9 @@ import streamlit as st
 import configs.config
 import os
 from services.agents.deepsearch_2agents import AutogenDeepSearchAgent
+from services.agents.agent_client import EnhancedMessageProcessor
 from utils.tool_optimizer_dialog import optimize_dialogue, optimize_execution
 from utils.tool_streamlit import random_string
-from frontend_st.user_memory_manager import UserMemoryManager
 from streamlit_extras.colored_header import colored_header
 
 from core.agent_scheduler import RepoMasterAgent
@@ -24,36 +24,33 @@ class AgentCaller:
             llm_config=self.llm_config,
             code_execution_config=self.code_execution_config,
         )
-        self.memory_manager = UserMemoryManager()
-        
     
     # 优化对话
     def _optimize_dialogue(self, messages):
         if 'messages' in st.session_state:
-            if len(messages) > 5:
-                history_message = json.dumps(messages, ensure_ascii=False)
-                optimize_history_message = optimize_execution(history_message)
-                if isinstance(optimize_history_message, list):
-                    return optimize_history_message
-                else:
-                    return messages
-        return messages
+            history_message = json.dumps(messages, ensure_ascii=False)
+            optimize_history_message = optimize_execution(history_message)
+            if optimize_history_message is None:
+                return None
+            return optimize_history_message
+        return None
     
     def preprocess_message(self, prompt):
         if len(st.session_state.messages) <= 1:
             st.session_state.messages.append({"role": "user", "content": prompt})
             return prompt
 
-        optimize_history_message = self._optimize_dialogue(st.session_state.messages)
-
-        # Add user message to chat history
-        st.session_state.messages = optimize_history_message + [{"role": "user", "content": prompt}]
-
-        out_prompt = ""
-        if len(optimize_history_message) > 0:
-            out_prompt += f"[History Message]:\n{json.dumps(optimize_history_message, ensure_ascii=False)}\n"
-        out_prompt += f"[Current User Question]:\n{prompt}\n"
-        return out_prompt
+        try:
+            optimize_history_message = self._optimize_dialogue(st.session_state.messages)
+        except Exception as e:
+            print(f"Error optimizing dialogue: {str(e)}")
+            optimize_history_message = ''
+        if optimize_history_message:
+            out_prompt = f"[History Message]:\n{optimize_history_message}\n[Current User Question]:\n{prompt}\n"
+            st.session_state.messages = [{"role": "user", "content": out_prompt}]
+            return out_prompt
+        else:
+            return prompt
     
     def postprocess_message(self, ai_response):
         # Add AI response to chat history
@@ -73,51 +70,52 @@ class AgentCaller:
     
     def store_user_memory(self, user_id, query, answer):
         return self.memory_manager.store_user_memory(user_id, query, answer)
+    
+    def save_chat_query_and_answer(self, content, role, sender_name, receiver_name, sender_role):
+
+        EnhancedMessageProcessor.add_message_to_session(
+            st=st,
+            role=role,
+            content=content,
+            check_duplicate=True
+        )
+
+        EnhancedMessageProcessor.add_display_message_to_session(
+            st=st,
+            message_content=content,
+            sender_name=sender_name,
+            receiver_name=receiver_name,
+            sender_role=sender_role,
+            llm_config={},
+            check_duplicate=True,
+        )          
 
     def create_chat_completion(self, messages, user_id, chat_id, file_paths=None, active_user_memory=False):
-        # print(f"Prompt: {prompt}")
-        # print(f"Messages1: {type(st.session_state.messages)} | {st.session_state.messages}")
-        if 'messages' in st.session_state:
-            messages = self.preprocess_message(messages)
-        # print(f"Messages2: {type(messages)} | {messages}")
-        
+        self.save_chat_query_and_answer(messages, "user", "User", "Researcher", "user")
+
         origin_question = messages
 
+        if 'messages' in st.session_state:
+            messages = self.preprocess_message(messages)        
+                
         # 处理文件路径信息
         if file_paths:
             file_info = "\n".join([f"- {path}" for path in file_paths])
             messages = f"{messages}\n\n[upload files]:\n{file_info}"
         
         if active_user_memory:
+            from frontend_st.user_memory_manager import UserMemoryManager
+            self.memory_manager = UserMemoryManager()
+            
             messages = self.retrieve_user_memory(user_id, messages)
 
         ai_response = self.repo_master.solve_task_with_repo(messages)
         
         if isinstance(ai_response, tuple):
             ai_response, chat_history = ai_response
-                
-        from services.agents.agent_client import EnhancedMessageProcessor
-            
-        if hasattr(st.session_state, 'messages'):
-            # 保存到基础消息
-            EnhancedMessageProcessor.add_message_to_session(
-                st=st,
-                role="assistant",
-                content=ai_response,
-                check_duplicate=True
-            )
-        if hasattr(st.session_state, 'display_messages'):
-            # 保存到显示消息
-            EnhancedMessageProcessor.add_display_message_to_session(
-                st=st,
-                message_content=ai_response,
-                sender_name="Digital Ray Researcher",
-                receiver_name="User",
-                sender_role="assistant",
-                llm_config={},
-                check_duplicate=True,
-            )       
-
+        
+        self.save_chat_query_and_answer(ai_response, "assistant", "Researcher", "User", "assistant")
+                            
         if active_user_memory:
             # self.store_user_memory(user_id, origin_question, ai_response)
             self.store_experience(user_id, origin_question)               

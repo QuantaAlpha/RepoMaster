@@ -11,8 +11,6 @@ from autogen.cache import Cache
 from services.autogen_upgrade.base_agent import ExtendedUserProxyAgent, ExtendedAssistantAgent, check_code_block
 from utils.toolkits import register_toolkits
 
-import sys;sys.path.insert(0, "/mnt/ceph/huacan/Code/Tasks/finance_agent/whc_Agent_Finance")
-
 from services.agents.deepsearch_2agents import AutogenDeepSearchAgent
 
 from core.git_task import TaskManager, AgentRunner
