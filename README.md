@@ -1,26 +1,26 @@
 # RepoMaster
 
-RepoMaster是一个代码仓库任务执行工具，能够自动分析并在本地或GitHub仓库上执行各种任务。
+RepoMaster is a code repository task execution tool that can automatically analyze and execute various tasks on local or GitHub repositories.
 
-## 功能特点
+## Features
 
-- 支持本地仓库和GitHub仓库
-- 基于YAML的简洁任务配置
-- 支持并行任务执行
-- 自动环境准备和数据集处理
-- 支持虚拟环境隔离
+- Support for local repositories and GitHub repositories
+- Concise task configuration based on YAML
+- Support for parallel task execution
+- Automatic environment preparation and dataset processing
+- Support for virtual environment isolation
 
-## 快速开始
+## Quick Start
 
-### 安装依赖
+### Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 创建任务配置文件
+### Create Task Configuration File
 
-在`config`目录下创建一个YAML配置文件，例如`my_tasks.yaml`：
+Create a YAML configuration file in the `config` directory, for example `my_tasks.yaml`:
 
 ```yaml
 tasks:
@@ -29,63 +29,63 @@ tasks:
       type: local
       path: /path/to/local/repository
     description: |
-      请分析{repo_path}中的代码，并完成以下任务：
-      1. 分析代码结构和主要功能
-      2. 生成分析报告，保存到{output_path}目录
+      Please analyze the code in {repo_path} and complete the following tasks:
+      1. Analyze code structure and main functionality
+      2. Generate analysis report and save to {output_path} directory
 ```
 
-### 运行任务
+### Run Tasks
 
 ```bash
 python RepoMaster/tasks/1_run_git.py --config RepoMaster/config/my_tasks.yaml
 ```
 
-要启用并行模式：
+To enable parallel mode:
 
 ```bash
 python RepoMaster/tasks/1_run_git.py --config RepoMaster/config/my_tasks.yaml --parallel --parallel_workers 4
 ```
 
-## 配置文件格式
+## Configuration File Format
 
-YAML配置文件定义如下：
+YAML configuration file is defined as follows:
 
 ```yaml
 tasks:
-  task_id:                     # 任务唯一标识符
-    repo:                      # 仓库信息
-      type: local | github     # 仓库类型：本地或GitHub
-      path: /path/to/repo      # 如果是本地仓库，指定路径
-      url: https://...         # 如果是GitHub仓库，指定URL
+  task_id:                     # Unique task identifier
+    repo:                      # Repository information
+      type: local | github     # Repository type: local or GitHub
+      path: /path/to/repo      # If local repository, specify path
+      url: https://...         # If GitHub repository, specify URL
     
-    description: |             # 任务描述，支持多行文本
-      任务描述内容，可以包含占位符：
-      {repo_path}：仓库路径
-      {output_path}：输出路径
-      {input_path}：输入数据路径
+    description: |             # Task description, supports multi-line text
+      Task description content, can include placeholders:
+      {repo_path}: Repository path
+      {output_path}: Output path
+      {input_path}: Input data path
     
-    data:                      # 数据相关配置（可选）
-      input_path: /path/...    # 输入数据路径
-      input_info:              # 输入数据信息（可选）
-        - name: "数据名称"
-          path: "数据路径"
-          description: "数据说明"
+    data:                      # Data-related configuration (optional)
+      input_path: /path/...    # Input data path
+      input_info:              # Input data information (optional)
+        - name: "Data Name"
+          path: "Data Path"
+          description: "Data Description"
     
-    parameters:                # 额外参数（可选）
-      timeout: 1800            # 任务超时时间（秒）
-      priority: 1              # 任务优先级
+    parameters:                # Additional parameters (optional)
+      timeout: 1800            # Task timeout (seconds)
+      priority: 1              # Task priority
 ```
 
-## 命令行参数
+## Command Line Arguments
 
 ```
---config            指定YAML配置文件路径（必需）
---retry             任务失败后重试次数（默认：2）
---max_repo          最大处理仓库数量（默认：5）
---parallel          使用并行模式执行任务
---parallel_workers  并行工作进程数（默认：4）
+--config            Specify YAML configuration file path (required)
+--retry             Number of retries after task failure (default: 2)
+--max_repo          Maximum number of repositories to process (default: 5)
+--parallel          Use parallel mode to execute tasks
+--parallel_workers  Number of parallel worker processes (default: 4)
 ```
 
-## 示例
+## Examples
 
-查看`RepoMaster/config/sample_tasks.yaml`获取完整的配置示例。
+See `RepoMaster/config/sample_tasks.yaml` for complete configuration examples.

@@ -101,7 +101,7 @@ def generate_repository_summary(
         file_content = file['file_content']
         try:
             summary = get_readme_summary(file_content, repository_summary)
-            if '<none>' not in summary.lower():
+            if '<none>' not in str(summary).lower():
                 if get_code_abs_token(json.dumps(repository_summary, ensure_ascii=False)+str(summary))> max_important_files_token:
                     break
                 repository_summary[file_path] = summary

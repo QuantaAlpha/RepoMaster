@@ -25,6 +25,7 @@ from autogen.io.base import IOStream
 
 
 from services.agents.agent_client import TrackableAssistantAgent, TrackableUserProxyAgent
+from services.autogen_upgrade.codeblock_judge import llm_judge_code_blocks, process_and_filter_code_blocks
 
 
 def check_code_block(content):
@@ -418,7 +419,11 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
             code_blocks = self._code_executor.code_extractor.extract_code_blocks(message["content"])
             if len(code_blocks) == 0:
                 continue
-
+            # 使用 LLM 对代码块进行判定、去重与排序
+            code_blocks = process_and_filter_code_blocks(code_blocks)
+            if len(code_blocks) == 0:
+                continue
+ 
             num_code_blocks = len(code_blocks)
             if num_code_blocks == 1:
                 iostream.print(
@@ -436,7 +441,7 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
                     ),
                     flush=True,
                 )
-
+ 
             # found code blocks, execute code.
             code_result = self._code_executor.execute_code_blocks(code_blocks)
             exitcode2str = "execution succeeded" if code_result.exit_code == 0 else "execution failed"
@@ -515,6 +520,10 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
         # Append file change information to execution result
         final_result = f"{code_exit}\nCode output: {code_result}"
         if file_changes_info and file_changes_info != "No new files generated during execution":
-            final_result += f"\n\n=== File Changes ===\n{file_changes_info}"
+            final_result += (
+                f"\n\n=== File Changes ===\n{file_changes_info}"
+                f"\n\n=== 任务提示 ==="
+                f"\n- 请结合任务目标，核对是否已生成预期结果文件。如果已生成，请给出结果文件的路径，并关注结果文件的路径是否正确。如果未生成，检查是不是任务执行失败，然后思考新的解决方法，给出具体的修正计划。"
+            )
         
         return is_exec_success, final_result

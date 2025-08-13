@@ -92,11 +92,30 @@ class RepoMasterAgent:
             code_execution_config=self.code_execution_config,
         )
     
-    async def github_repo_search(self, task: Annotated[str, "用户需要解决的任务描述"]) -> str:
+    async def web_search(self, query: Annotated[str, "用于进行通用网络搜索的查询，以获取实时信息或回答非代码相关的问题"]) -> str:
         """
-        执行GitHub仓库深度搜索并返回适合解决任务的仓库列表。
+        执行通用网络搜索，以查找实时信息或解决不需要代码的通用问题。
+        
+        此方法允许代理搜索互联网以获取最新信息，例如时事和最新数据。
+        它适用于需要超出模型知识范围或需要最新信息的场景。
+        
+        功能:
+        - 搜索互联网并根据结果生成答案
+        - 提供有关时事和最新数据的实时信息
+        - 返回格式化的搜索结果信息
+        - 访问超出模型知识截止日期的信息
+        """
+        return await self.repo_searcher.deep_search(query)
+    
+    async def github_repo_search(self, task: Annotated[str, "描述需要通过GitHub仓库解决的任务，用于搜索最相关的代码库"]) -> str:
+        """
+        根据任务描述在GitHub上搜索相关的代码仓库。
+        
+        此方法旨在根据用户任务找到最合适的GitHub仓库。它会分析仓库的README文件
+        来判断其相关性，并返回一个最适合解决任务的仓库列表。
+
         返回:
-            包含匹配仓库信息的JSON字符串，格式为：
+            一个JSON字符串，其中包含最匹配的仓库信息列表。
         """
         query = f"""
 Please search for GitHub repositories related to the task:
@@ -121,7 +140,7 @@ The JSON format should be like this:
     ...
 ]
 """
-        return await self.repo_searcher.a_web_agent_answer(query)
+        return await self.repo_searcher.deep_search(query)
     
     def run_repo_agent(
         self, 
@@ -179,6 +198,7 @@ The JSON format should be like this:
         """
         register_toolkits(
             [
+                self.web_search,
                 self.run_repo_agent,
                 self.github_repo_search,
             ],

@@ -6,7 +6,7 @@ from scripts.mle_task import get_mle_task, get_dataset_examples, create_small_da
 
 
 def init_venv():
-    """初始化虚拟环境"""
+    """Initialize virtual environment"""
     default_venvs_dir = './.venvs'
     venv_path = os.path.join(default_venvs_dir, "persistent_venv")
     
@@ -19,14 +19,14 @@ def init_venv():
     return
 
 def test_repomap_importance():
-    # 或者更详细的方式
+    # Or more detailed approach
     # builder = GlobalCodeTreeBuilder('git_repos/lyrapdf')
     builder = GlobalCodeTreeBuilder('git_repos/fish-speech')
     
     builder.parse_repository()
     builder.save_code_tree('res/code_tree.pkl')
     
-    # 保存为JSON格式
+    # Save as JSON format
     builder.save_json('res/code_tree.json')
     
     content = builder.generate_llm_important_modules()
@@ -35,7 +35,7 @@ def test_repomap_importance():
 def test_repomap_search():
     explorer = CodeExplorerTools(repo_path="git_repos/fish-speech")
     
-    # 运行示例
+    # Run examples
     # explorer.run_examples()
     print(explorer.builder.generate_llm_important_modules())
 

@@ -12,7 +12,7 @@ def get_tokenizer_config():
 
 
 def get_llm_config(timeout: int = 120, temperature: float = 0.5):
-    # 尝试获取Azure配置，如果不存在则使用OpenAI配置
+    # Try to get Azure configuration, if not exists then use OpenAI configuration
     if all(key in os.environ for key in ["AZURE_OPENAI_MODEL", "AZURE_OPENAI_API_KEY", "AZURE_OPENAI_BASE_URL"]):
         return {
             "config_list": [{
