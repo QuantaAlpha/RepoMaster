@@ -168,7 +168,7 @@ def download_file_lists(work_dir):
     table_files = get_files_from_dir(work_dir, ['.csv', '.xlsx'])
     pdf_txt_files = get_files_from_dir(work_dir, ['.pdf', '.md', '.pdf'])
 
-    # 使用st.selectbox实时更新下拉框
+    # Use st.selectbox to update dropdown box in real-time
     selected_image = st.selectbox("Select an image to download", image_files, key=f"imag_select_{random_string(8)}")
     if selected_image:
         file_path = os.path.join(work_dir, selected_image)
@@ -204,7 +204,7 @@ def Upload_files(work_dir):
     file = st.file_uploader("Upload your financial data", type=['csv', 'xlsx', 'pdf', 'txt', 'md'])
     if file is not None:
         if file.type == "application/pdf":
-            # 这里可以添加读取PDF内容的逻辑
+            # Here you can add logic to read PDF content
             pass
         elif file.type == "text/csv":
             df = pd.read_csv(file)

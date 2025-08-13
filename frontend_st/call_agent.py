@@ -25,7 +25,7 @@ class AgentCaller:
             code_execution_config=self.code_execution_config,
         )
     
-    # 优化对话
+    # Optimize dialogue
     def _optimize_dialogue(self, messages):
         if 'messages' in st.session_state:
             history_message = json.dumps(messages, ensure_ascii=False)
@@ -98,7 +98,7 @@ class AgentCaller:
         if 'messages' in st.session_state:
             messages = self.preprocess_message(messages)        
                 
-        # 处理文件路径信息
+        # Process file path information
         if file_paths:
             file_info = "\n".join([f"- {path}" for path in file_paths])
             messages = f"{messages}\n\n[upload files]:\n{file_info}"

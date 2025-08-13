@@ -1,23 +1,23 @@
-# 依赖目录
+# Dependency directories
 node_modules/
 vendor/
 .pnp/
 .pnp.js
 
-# 构建输出
+# Build output
 build/
 dist/
 out/
 *.min.js
 
-# 日志
+# Logs
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# 环境变量和密钥
+# Environment variables and keys
 .env
 .env.local
 .env.development.local
@@ -26,7 +26,7 @@ yarn-error.log*
 .env.*
 *.pem
 
-# 缓存
+# Cache
 _del/
 coding/
 res/
@@ -35,7 +35,7 @@ res/
 .eslintcache
 .parcel-cache
 
-# IDE 和编辑器
+# IDE and editors
 .idea/
 .vscode/
 *.swp
@@ -43,15 +43,15 @@ res/
 *~
 .DS_Store
 
-# 操作系统文件
+# OS files
 Thumbs.db
 desktop.ini
 
-# 测试覆盖率
+# Test coverage
 coverage/
 .nyc_output/
 
-# 临时文件
+# Temporary files
 tmp/
 temp/
 

@@ -6,30 +6,30 @@ from utils.agent_gpt4 import AzureGPT4Chat
 
 def _build_system_prompt() -> str:
     return (
-        "你是一个代码块执行规划器。\n"
-        "输入是一组从对话中抽取的代码块，每个包含 index、language、code。\n"
+        "You are a code block execution planner.\n"
+        "Input is a set of code blocks extracted from conversation, each containing index, language, code.\n"
         "\n"
-        "任务说明：\n"
-        "1) 判断每个代码块是否可执行（runnable），以及语言标签与代码是否匹配（language_ok）\n"
-        "2) 识别代码块意图：\n"
-        "   - env_setup: 系统依赖/环境准备（如 apt-get、pip install 等）\n"
-        "   - direct_exec: 直接执行的代码（包含具体逻辑，会被 autogen 直接执行）\n" 
-        "   - script_run: 运行脚本命令（如 python xxx.py）\n"
-        "   - other: 其他类型\n"
-        "3) 抽取目标文件 target_file：\n"
-        "   - 若 Python 代码包含 '# filename: xxx.py'，则 target_file=该文件名\n"
-        "   - 若 Shell 代码形如 'python xxx.py' 或 'python3 xxx.py'，则 target_file=xxx.py\n"
-        "4) 去重规则：如果一个代码块是直接执行的代码（包含 filename 注释），另一个代码块是运行同一脚本，则保留直接执行的代码，丢弃运行命令\n"
-        "   - 同一脚本的多个运行命令仅保留一个\n"
-        "   - 内容相同的代码块仅保留一个\n"
-        "5) 排序规则：根据执行逻辑智能排序\n"
-        "   - 环境准备（env_setup）优先执行\n"
-        "   - 根据依赖关系和执行逻辑合理安排其他代码块顺序\n"
-        "   - 如：数据准备 → 数据处理 → 结果输出\n"
-        "   - 如：被依赖的文件先生成\n"
-        "   - 如：需要先导入/定义的内容优先\n"
+        "Task description:\n"
+        "1) Judge whether each code block is runnable and whether the language label matches the code (language_ok)\n"
+        "2) Identify code block intent:\n"
+        "   - env_setup: System dependencies/environment preparation (such as apt-get, pip install, etc.)\n"
+        "   - direct_exec: Code to be executed directly (contains specific logic, will be executed directly by autogen)\n" 
+        "   - script_run: Run script commands (such as python xxx.py)\n"
+        "   - other: Other types\n"
+        "3) Extract target file target_file:\n"
+        "   - If Python code contains '# filename: xxx.py', then target_file=that filename\n"
+        "   - If Shell code is like 'python xxx.py' or 'python3 xxx.py', then target_file=xxx.py\n"
+        "4) Deduplication rules: If one code block is directly executable code (contains filename comment), another code block runs the same script, then keep the directly executable code and discard the run command\n"
+        "   - Keep only one run command for the same script\n"
+        "   - Keep only one code block with identical content\n"
+        "5) Sorting rules: Intelligent sorting based on execution logic\n"
+        "   - Environment preparation (env_setup) executes first\n"
+        "   - Reasonably arrange other code blocks order based on dependencies and execution logic\n"
+        "   - Such as: data preparation → data processing → result output\n"
+        "   - Such as: generate dependent files first\n"
+        "   - Such as: prioritize content that needs to be imported/defined first\n"
         "\n"
-        "输出JSON格式：\n"
+        "Output JSON format:\n"
         "{\n"
         '  "blocks": [\n'
         '    {"index": 0, "keep": true, "intent": "env_setup", "target_file": null},\n'
@@ -38,32 +38,32 @@ def _build_system_prompt() -> str:
         '  "order": [0, 1]\n'
         "}\n"
         "\n"
-        "示例1 - 智能重排序（环境准备 + 直接执行）：\n"
-        "输入: [\n"
+        "Example 1 - Intelligent reordering (environment preparation + direct execution):\n"
+        "Input: [\n"
         '  {"index": 0, "language": "python", "code": "# filename: convert.py\\nimport os\\nfrom spatie.pdf_to_text import Pdf\\nprint(\\"converting\\")"},\n'
         '  {"index": 1, "language": "sh", "code": "apt-get update && apt-get install -y poppler-utils"}\n'
         "]\n"
-        "输出: {\n"
+        "Output: {\n"
         '  "blocks": [{"index": 1, "keep": true, "intent": "env_setup", "target_file": null}, {"index": 0, "keep": true, "intent": "direct_exec", "target_file": "convert.py"}],\n'
         '  "order": [1, 0]\n'
         "}\n"
         "\n"
-        "示例2 - 直接执行 + 运行脚本去重：\n"
-        "输入: [\n"
+        "Example 2 - Direct execution + run script deduplication:\n"
+        "Input: [\n"
         '  {"index": 0, "language": "python", "code": "# filename: test.py\\nprint(\\"test\\")"},\n'
         '  {"index": 1, "language": "sh", "code": "python test.py"}\n'
         "]\n"
-        "输出: {\n"
+        "Output: {\n"
         '  "blocks": [{"index": 0, "keep": true, "intent": "direct_exec", "target_file": "test.py"}, {"index": 1, "keep": false, "intent": "script_run", "target_file": "test.py"}],\n'
         '  "order": [0]\n'
         "}\n"
         "\n"
-        "只输出JSON，不要其他文字。"
+                "Only output JSON, no other text."
     )
 
 
 def _build_user_prompt(raw_blocks: List[Dict[str, Any]]) -> str:
-    return f"代码块列表：\n{json.dumps(raw_blocks, ensure_ascii=False, indent=2)}\n\n请分析并输出JSON："
+    return f"Code block list:\n{json.dumps(raw_blocks, ensure_ascii=False, indent=2)}\n\nPlease analyze and output JSON:"
 
 
 def llm_judge_code_blocks(
@@ -71,14 +71,14 @@ def llm_judge_code_blocks(
     message_list: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """
-    使用 LLM 对代码块进行可执行性判断、语言匹配、去重与排序。
+    Use LLM to judge code block executability, language matching, deduplication and sorting.
 
     Args:
         raw_blocks: [{"index": int, "language": str, "code": str}, ...]
-        message_list: 额外上下文（可选，不需要可传 None）。
+        message_list: Additional context (optional, can pass None if not needed).
 
     Returns:
-        Dict，包含 blocks/order。
+        Dict containing blocks/order.
     """
     system_prompt = _build_system_prompt()
 
@@ -88,7 +88,7 @@ def llm_judge_code_blocks(
             {"role": "user", "content": _build_user_prompt(raw_blocks)},
         ]
     else:
-        # 在传入自定义 message_list 的情况下，保证包含系统与用户需求
+        # In case of passing custom message_list, ensure it contains system and user requirements
         message_list = list(message_list)
         message_list.insert(0, {"role": "system", "content": system_prompt})
         message_list.append({"role": "user", "content": _build_user_prompt(raw_blocks)})
@@ -100,21 +100,21 @@ def llm_judge_code_blocks(
             message=message_list,
             json_format=True
         )
-        # chat_with_message 返回解析后的 dict
+        # chat_with_message returns parsed dict
         if isinstance(content, str):
             result = json.loads(content)
         else:
             result = content
             
-        # 基本健壮性：若缺 key 则补齐
+        # Basic robustness: fill in missing keys
         if "blocks" not in result:
             result["blocks"] = []
         if "order" not in result:
             result["order"] = []
         return result
     except Exception as e:
-        print(f"LLM 判定失败: {e}")
-        # 兜底：全部保留，按原始顺序
+        print(f"LLM judgment failed: {e}")
+        # Fallback: keep all, in original order
         n = len(raw_blocks)
         return {
             "blocks": [
@@ -127,38 +127,38 @@ def llm_judge_code_blocks(
 
 def process_and_filter_code_blocks(code_blocks) -> List:
     """
-    处理代码块：使用 LLM 判定、去重与排序，返回处理后的代码块列表。
+    Process code blocks: use LLM for judgment, deduplication and sorting, return processed code block list.
     
     Args:
-        code_blocks: 从 autogen code_extractor 提取的代码块列表
+        code_blocks: Code block list extracted from autogen code_extractor
         
     Returns:
-        List: 处理后的代码块列表（已去重、排序）
+        List: Processed code block list (deduplicated, sorted)
     """
     if len(code_blocks) == 0:
         return []
     
     try:
-        # 使用 LLM 对代码块进行判定、去重与排序
+        # Use LLM for code block judgment, deduplication and sorting
         raw_blocks = [
             {"index": i, "language": getattr(cb, "language", None), "code": getattr(cb, "code", None)}
             for i, cb in enumerate(code_blocks)
         ]
         judge = llm_judge_code_blocks(raw_blocks)
         
-        # 解析判定结果
+        # Parse judgment results
         blocks_info = {item.get("index"): item for item in judge.get("blocks", [])}
         ordered = judge.get("order", list(range(len(code_blocks))))
         keep_set = {idx for idx, info in blocks_info.items() if info.get("keep", True)}
         
-        # 若 blocks_info 为空，默认全部保留
+        # If blocks_info is empty, default to keep all
         if not blocks_info:
             keep_set = set(range(len(code_blocks)))
         
-        # 过滤与重排
+        # Filter and reorder
         selected_indexes = [idx for idx in ordered if idx in keep_set and 0 <= idx < len(code_blocks)]
         
-        # 去重（防止 LLM 输出重复 index）
+        # Deduplication (prevent LLM from outputting duplicate index)
         seen = set()
         selected_indexes = [idx for idx in selected_indexes if not (idx in seen or seen.add(idx))]
         
@@ -168,6 +168,6 @@ def process_and_filter_code_blocks(code_blocks) -> List:
         return [code_blocks[idx] for idx in selected_indexes]
         
     except Exception as e:
-        print(f"代码块处理失败: {e}")
-        # 兜底：返回原始代码块列表
+        print(f"Code block processing failed: {e}")
+        # Fallback: return original code block list
         return code_blocks 

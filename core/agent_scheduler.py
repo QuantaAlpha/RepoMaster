@@ -51,10 +51,10 @@ Important Notes:
 
 class RepoMasterAgent:
     """
-    RepoMaster代理，用于搜索和利用GitHub仓库解决用户任务。
+    RepoMaster agent for searching and utilizing GitHub repositories to solve user tasks.
     
-    该代理能够根据用户任务搜索相关的GitHub仓库，分析仓库内容，
-    并生成解决方案。主要由调度器代理和用户代理协作完成任务。
+    This agent can search for relevant GitHub repositories based on user tasks, analyze repository content,
+    and generate solutions. The main work is accomplished through collaboration between scheduler agent and user agent.
     """
     # def __init__(self, local_repo_path: str, work_dir: str, remote_repo_path=None, llm_config=None, code_execution_config=None, task_type=None, use_venv=False, task_id=None, is_cleanup_venv=True, args={}):
     def __init__(self, llm_config=None, code_execution_config=None):
@@ -74,7 +74,7 @@ class RepoMasterAgent:
        
     def initialize_agents(self, **kwargs):    
         """
-        初始化调度器代理和用户代理。
+        Initialize scheduler agent and user agent.
         """
         self.scheduler = ExtendedAssistantAgent(
             name="scheduler_agent",
@@ -92,30 +92,31 @@ class RepoMasterAgent:
             code_execution_config=self.code_execution_config,
         )
     
-    async def web_search(self, query: Annotated[str, "用于进行通用网络搜索的查询，以获取实时信息或回答非代码相关的问题"]) -> str:
+    async def web_search(self, query: Annotated[str, "Query for general web search to get real-time information or answer non-code-related questions"]) -> str:
         """
-        执行通用网络搜索，以查找实时信息或解决不需要代码的通用问题。
+        Perform general web search to find real-time information or solve general problems that don't require code.
         
-        此方法允许代理搜索互联网以获取最新信息，例如时事和最新数据。
-        它适用于需要超出模型知识范围或需要最新信息的场景。
+        This method allows the agent to search the internet for the latest information, such as current events and recent data.
+        It is suitable for scenarios that require information beyond the model's knowledge scope or need the latest information.
         
-        功能:
-        - 搜索互联网并根据结果生成答案
-        - 提供有关时事和最新数据的实时信息
-        - 返回格式化的搜索结果信息
-        - 访问超出模型知识截止日期的信息
+        Features:
+        - Search the internet and generate answers based on results
+        - Provide real-time information about current events and latest data
+        - Return formatted search result information
+        - Access information beyond the model's knowledge cutoff date
         """
         return await self.repo_searcher.deep_search(query)
     
-    async def github_repo_search(self, task: Annotated[str, "描述需要通过GitHub仓库解决的任务，用于搜索最相关的代码库"]) -> str:
+    async def github_repo_search(self, task: Annotated[str, "Description of tasks that need to be solved through GitHub repositories, used to search for the most relevant code libraries"]) -> str:
         """
-        根据任务描述在GitHub上搜索相关的代码仓库。
+        Search for relevant code repositories on GitHub based on task description.
         
-        此方法旨在根据用户任务找到最合适的GitHub仓库。它会分析仓库的README文件
-        来判断其相关性，并返回一个最适合解决任务的仓库列表。
+        This method is designed to find the most suitable GitHub repositories based on user tasks. It analyzes
+        the README files of repositories to determine their relevance and returns a list of repositories
+        most suitable for solving the task.
 
-        返回:
-            一个JSON字符串，其中包含最匹配的仓库信息列表。
+        Returns:
+            A JSON string containing a list of the most matching repository information.
         """
         query = f"""
 Please search for GitHub repositories related to the task:
@@ -144,34 +145,34 @@ The JSON format should be like this:
     
     def run_repo_agent(
         self, 
-        task_description: Annotated[str, "用户需要解决的任务描述, 保持任务描述的完整性, 不要省略任何信息"],
-        github_url: Annotated[str, "GitHub仓库URL(格式是: https://github.com/repo_name/repo_name)"],
-        input_data: Annotated[Optional[str], "一个JSON字符串，表示本地输入数据。当用户任务中明确提及或暗示需要使用本地文件作为输入时，必须提供此参数。格式为: '[{\"path\": \"本地输入数据路径\", \"description\": \"输入数据描述\"}]'。如果任务不需要本地输入数据，则可传入空列表'[]'。"]
+        task_description: Annotated[str, "User's task description to be solved, maintain the completeness of task description, do not omit any information"],
+        github_url: Annotated[str, "GitHub repository URL (format: https://github.com/repo_name/repo_name)"],
+        input_data: Annotated[Optional[str], "A JSON string representing local input data. Must be provided when user task explicitly mentions or implies the need to use local files as input. Format: '[{\"path\": \"local input data path\", \"description\": \"input data description\"}]'. If task doesn't require local input data, can pass empty list '[]'."]
     ):
         """
-        基于指定的GitHub仓库执行用户任务。
+        Execute user tasks based on specified GitHub repository.
         
-        该方法克隆指定的GitHub仓库，然后根据提供的任务描述和输入数据，
-        调用任务管理器和代理运行器完成任务执行过程。整个流程包括：
-        1. 验证和处理输入数据
-        2. 初始化任务环境（创建工作目录、克隆仓库等）
-        3. 运行代码代理分析和执行任务
+        This method clones the specified GitHub repository, then based on the provided task description and input data,
+        calls task manager and agent runner to complete the task execution process. The entire process includes:
+        1. Validate and process input data
+        2. Initialize task environment (create working directory, clone repository, etc.)
+        3. Run code agent to analyze and execute tasks
         
-        返回:
-            代理执行任务的结果，通常包含任务完成状态和输出内容的描述
+        Returns:
+            Result of agent executing the task, usually containing task completion status and description of output content
         """
         if input_data:
             try:
                 input_data = json.loads(input_data)
             except:
-                raise ValueError("input_data 格式错误，请检查输入数据格式")
+                raise ValueError("input_data format error, please check input data format")
             
-            assert isinstance(input_data, list), "input_data必须是列表类型"
+            assert isinstance(input_data, list), "input_data must be list type"
             for data in input_data:
-                assert isinstance(data, dict), "input_data中的元素必须是字典类型"
-                assert 'path' in data, "每个数据项必须包含'path'字段"
-                assert 'description' in data, "每个数据项必须包含'description'字段"
-                assert os.path.exists(data['path']), f"路径不存在：{data['path']}"
+                assert isinstance(data, dict), "Elements in input_data must be dict type"
+                assert 'path' in data, "Each data item must contain 'path' field"
+                assert 'description' in data, "Each data item must contain 'description' field"
+                assert os.path.exists(data['path']), f"Path does not exist: {data['path']}"
 
         args = argparse.Namespace(
             config_data={
@@ -194,7 +195,7 @@ The JSON format should be like this:
 
     def register_tools(self):
         """
-        注册代理所需的工具集。
+        Register the toolkit required by the agent.
         """
         register_toolkits(
             [
@@ -206,26 +207,26 @@ The JSON format should be like this:
             self.user_proxy,
         )
 
-    def solve_task_with_repo(self, task: Annotated[str, "用户需要解决的详细任务描述"]) -> str:
+    def solve_task_with_repo(self, task: Annotated[str, "Detailed task description that user needs to solve"]) -> str:
         """
-        搜索GitHub仓库并利用其解决用户任务。
+        Search GitHub repositories and use them to solve user tasks.
         
-        该方法是RepoMaster的主要入口点，它协调整个解决方案流程：
-        1. 搜索相关GitHub仓库
-        2. 分析仓库内容
-        3. 生成解决方案
-        4. 执行解决方案
+        This method is the main entry point of RepoMaster, which coordinates the entire solution process:
+        1. Search for relevant GitHub repositories
+        2. Analyze repository content
+        3. Generate solutions
+        4. Execute solutions
         
-        参数:
-            task: 用户需要解决的详细任务描述
+        Args:
+            task: Detailed task description that user needs to solve
             
-        返回:
-            完整的解决方案报告，包含找到的仓库、解析的方法和执行结果
+        Returns:
+            Complete solution report including found repositories, analyzed methods and execution results
         """
-        # 设置初始消息
+        # Set initial message
         initial_message = task
         
-        # 启动对话
+        # Start conversation
         chat_result = self.user_proxy.initiate_chat(
             self.scheduler,
             message=initial_message,
@@ -239,8 +240,8 @@ The JSON format should be like this:
         return final_answer
 
     def _extract_final_answer(self, chat_result) -> str:
-        """从聊天历史中提取最终答案"""
-        # 提取最终结果
+        """Extract final answer from chat history"""
+        # Extract final result
         final_answer = chat_result.summary
         
         if isinstance(final_answer, dict):
@@ -308,7 +309,7 @@ def test_run_all():
         llm_config=llm_config,
         code_execution_config=code_execution_config,
     )
-    task = "帮我把 '/data/huacan/Code/workspace/RepoMaster/data/DeepResearcher.pdf' 转成markdown 保存"
+    task = "Help me convert '/data/huacan/Code/workspace/RepoMaster/data/DeepResearcher.pdf' to markdown and save"
     result = repo_master.solve_task_with_repo(task)
     print(result)
 

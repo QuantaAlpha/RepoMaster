@@ -17,18 +17,18 @@ except ImportError:
 
 def create_response_format(schema: dict) -> dict:
     """
-    根据给定的 schema 字典快速生成 OpenAI API 的 response_format 参数。
+    Quickly generate the response_format parameter for OpenAI API based on the given schema dictionary.
 
-    参数 schema 示例:
+    Example schema parameter:
     {
-        "字段名": {"type": "数据类型", "description": "字段描述"},
+        "field_name": {"type": "data_type", "description": "field_description"},
         ...
     }
     """
     properties = {}
     for key, val in schema.items():
         prop = {"type": val["type"], "description": val["description"]}
-        # 添加数组类型的items定义
+        # Add items definition for array type
         if val["type"] == "array" and "items" in val:
             prop["items"] = val["items"]
         properties[key] = prop
@@ -50,7 +50,7 @@ def create_response_format(schema: dict) -> dict:
     }
 
 class RetryHandler:
-    """更灵活的重试处理器"""
+    """More flexible retry handler"""
     
     def __init__(self, max_retries: int = 2, base_delay: float = 1.0, max_delay: float = 10.0, 
                  exponential_base: float = 2.0, jitter: bool = True):
@@ -61,14 +61,14 @@ class RetryHandler:
         self.jitter = jitter
     
     def calculate_delay(self, attempt: int) -> float:
-        """计算延迟时间"""
+        """Calculate delay time"""
         delay = min(self.base_delay * (self.exponential_base ** attempt), self.max_delay)
         if self.jitter:
-            delay *= (0.5 + random.random() * 0.5)  # 添加50%的随机抖动
+            delay *= (0.5 + random.random() * 0.5)  # Add 50% random jitter
         return delay
     
     def execute_with_retry(self, func: Callable, *args, **kwargs) -> Any:
-        """执行函数并重试"""
+        """Execute function with retry"""
         last_exception = None
         
         for attempt in range(self.max_retries + 1):
@@ -83,7 +83,7 @@ class RetryHandler:
                 else:
                     break
         
-        return f"在重试 {self.max_retries} 次后仍然失败。错误: {str(last_exception)}"
+        return f"Still failed after {self.max_retries} retries. Error: {str(last_exception)}"
 
 class AzureGPT4Chat:
     def __init__(
@@ -99,7 +99,7 @@ class AzureGPT4Chat:
         if not AUTOGEN_AVAILABLE:
             raise ImportError("autogen package is not available. Please install it with: pip install pyautogen")
         
-        # 如果没有提供 config_list，尝试从环境变量构建
+        # If no config_list is provided, try to build from environment variables
         if config_list is None:
             config_list = get_llm_config(api_type="basic")
         
@@ -115,7 +115,7 @@ class AzureGPT4Chat:
         self.deployment_name = model_name
         self.system_prompt = system_prompt
         
-        # 初始化重试处理器
+        # Initialize retry handler
         self.retry_handler = RetryHandler(
             max_retries=max_retries,
             base_delay=base_delay,
@@ -126,7 +126,7 @@ class AzureGPT4Chat:
         self.system_prompt = prompt
 
     def chat(self, question: str, system_prompt: Optional[str] = None, json_format = None) -> str:
-        """使用 RetryHandler 的聊天方法"""
+        """Chat method using RetryHandler"""
         _system_prompt = system_prompt if system_prompt is not None else self.system_prompt
         
         def _chat_call():
@@ -145,11 +145,11 @@ class AzureGPT4Chat:
         return self.retry_handler.execute_with_retry(_chat_call)
     
     def chat_with_message(self, message: List[Dict], model_name: Optional[str] = None, json_format = False) -> str:
-        """使用 RetryHandler 的聊天方法"""
+        """Chat method using RetryHandler"""
         _model = model_name if model_name is not None else self.deployment_name
         
         def _chat_call():
-            # 直接使用原始参数，避免装饰器的参数传递问题
+            # Directly use original parameters to avoid decorator parameter passing issues
             response = self.client.create(
                 model=_model,
                 messages=message
@@ -169,13 +169,13 @@ class AzureGPT4Chat:
         **create_kwargs
     ):
         """
-        使用指定的输出格式进行对话
+        Chat with specified output format
         
         Args:
-            question (str): 用户问题
-            response_format (dict): 响应格式,例如 {"type": "json_object"} 或 {"type": "text"}
-            system_prompt (str, optional): 可选的系统提示
-            **create_kwargs: 传递给 create 方法的额外参数
+            question (str): User question
+            response_format (dict): Response format, e.g. {"type": "json_object"} or {"type": "text"}
+            system_prompt (str, optional): Optional system prompt
+            **create_kwargs: Additional parameters passed to the create method
         """
         _system_prompt = system_prompt if system_prompt is not None else self.system_prompt
         
@@ -228,18 +228,18 @@ class AzureGPT4Chat:
     
     def get_usage_summary(self) -> Dict:
         """
-        获取使用情况摘要（如果 OpenAIWrapper 支持）
+        Get usage summary (if OpenAIWrapper supports it)
         
         Returns:
-            Dict: 使用情况统计
+            Dict: Usage statistics
         """
         try:
             return self.client.get_usage()
         except AttributeError:
-            return {"error": "OpenAIWrapper 不支持使用情况统计"}
+            return {"error": "OpenAIWrapper does not support usage statistics"}
     
     def clear_usage_summary(self):
-        """清除使用情况统计（如果 OpenAIWrapper 支持）"""
+        """Clear usage statistics (if OpenAIWrapper supports it)"""
         try:
             self.client.clear_usage_summary()
         except AttributeError:

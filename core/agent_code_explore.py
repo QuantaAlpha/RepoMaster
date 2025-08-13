@@ -22,9 +22,9 @@ from configs.oai_config import get_llm_config
 
 class CodeExplorer(BaseCodeExplorer):
     def __init__(self, local_repo_path: str, work_dir: str, remote_repo_path=None, llm_config=None, code_execution_config=None, task_type=None, use_venv=False, task_id=None, is_cleanup_venv=True, args={}):
-        """初始化代码仓库探索工具"""
+        """Initialize code repository exploration tool"""
         
-        # 调用基类初始化方法
+        # Call base class initialization method
         super().__init__(work_dir, use_venv, task_id, is_cleanup_venv)
         
         self.llm_config = get_llm_config(service_type='code_explore') if llm_config is None else llm_config
@@ -39,7 +39,7 @@ class CodeExplorer(BaseCodeExplorer):
         self.docker_path_prefix = "/workspace" if remote_repo_path else ''
         self.remote_repo_path = remote_repo_path if remote_repo_path else self.local_repo_path
         
-        # 设置超时时间 2小时
+        # Set timeout to 2 hours
         self.code_execution_config['timeout'] = 2 * 60 * 60
         self.timeout = 2 * 60 * 60
         # self.timeout = 60*5
@@ -47,15 +47,15 @@ class CodeExplorer(BaseCodeExplorer):
         self.work_dir = work_dir
         self.args = args
         
-        # 添加消息历史摘要相关参数
-        self.max_tool_messages_before_summary = 2  # 累积多少轮工具调用后进行摘要
+        # Add message history summary related parameters
+        self.max_tool_messages_before_summary = 2  # How many rounds of tool calls to accumulate before summarizing
         self.current_tool_call_count = 0
-        self.token_limit = 2000  # 设置token数量限制
-        self.limit_restart_tokens = 80000  # 设置重启token数量限制
+        self.token_limit = 2000  # Set token count limit
+        self.limit_restart_tokens = 80000  # Set restart token count limit
         
         # self.is_cleanup_venv = False
         
-        # 如果启用虚拟环境，加载或创建虚拟环境
+        # If virtual environment is enabled, load or create virtual environment
         if self.use_venv:
             self.venv_context = self._load_venv_context(
                 # venv_dir=os.path.dirname(self.work_dir), 
@@ -69,11 +69,11 @@ class CodeExplorer(BaseCodeExplorer):
         print(f"init_tool_library time: {time_end - time_start} seconds")
         print("="*100)
         
-        # 创建AutoGen代理
+        # Create AutoGen agents
         self._setup_agents()
     
     def _setup_tool_library(self):
-        """设置工具库"""
+        """Setup tool library"""
         time_start = time.time()
         self.code_library = CodeExplorerTools(
             self.local_repo_path,
@@ -91,8 +91,8 @@ class CodeExplorer(BaseCodeExplorer):
             self.code_importance = ""
 
     def token_limit_termination(self, msg):
-        """检查是否达到token限制，决定是否终止对话"""
-        # 检查原有的终止条件
+        """Check if token limit is reached to decide whether to terminate conversation"""
+        # Check original termination conditions
         def check_tool_call(msg):
             if msg.get("tool_calls", []):
                 return True
@@ -113,7 +113,7 @@ class CodeExplorer(BaseCodeExplorer):
         if (not check_tool_call(msg)) and (not content):
             return True
                 
-        # 如果原有条件满足则终止
+        # Terminate if original conditions are met
         if (
             original_termination and 
             check_code_block(content) is None and
@@ -122,15 +122,15 @@ class CodeExplorer(BaseCodeExplorer):
             self.is_restart = False
             return True
         
-        # 获取当前对话历史
+        # Get current conversation history
         messages = self.executor.chat_messages.get(self.explore, [])
-        # 计算总token数
+        # Calculate total token count
         total_tokens = 0
         for m in messages:
             if m.get("content"):
                 total_tokens += get_code_abs_token(str(m.get("content", "")))
         
-        # 如果超过限制则终止
+        # If over the limit, terminate
         if total_tokens > self.limit_restart_tokens:
             self.is_restart = True
             self.chat_turns += len(messages)-1
@@ -138,20 +138,20 @@ class CodeExplorer(BaseCodeExplorer):
         return False
     
     def _setup_agents(self):
-        """设置AutoGen代理"""
+        """Setup AutoGen agents"""
         if self.remote_repo_path and not self.use_venv:
-            # 使用Docker执行器
+            # Use Docker executor
             print("run docker executor")
             executor = EnhancedDockerCommandLineCodeExecutor(
-                image="whc_docker",  # 包含PyTorch和CUDA支持的镜像
-                timeout=self.timeout,  # 增加超时时间以适应更复杂的计算
+                image="whc_docker",  # Image with PyTorch and CUDA support
+                timeout=self.timeout,  # Increase timeout to accommodate more complex computations
                 work_dir=self.work_dir,
                 keep_same_path=True,
                 network_mode="host",
             )
             self.code_execution_config = {"executor": executor}
         elif self.use_venv:
-            # 使用本地虚拟环境执行器
+            # Use local virtual environment executor
             local_executor = LocalCommandLineCodeExecutor(
                 work_dir=self.work_dir,
                 timeout=self.timeout,
@@ -172,7 +172,7 @@ class CodeExplorer(BaseCodeExplorer):
             code_execution_config=self.code_execution_config,
         )        
 
-        # 创建代码分析者智能体
+        # Create code analyzer agent
         self.explore = ExtendedAssistantAgent(
             name="Code_Explorer",
             system_message=explorer_system_message,
@@ -180,14 +180,14 @@ class CodeExplorer(BaseCodeExplorer):
             is_termination_msg=self.token_limit_termination,
         )
         
-        # 创建执行者智能体
+        # Create executor agent
         self.executor = ExtendedUserProxyAgent(
             name="Coder_Excuter",
-            system_message=dedent("""你是代码分析者的助手，负责执行代码分析和查看操作。
-            执行完操作后，将结果返回给代码分析者进行分析。
-            当任务完成后，或者当前任务无法完成时，你应该回复"TERMINATE"来结束对话。
-            # 请注意：
-            - 只有在代码分析者明确表示已完成分析时才回复"TERMINATE"
+            system_message=dedent("""You are the assistant to the code analyzer, responsible for executing code analysis and viewing operations.
+            After completing operations, return the results to the code analyzer for analysis.
+            When the task is completed or cannot be completed, you should reply "TERMINATE" to end the conversation.
+            # Please note:
+            - Only reply "TERMINATE" when the code analyzer explicitly indicates that the analysis is complete
             """),
             human_input_mode="NEVER",
             llm_config=self.llm_config,
@@ -198,19 +198,19 @@ class CodeExplorer(BaseCodeExplorer):
             work_dir=self.work_dir,
         )
         
-        # 注册工具函数
+        # Register tool functions
         if self.args.get("function_call", True):
             self._register_tools()
 
-    async def issue_solution_search(self, issue_description: Annotated[str, "用户遇到的具体编程问题或错误的描述"]) -> str:
+    async def issue_solution_search(self, issue_description: Annotated[str, "Description of specific programming issues or errors encountered by the user"]) -> str:
         """
-        针对在代码探索或开发过程中遇到的具体编程问题或错误，执行网络搜索以查找可能的解决方案。
+        For specific programming issues or errors encountered during code exploration or development, perform web search to find possible solutions.
 
-        参数:
-            issue_description: 用户遇到的具体编程问题或错误的详细描述。
+        Args:
+            issue_description: Detailed description of the specific programming issue or error encountered by the user.
 
-        返回:
-            一个字符串，包含找到的解决方案信息。如果未找到相关解决方案，则可能返回空字符串或提示信息。
+        Returns:
+            A string containing the solution information found. If no relevant solutions are found, may return an empty string or prompt message.
         """
         query = f"""
 Please search for solutions to the following programming issue:
@@ -229,7 +229,7 @@ If no relevant solutions are found, please indicate that.
         return await self.issue_searcher.a_web_agent_answer(query)
 
     def _register_tools(self):
-        """注册工具函数到执行者智能体"""
+        """Register tool functions to the executor agent"""
         register_toolkits(
             [
                 self.code_library.list_repository_structure,
@@ -251,25 +251,25 @@ If no relevant solutions are found, please indicate that.
     
     async def analyze_code(self, task: str, max_turns: int = 40) -> str:
         """
-        分析代码仓库并完成特定任务
+        Analyze code repository and complete specific tasks
         
-        参数:
-            task: 用户的编程任务描述
-            max_turns: 最大对话轮次
+        Args:
+            task: User's programming task description
+            max_turns: Maximum conversation turns
             
-        返回:
-            分析结果和实现方案
+        Returns:
+            Analysis results and implementation plan
         """
-        # 重置工具调用计数
+        # Reset tool call count
         self.task = task
         self.current_tool_call_count = 0
         
-        # 设置初始消息
+        # Set initial message
         initial_message = USER_EXPLORER_PROMPT.format(
             task=task, work_dir=self.work_dir, 
             remote_repo_path=self.remote_repo_path, code_importance=self.code_importance)
         
-        # initial_message += f"""## 仓库目录结构：{self.local_repo_path}\n\n{self.code_library.list_repository_structure(self.local_repo_path)}"""
+        # initial_message += f"""## Repository directory structure: {self.local_repo_path}\n\n{self.code_library.list_repository_structure(self.local_repo_path)}"""
         
         history_message_list = []
         if self.is_restart and self.restart_count < 2:
@@ -281,7 +281,7 @@ If no relevant solutions are found, please indicate that.
             self.is_restart = False
             history_message_list = json.loads(initial_message)
 
-        # 启动对话
+        # Start conversation
         chat_result = await self.executor.a_initiate_chat(
             self.explore,
             message=initial_message,
@@ -293,7 +293,7 @@ If no relevant solutions are found, please indicate that.
         if self.is_restart and self.restart_count < 2:
             return await self.analyze_code(task, max_turns)
         
-        # 提取最终结果
+        # Extract final result
         messages = chat_result.chat_history
         final_answer = chat_result.summary.strip().lstrip()
 
@@ -307,38 +307,38 @@ If no relevant solutions are found, please indicate that.
         
         return final_answer
     
-    def code_analysis(self, task: Annotated[str, "编程任务描述"], max_turns: int = 40) -> str:
+    def code_analysis(self, task: Annotated[str, "Programming task description"], max_turns: int = 40) -> str:
         """
-        分析代码仓库并完成特定任务
+        Analyze code repository and complete specific tasks
         
-        参数:
-            task: 用户的编程任务描述
-            max_turns: 最大对话轮次
+        Args:
+            task: User's programming task description
+            max_turns: Maximum conversation turns
             
-        返回:
-            分析结果和实现方案
+        Returns:
+            Analysis results and implementation plan
         """
         try:
             return asyncio.run(self.analyze_code(task, max_turns))
         finally:
-            # 如果启用了虚拟环境，任务完成后可以选择清理
+            # If virtual environment is enabled, optionally clean up after task completion
             if self.use_venv and hasattr(self, 'cleanup_venv') and self.cleanup_venv:
                 self.cleanup_venv()
     
-    async def a_code_analysis(self, task: Annotated[str, "编程任务描述"], max_turns: int = 40) -> str:
+    async def a_code_analysis(self, task: Annotated[str, "Programming task description"], max_turns: int = 40) -> str:
         """
-        分析代码仓库并完成特定任务（异步版本）
+        Analyze code repository and complete specific tasks (asynchronous version)
         
-        参数:
-            task: 用户的编程任务描述
-            max_turns: 最大对话轮次
+        Args:
+            task: User's programming task description
+            max_turns: Maximum conversation turns
             
-        返回:
-            分析结果和实现方案
+        Returns:
+            Analysis results and implementation plan
         """
         try:
             return await self.analyze_code(task, max_turns)
         finally:
-            # 如果启用了虚拟环境，任务完成后可以选择清理
+            # If virtual environment is enabled, optionally clean up after task completion
             if self.use_venv and hasattr(self, 'cleanup_venv') and self.cleanup_venv:
                 self.cleanup_venv()

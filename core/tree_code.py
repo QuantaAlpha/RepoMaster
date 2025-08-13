@@ -41,7 +41,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class GlobalCodeTreeBuilder:
-    """全局代码树构建器，用于解析代码仓库并构建LLM友好的结构化表示"""
+    """Global code tree builder, used to parse code repositories and build LLM-friendly structured representations"""
     
     def __init__(self, repo_path: str):
         """

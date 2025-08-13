@@ -1,32 +1,32 @@
-# 测试样例字典
+# Test case dictionary
 test_cases = {
-        "缺少包错误": """
+        "missing_package_error": """
 Traceback (most recent call last):
   File "example.py", line 10, in <module>
     import pandas as pd
 ModuleNotFoundError: No module named 'pandas'
         """,
         
-        "导入名称错误": """
+        "import_name_error": """
 Traceback (most recent call last):
   File "data_analysis.py", line 15, in <module>
     from tensorflow.keras import SequentialModel
 ImportError: cannot import name 'SequentialModel' from 'tensorflow.keras' (/usr/local/lib/python3.8/site-packages/tensorflow/keras/__init__.py)
         """,
         
-        "属性错误": """
+        "attribute_error": """
 Traceback (most recent call last):
   File "script.py", line 25, in <module>
     result = numpy.random.randn_special(5, 5)
 AttributeError: module 'numpy.random' has no attribute 'randn_special'
         """,
         
-        "版本冲突": """
+        "version_conflict": """
 ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
 tensorflow 2.4.0 requires numpy~=1.19.2, but you have numpy 1.20.3 which is incompatible.
         """,
         
-        "包中的语法错误": """
+        "syntax_error_in_package": """
 Traceback (most recent call last):
   File "main.py", line 8, in <module>
     from custom_package import function
@@ -36,20 +36,20 @@ Traceback (most recent call last):
 SyntaxError: invalid syntax
         """,
         
-        "DLL加载错误": """
+        "dll_load_error": """
 Traceback (most recent call last):
   File "image_process.py", line 3, in <module>
     import cv2
   File "/usr/local/lib/python3.8/site-packages/cv2/__init__.py", line 5, in <module>
     from .cv2 import *
-ImportError: DLL load failed while importing cv2: 找不到指定的模块。
+ImportError: DLL load failed while importing cv2: The specified module could not be found.
         """,
         
-        "依赖错误": """
+        "dependency_error": """
 ERROR: tensorboard 2.4.0 requires markdown>=2.6.8, which is not installed.
         """,
         
-        "权限错误": """
+        "permission_error": """
 Traceback (most recent call last):
   File "app.py", line 7, in <module>
     from package_name import module
@@ -58,7 +58,7 @@ Traceback (most recent call last):
 PermissionError: [Errno 13] Permission denied: '/var/log/app.log'
         """,
         
-        "复杂的多个错误": """
+        "complex_multiple_errors": """
 Traceback (most recent call last):
   File "complex_app.py", line 5, in <module>
     import pandas as pd
@@ -72,7 +72,7 @@ ImportError: cannot import name 'special_plot' from 'matplotlib' (/usr/local/lib
 ERROR: tensorflow 2.4.0 requires numpy~=1.19.2, but you have numpy 1.20.3 which is incompatible.
         """,
         
-        "嵌套的导入错误": """
+        "nested_import_error": """
 Traceback (most recent call last):
   File "deep_learning.py", line 3, in <module>
     import tensorflow as tf
@@ -91,7 +91,7 @@ Traceback (most recent call last):
 ImportError: libcudart.so.11.0: cannot open shared object file: No such file or directory
         """,
         
-        "pkg_resources错误": """
+        "pkg_resources_error": """
 Traceback (most recent call last):
   File "web_app.py", line 10, in <module>
     import flask

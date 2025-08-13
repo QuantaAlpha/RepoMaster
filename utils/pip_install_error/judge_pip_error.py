@@ -6,7 +6,7 @@ from functools import lru_cache
 
 @lru_cache(maxsize=128)
 def is_pypi_package(package_name):
-    """检查包是否存在于 PyPI 上"""
+    """Check if package exists on PyPI"""
     try:
         response = requests.get(f"https://pypi.org/pypi/{package_name}/json", timeout=2)
         return response.status_code == 200
@@ -15,47 +15,47 @@ def is_pypi_package(package_name):
 
 def is_pip_installable(package_name):
     """
-    判断包是否确定可以通过 pip 安装
+    Determine if a package can definitely be installed via pip
     
-    返回:
-    - True: 确定可以通过 pip 安装
-    - False: 不能通过 pip 安装或无法确定
+    Returns:
+    - True: Definitely can be installed via pip
+    - False: Cannot be installed via pip or uncertain
     """
-    # 处理空字符串或相对导入
+    # Handle empty strings or relative imports
     if not package_name or package_name.startswith('.'):
         return False
     
-    # 获取基础包名（去除子模块）
+    # Get base package name (remove submodules)
     base_package = package_name.split('.')[0]
     
-    # 标准库不需要 pip 安装
+    # Standard library doesn't need pip installation
     if base_package in sys.builtin_module_names:
         return False
     
-    # 检查包是否已安装及其位置
+    # Check if package is already installed and its location
     try:
         spec = importlib.util.find_spec(base_package)
         if spec is not None:
-            # 已安装的包，检查它是否是第三方库
+            # Already installed package, check if it's a third-party library
             if spec.origin and "site-packages" in spec.origin:
-                # 虽然已安装，但确实是可 pip 安装的包
+                # Although already installed, it is indeed pip-installable
                 return True
             elif spec.origin and (os.getcwd() in spec.origin or os.path.abspath(os.path.dirname(".")) in spec.origin):
-                # 本地模块，不需要 pip 安装
+                # Local module, doesn't need pip installation
                 return False
     except (ImportError, AttributeError, ValueError):
         pass
     
-    # 如果不在本地，检查 PyPI
+    # If not local, check PyPI
     if is_pypi_package(base_package):
         return True
     
-    # 默认返回 False（包括无法确定的情况）
+    # Default return False (including uncertain cases)
     return False
 
 def judge_pip_package(error_text):
     """
-    判断错误文本是否是pip安装错误
+    Determine if error text is a pip installation error
     """
     from utils.pip_install_error.extract_pip_error import PackageErrorExtractor
     extractor = PackageErrorExtractor()
@@ -73,9 +73,9 @@ def main():
     from test_messages import test_cases
     
     for case_name, error_text in test_cases.items():
-        print(f"测试用例: {case_name}")
-        print(f"错误文本: {error_text}")
-        print(f"是否是pip安装错误: {judge_pip_package(error_text)}")
+        print(f"Test case: {case_name}")
+        print(f"Error text: {error_text}")
+        print(f"Is pip installation error: {judge_pip_package(error_text)}")
         print("-"*100)
 
 if __name__ == "__main__":

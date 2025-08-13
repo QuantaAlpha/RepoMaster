@@ -100,7 +100,7 @@ def load_checkpoint(model, optimizer=None, scheduler=None, load_dir='checkpoints
         latest_file = sorted(epoch_files, key=lambda x: int(x.split('_')[2].split('.')[0]))[-1]
         checkpoint_path = os.path.join(load_dir, latest_file)
     
-    # 加载检查点
+    # Load checkpoint
     checkpoint = torch.load(checkpoint_path, map_location='cpu')
     model.load_state_dict(checkpoint['model_state_dict'])
     model = model.to(device)
@@ -116,11 +116,11 @@ def load_checkpoint(model, optimizer=None, scheduler=None, load_dir='checkpoints
 # 模型训练example
 def train_model(model, train_loader, criterion, optimizer, scheduler=None, num_epochs=10, patience=3, save_dir='checkpoints'):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"使用设备: {device}")
+    print(f"Using device: {device}")
     
     model = model.to(device)
     
-    # 加载检查点（如果存在）
+    # Load checkpoint (if exists)
     start_epoch, best_loss = load_checkpoint(model, optimizer, scheduler, device=device)
     
     # 初始化早停

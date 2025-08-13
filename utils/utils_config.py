@@ -3,7 +3,7 @@ import string
 import asyncio
 from contextvars import ContextVar
 
-# 定义 ContextVar
+# Define ContextVar
 session_var = ContextVar("session", default=None)
 
 def random_string(length=8):

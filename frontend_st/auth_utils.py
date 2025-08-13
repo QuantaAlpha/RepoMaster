@@ -19,7 +19,7 @@ def hash_password(password):
 def generate_user_id(username, password):
     return hashlib.sha256(f"{username}:{password}".encode()).hexdigest()
 
-# 修改：登录界面
+# Modified: Login interface
 def login():
     st.write("# Login")
     username = st.text_input("Username", key="login_username")
@@ -49,7 +49,7 @@ def login():
             st.session_state.show_login = False
             st.rerun()
 
-# 修改：注册界面
+# Modified: Registration interface
 def register():
     st.write("# Register")
     new_username = st.text_input("New Username", key="register_username")

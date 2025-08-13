@@ -6,42 +6,42 @@ from utils.agent_gpt4 import AzureGPT4Chat
 
 
 def generate_repository_summary(
-    code_list: list[dict[Annotated[str, "文件路径"], Annotated[str, "文件内容"]]],
+    code_list: list[dict[Annotated[str, "File path"], Annotated[str, "File content"]]],
     max_important_files_token: int = 2000
 ):
     """
-    生成代码仓库的摘要
+    Generate code repository summary
     
     Args:
-        code_list: 包含代码文件信息的列表，每个元素应包含文件路径和内容
+        code_list: List containing code file information, each element should contain file path and content
         [
             {
-                "file_path": "文件路径",
-                "file_content": "文件内容"
+                "file_path": "File path",
+                "file_content": "File content"
             }
         ]
-        max_important_files_token: 重要文件的token数量限制
+        max_important_files_token: Token count limit for important files
     """
     
-    def judge_file_is_important(code_list: list[dict[Annotated[str, "文件路径"], Annotated[str, "文件内容"]]]):
+    def judge_file_is_important(code_list: list[dict[Annotated[str, "File path"], Annotated[str, "File content"]]]):
         
         judge_prompt = f"""
-        你是一个帮助开发者理解代码仓库的助手。请判断当前文件是否对于理解整个仓库很重要。
-        重要的文件输出yes，不重要的文件输出no。
+        You are an assistant that helps developers understand code repositories. Please judge whether the current file is important for understanding the entire repository.
+        Output yes for important files, no for unimportant files.
         
-        请根据以下规则判断文件是否重要：
-        1. 如果文件是README.md，且文件内容中包含对整个仓库的描述，则认为它很重要
-        2. 如果是配置文件或者测试文件或者示例文件，则认为它很重要
-        3. 如果文件内容中包含对理解整个仓库比较重要的信息，则认为它很重要，请不要忽略任何重要的信息
-        4. 如果几个文件是完全重复的文件内容，可能只是文件名不同或language不同，则只保留其中一个（输出yes），其他删除（输出no）
+        Please judge whether a file is important according to the following rules:
+        1. If the file is README.md and the file content contains a description of the entire repository, then consider it very important
+        2. If it is a configuration file or test file or example file, then consider it very important
+        3. If the file content contains information that is important for understanding the entire repository, then consider it very important, please do not ignore any important information
+        4. If several files have completely duplicate file content, possibly with different filenames or languages, then keep only one (output yes) and delete the others (output no)
         
         ## Please note:
-        - 请不要忽略任何重要的信息
+        - Please do not ignore any important information
         
-        请返回一个JSON list(list按照重要性排序)格式，包含文件是否重要的判断：
+        Please return a JSON list (list sorted by importance) format containing judgment of whether files are important:
         [
             {{
-                "file_path": "文件路径",
+                "file_path": "File path",
                 "is_important": "yes" or "no"
             }}
         ]
@@ -66,8 +66,8 @@ def generate_repository_summary(
             print(f"Error parsing LLM response: {e}")
             return code_list
     
-    def split_code_lists(code_list: list[dict[Annotated[str, "文件路径"], Annotated[str, "文件内容"]]]):
-        # 按照tiktoken的token数量进行分割
+    def split_code_lists(code_list: list[dict[Annotated[str, "File path"], Annotated[str, "File content"]]]):
+        # Split according to tiktoken token count
         max_token = 50000
         out_code_list = []
         split_code_list = []
@@ -82,7 +82,7 @@ def generate_repository_summary(
             out_code_list.append(split_code_list)
         return out_code_list
 
-    # 并行计算
+    # Parallel computation
 
     all_file_content = json.dumps(code_list, ensure_ascii=False)
     if get_code_abs_token(all_file_content) < max_important_files_token:
@@ -113,39 +113,39 @@ def generate_repository_summary(
 
 def get_readme_summary(code_content: str, history_summary: dict):
     """
-    获取README.md和其他重要文档文件的摘要，对整个仓库进行整体理解
+    Get summary of README.md and other important documentation files, for overall understanding of the entire repository
     
     Args:
-        code_list: 包含代码文件信息的列表，每个元素应包含文件路径和内容
+        code_list: List containing code file information, each element should contain file path and content
         
     Returns:
-        str: 仓库摘要，包含对重要内容的引用
+        str: Repository summary, including references to important content
     """
     
     system_prompt = """
-    你是一个帮助开发者理解代码仓库的助手。请基于提供的README和其他文档文件，对整个仓库进行整体理解并生成摘要。
+    You are an assistant that helps developers understand code repositories. Please provide an overall understanding of the entire repository based on the provided README and other documentation files and generate a summary.
     
-    在生成摘要时，请遵循以下规则：
-    1. 重点关注项目的主要功能、架构设计和使用方法，生成的内容尽量精简，但不要遗漏重要的代码块和命令, 不要遗漏任何重要的信息(特别是模型和文件下载方式和模型使用方法)
-    2. 当遇到重要的代码是可以直接引用文档中的代码，使用<cite>引用内容</cite>格式
-    3. 保持摘要简洁、全面且具有信息性
-    4. 包括项目的安装方法、依赖项和示例用法（如果文档中有提供）
-    5. 如果是一些免责声明还是一些其他对于代码仓库理解无关紧要的内容，则忽略。
-    6. 如果和history_summary中内容重复，则不需要重复输出。
+    When generating the summary, please follow these rules:
+    1. Focus on the project's main functions, architectural design and usage methods, generate content as concise as possible, but do not miss important code blocks and commands, do not miss any important information (especially model and file download methods and model usage methods)
+    2. When encountering important code that can be directly referenced from documentation, use <cite>referenced content</cite> format
+    3. Keep the summary concise, comprehensive and informative
+    4. Include installation methods, dependencies and example usage (if provided in documentation)
+    5. If it's disclaimers or other content unimportant to code repository understanding, then ignore it.
+    6. If it duplicates content in history_summary, then no need to output repeatedly.
     """
     
     prompt = f"""
-    以下是代码仓库中的README和其他重要文档:
+    The following is the README and other important documents in the code repository:
     <code_content>
     {code_content}
     </code_content>
     
-    以下是其他重要文档的摘要:
+    The following is the summary of other important documents:
     <history_summary>
     {history_summary}
     </history_summary>
     
-    如果和history_summary中内容重复，则不需要重复输出。
+    If it duplicates content in history_summary, then no need to output repeatedly.
     """
     
     response = AzureGPT4Chat().chat_with_message(

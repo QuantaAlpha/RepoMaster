@@ -175,14 +175,14 @@ def optimized_dialogue_history_test():
    # Example usage:
    dialogue_history_example = '''
    [
-      {{"role": "user", "content": "我需要分析NVIDIA 2022年的股票数据"}},
-      {{"role": "researcher", "content": "我可以帮您分析NVIDIA 2022年的股票数据。我们需要首先获取数据，然后进行分析。"}},
-      {{"role": "data_agent", "content": "我将使用金融API获取NVIDIA的数据。", "tool_calls": [{{"id": "call_123", "function": {{"name": "get_stock_data", "arguments": "{{\\"ticker_symbol\\":\\"NVDA\\",\\"start_date\\":\\"2022-01-01\\",\\"end_date\\":\\"2022-12-31\\",\\"period\\":\\"1d\\"}}"}}}}]}},
-      {{"role": "user", "content": "数据已成功获取并保存为'nvda_2022_data.csv'。"}},
-      {{"role": "data_analyst", "content": "我现在将分析这些数据，计算一些关键指标。"}},
-      {{"role": "code_agent", "content": "我将编写一个Python脚本来分析数据并计算最大回撤。", "tool_calls": [{{"id": "call_456", "function": {{"name": "write_python_script", "arguments": "{{\\"script_content\\":\\"import pandas as pd\\n\\n# 读取CSV文件\\ndf = pd.read_csv('nvda_2022_data.csv')\\n\\n# 计算最大回撤\\ndf['cummax'] = df['Close'].cummax()\\ndf['drawdown'] = (df['Close'] - df['cummax']) / df['cummax']\\nmax_drawdown = df['drawdown'].min()\\n\\nprint(f'2022年NVIDIA的最大回撤为{{max_drawdown:.2%}}')\\"}}"}}}}]}},
-      {{"role": "user", "content": "脚本已执行。输出结果是：'2022年NVIDIA的最大回撤为-62.70%'"}},
-      {{"role": "researcher", "content": "分析结果显示，NVIDIA在2022年的最大回撤为-62.70%，这表明该股票在2022年经历了显著的价格下跌，从最高点下跌了62.70%。这一数据反映了科技股在2022年普遍面临的挑战。您需要了解更多关于这一时期的其他分析指标吗？"}}
+      {{"role": "user", "content": "I need to analyze NVIDIA's 2022 stock data"}},
+      {{"role": "researcher", "content": "I can help you analyze NVIDIA's 2022 stock data. We need to first obtain the data, then perform the analysis."}},
+      {{"role": "data_agent", "content": "I will use the financial API to get NVIDIA's data.", "tool_calls": [{{"id": "call_123", "function": {{"name": "get_stock_data", "arguments": "{{\\"ticker_symbol\\":\\"NVDA\\",\\"start_date\\":\\"2022-01-01\\",\\"end_date\\":\\"2022-12-31\\",\\"period\\":\\"1d\\"}}"}}}}]}},
+      {{"role": "user", "content": "Data has been successfully retrieved and saved as 'nvda_2022_data.csv'."}},
+      {{"role": "data_analyst", "content": "I will now analyze this data and calculate some key metrics."}},
+      {{"role": "code_agent", "content": "I will write a Python script to analyze the data and calculate the maximum drawdown.", "tool_calls": [{{"id": "call_456", "function": {{"name": "write_python_script", "arguments": "{{\\"script_content\\":\\"import pandas as pd\\n\\n# Read CSV file\\ndf = pd.read_csv('nvda_2022_data.csv')\\n\\n# Calculate maximum drawdown\\ndf['cummax'] = df['Close'].cummax()\\ndf['drawdown'] = (df['Close'] - df['cummax']) / df['cummax']\\nmax_drawdown = df['drawdown'].min()\\n\\nprint(f'The maximum drawdown for NVIDIA in 2022 was {{max_drawdown:.2%}}')\\"}}"}}}}]}},
+      {{"role": "user", "content": "Script has been executed. The output result is: 'The maximum drawdown for NVIDIA in 2022 was -62.70%'"}},
+      {{"role": "researcher", "content": "The analysis results show that NVIDIA's maximum drawdown in 2022 was -62.70%, indicating that the stock experienced significant price decline in 2022, falling 62.70% from its peak. This data reflects the challenges commonly faced by tech stocks in 2022. Would you like to know more about other analytical metrics for this period?"}}
    ]
    '''
 

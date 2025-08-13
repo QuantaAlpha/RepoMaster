@@ -33,26 +33,26 @@ def check_code_block(content):
         return None
     if "```" in content:
         import re
-        # 使用更精确的正则表达式匹配 Markdown 代码块，并捕获语言标识
+        # Use more precise regular expression to match Markdown code blocks and capture language identifiers
         code_block_pattern = r"```[ \t]*(\w+)?[ \t]*\r?\n(.*?)\r?\n[ \t]*```"
         matches = re.findall(code_block_pattern, content, re.DOTALL)
         if not matches:
             return None
         
-        # 定义常见的编程语言列表
+        # Define list of common programming languages
         common_languages = {
-            # 常见编程语言
+            # Common programming languages
             "python", "python3", 
             "sh", "bash", "shell"
         }
         
-        # shell命令相关语言标识
+        # Shell command related language identifiers
         shell_languages = {"sh", "bash", "shell"}
 
         code_blocks = []
         for lang, code in matches:
             lang = lang.lower().strip()
-            # 如果语言为空或者是shell命令相关，跳过
+            # If language is empty or shell command related, skip
             if lang in common_languages:
                 code_blocks.append({"language": lang, "code": code.strip()})
             else:
@@ -108,7 +108,7 @@ class BasicConversableAgent(ConversableAgent):
                 if tool_call.get("type") is None:
                     tool_call.pop("type")
                     
-        # 检查是否同时存在代码块和工具调用
+        # Check if both code blocks and tool calls exist simultaneously
         if isinstance(extracted_response, dict) and extracted_response.get('content') and (
             check_code_block(extracted_response['content']) is not None
         ) and (
@@ -163,7 +163,7 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
 
     def replace_code_execution_func(self):
 
-        # 使用一个包装函数避免参数重复传递
+        # Use a wrapper function to avoid duplicate parameter passing
         def wrapped_code_execution_func(agent, messages=None, sender=None, config=None):
             return self.generate_code_execution_reply_using_executor(messages, sender, config) 
         
@@ -174,7 +174,7 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
         
     def replace_function_call_func(self):
 
-        # 使用一个包装函数避免参数重复传递
+        # Use a wrapper function to avoid duplicate parameter passing
         async def wrapped_a_tool_calls_reply(agent, messages=None, sender=None, config=None):
             message = messages[-1]
             code_blocks = check_code_block(message.get("content", ""))
@@ -182,7 +182,7 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
                 return False, None
             return await self.a_generate_tool_calls_reply(messages, sender, config) 
         
-        # 使用一个包装函数避免参数重复传递
+        # Use a wrapper function to avoid duplicate parameter passing
         def wrapped_tool_calls_reply(agent, messages=None, sender=None, config=None):
             message = messages[-1]
             code_blocks = check_code_block(message.get("content", ""))
@@ -239,7 +239,7 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
         }
     
     def check_gpu_usage(self):
-        # 检测GPU使用情况，只使用空闲的GPU
+        # Detect GPU usage, only use idle GPUs
         try:
             import nvidia_smi
             nvidia_smi.nvmlInit()
@@ -247,23 +247,23 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
             for i in range(torch.cuda.device_count()):
                 handle = nvidia_smi.nvmlDeviceGetHandleByIndex(i)
                 info = nvidia_smi.nvmlDeviceGetMemoryInfo(handle)
-                # 如果GPU内存使用率低于20%，认为是空闲的
+                # If GPU memory usage is below 20%, consider it idle
                 if info.used / info.total < 0.3:
                     free_gpus.append(i)
             if free_gpus:
                 os.environ['CUDA_VISIBLE_DEVICES'] = str(random.choice(free_gpus))
             else:
-                # 如果没有空闲GPU，使用所有GPU
+                # If no idle GPU, use all GPUs
                 os.environ['CUDA_VISIBLE_DEVICES'] = str(random.choice(range(torch.cuda.device_count())))
             nvidia_smi.nvmlShutdown()
         except Exception as e:
-            print(f"检测GPU使用情况失败: {e}")
-            # 出错时使用所有GPU
+            print(f"Failed to detect GPU usage: {e}")
+            # Use all GPUs when error occurs
             os.environ['CUDA_VISIBLE_DEVICES'] = str(random.choice(range(torch.cuda.device_count())))      
 
     def set_env(self,):
 
-        # 检查GPU使用情况
+        # Check GPU usage
         # self.check_gpu_usage()
                     
         if self.remote_repo_path and self.remote_repo_path not in sys.path:
@@ -298,30 +298,30 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
     def process_import_error(self, args, retry_times=0):
         execute_result = args['execute_result']
         if 'ModuleNotFoundError: No module named' in execute_result:
-            # 如果出现ModuleNotFoundError: No module named，则需要安装库
-            # 获取需要安装的库
+            # If ModuleNotFoundError: No module named appears, need to install library
+            # Get libraries to install
             code_blocks = args.get('code_blocks', None)
             
             if code_blocks and isinstance(execute_result, tuple):
                 exitcode, logs_all = execute_result
             else:
                 logs_all = execute_result
-            # 提取错误信息中的模块名
+            # Extract module names from error messages
             packages = judge_pip_package(logs_all)
             packages = [package for package in packages if '.' not in  package]
-            print(f"需要安装的库：{packages}", flush=True)
+            print(f"Libraries to install: {packages}", flush=True)
             if packages:
                 if retry_times < 3:
-                    # # 安装库
+                    # # Install libraries
                     try:
                         for package in packages:
-                            print(f"自动安装库：{package}", flush=True)
+                            print(f"Auto-installing library: {package}", flush=True)
                             subprocess.check_call([sys.executable, "-m", "pip", "install", package])
                     except Exception as e:
-                        print(f"安装库失败，错误信息：{e}", flush=True)
+                        print(f"Library installation failed, error message: {e}", flush=True)
                         return args
                     
-                    # # 重新执行代码
+                    # # Re-execute code
                     if code_blocks:
                         execute_result = super().execute_code_blocks(code_blocks)
                         args['execute_result'] = execute_result
@@ -338,17 +338,17 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
                         
                         return self.process_import_error(args, retry_times=retry_times+1)
                 else:
-                    args['execute_result'] += f"请首先尝试pip install {','.join(packages)}来安装库，如果安装失败，请重新生成代码。"
+                    args['execute_result'] += f"Please try pip install {','.join(packages)} first to install libraries. If installation fails, please regenerate the code."
         return args
 
     def clean_execute_result(self, execute_result):
         
         try:
             execute_result = filter_pip_output(execute_result)
-            # print(f"执行代码块结果3：{execute_result}")
+            # print(f"Execute code block result 3: {execute_result}")
         except Exception as e:
             # import pdb;pdb.set_trace()
-            print(f"ERR执行代码块结果3：{execute_result}")
+            print(f"ERR Execute code block result 3: {execute_result}")
             
         execute_result = cut_execute_result_by_token(execute_result, max_token=4000)
         
@@ -359,12 +359,12 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
         # Add project root to Python path
         self.set_env()
         
-        # print(f"执行代码块1：{code_blocks}")
+        # print(f"Execute code block 1: {code_blocks}")
         code_blocks, shell_cmds = filter_duplicate_commands(code_blocks)
         for cmd in shell_cmds:
             print(f"echo {cmd} >> {self._code_execution_config['work_dir']}/run_all_cmd.sh", flush=True)
             os.system(f"echo {cmd} >> {self._code_execution_config['work_dir']}/run_all_cmd.sh")
-        # print(f"执行代码块2：{code_blocks}")
+        # print(f"Execute code block 2: {code_blocks}"))
         
         execute_result = super().execute_code_blocks(code_blocks)
         
@@ -419,7 +419,7 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
             code_blocks = self._code_executor.code_extractor.extract_code_blocks(message["content"])
             if len(code_blocks) == 0:
                 continue
-            # 使用 LLM 对代码块进行判定、去重与排序
+            # Use LLM to judge, deduplicate and sort code blocks
             code_blocks = process_and_filter_code_blocks(code_blocks)
             if len(code_blocks) == 0:
                 continue
@@ -515,15 +515,15 @@ class ExtendedUserProxyAgent(BasicConversableAgent, TrackableUserProxyAgent):
         try:
             code_result = self.clean_execute_result(code_result)
         except Exception as e:
-            print(f"clean_execute_result failed：{traceback.format_exc()}")
+            print(f"clean_execute_result failed: {traceback.format_exc()}")
         
         # Append file change information to execution result
         final_result = f"{code_exit}\nCode output: {code_result}"
         if file_changes_info and file_changes_info != "No new files generated during execution":
             final_result += (
                 f"\n\n=== File Changes ===\n{file_changes_info}"
-                f"\n\n=== 任务提示 ==="
-                f"\n- 请结合任务目标，核对是否已生成预期结果文件。如果已生成，请给出结果文件的路径，并关注结果文件的路径是否正确。如果未生成，检查是不是任务执行失败，然后思考新的解决方法，给出具体的修正计划。"
+                f"\n\n=== Task Reminder ==="
+                f"\n- Please check in conjunction with the task objective whether the expected result files have been generated. If generated, please provide the path to the result files and pay attention to whether the path is correct. If not generated, check if the task execution failed, then think of a new solution and give a specific correction plan."
             )
         
         return is_exec_success, final_result

@@ -43,7 +43,7 @@ class EnhancedDockerCommandLineCodeExecutor(DockerCommandLineCodeExecutor):
         stop_container: bool = True,
         execution_policies: Optional[Dict[str, bool]] = None,
         keep_same_path: bool = False,
-        network_mode: str = "host",  # 添加网络模式配置
+        network_mode: str = "host",  # Add network mode configuration
     ):
         """
         Initialize the enhanced Docker code executor.
@@ -61,13 +61,13 @@ class EnhancedDockerCommandLineCodeExecutor(DockerCommandLineCodeExecutor):
         self._network_mode = network_mode
         
         if not keep_same_path:
-            # 使用父类的默认行为
+            # Use parent class default behavior
             super().__init__(
                 image, container_name, timeout, work_dir, bind_dir,
                 auto_remove, stop_container, execution_policies
             )
         else:
-            # 需要自定义挂载逻辑时，手动创建容器
+            # When custom mount logic is needed, manually create container
             self._custom_init(
                 image, container_name, timeout, work_dir, bind_dir,
                 auto_remove, stop_container, execution_policies, network_mode
@@ -86,7 +86,7 @@ class EnhancedDockerCommandLineCodeExecutor(DockerCommandLineCodeExecutor):
         network_mode: str,
     ):
         """Custom initialization with same path mounting."""
-        # 参数验证和处理（复用父类逻辑）
+        # Parameter validation and processing (reuse parent class logic)
         if timeout < 1:
             raise ValueError("Timeout must be greater than or equal to 1.")
 
@@ -99,7 +99,7 @@ class EnhancedDockerCommandLineCodeExecutor(DockerCommandLineCodeExecutor):
         elif isinstance(bind_dir, str):
             bind_dir = Path(bind_dir)
 
-        # Docker客户端和镜像处理
+        # Docker client and image processing
         client = docker.from_env()
         try:
             client.images.get(image)
@@ -111,12 +111,12 @@ class EnhancedDockerCommandLineCodeExecutor(DockerCommandLineCodeExecutor):
         if container_name is None:
             container_name = f"autogen-code-exec-{uuid.uuid4()}"
 
-        # 关键差异：使用相同路径挂载
+        # Key difference: use same path mounting
         bind_source = str(bind_dir.resolve())
-        bind_target = str(bind_dir.resolve())  # 目标路径与源路径相同
+        bind_target = str(bind_dir.resolve())  # Target path same as source path
         container_work_dir = str(work_dir.resolve())
         
-        # 根据网络模式配置容器参数
+        # Configure container parameters based on network mode
         container_kwargs = {
             "image": image,
             "name": container_name,
@@ -128,20 +128,20 @@ class EnhancedDockerCommandLineCodeExecutor(DockerCommandLineCodeExecutor):
             "network_mode": network_mode,
         }
         
-        # 只在非host网络模式下设置DNS
+        # Only set DNS in non-host network mode
         if network_mode != "host":
             container_kwargs["dns"] = ["8.8.8.8", "8.8.4.4"]
         
-        # 创建容器
+        # Create container
         self._container = client.containers.create(**container_kwargs)
         
         self._container.start()
         
-        # 等待容器就绪
+        # Wait for container ready
         from autogen.coding.docker_commandline_code_executor import _wait_for_ready
         _wait_for_ready(self._container)
 
-        # 设置清理函数
+        # Set cleanup function
         import atexit
         def cleanup() -> None:
             try:
@@ -156,11 +156,11 @@ class EnhancedDockerCommandLineCodeExecutor(DockerCommandLineCodeExecutor):
 
         self._cleanup = cleanup
 
-        # 检查容器状态
+        # Check container status
         if self._container.status != "running":
             raise ValueError(f"Failed to start container from image {image}. Logs: {self._container.logs()}")
 
-        # 设置实例变量
+        # Set instance variables
         self._timeout = timeout
         self._work_dir: Path = work_dir
         self._bind_dir: Path = bind_dir
@@ -173,10 +173,10 @@ class EnhancedDockerCommandLineCodeExecutor(DockerCommandLineCodeExecutor):
         Execute code blocks with enhanced path handling.
         """
         if not self._keep_same_path:
-            # 使用父类的默认逻辑
+            # Use parent class default logic
             return super().execute_code_blocks(code_blocks)
         
-        # 使用修改过的执行逻辑
+        # Use modified execution logic
         return self._execute_with_full_paths(code_blocks)
     
     def _execute_with_full_paths(self, code_blocks: List[CodeBlock]) -> CommandLineCodeResult:
@@ -189,7 +189,7 @@ class EnhancedDockerCommandLineCodeExecutor(DockerCommandLineCodeExecutor):
         last_exit_code = 0
         
         for code_block in code_blocks:
-            # 语言验证（复用父类逻辑）
+            # Language validation (reuse parent class logic)
             lang = self.LANGUAGE_ALIASES.get(code_block.language.lower(), code_block.language.lower())
             if lang not in self.DEFAULT_EXECUTION_POLICY:
                 outputs.append(f"Unsupported language {lang}\n")
@@ -198,13 +198,13 @@ class EnhancedDockerCommandLineCodeExecutor(DockerCommandLineCodeExecutor):
 
             execute_code = self.execution_policies.get(lang, False)
             
-            # 代码处理（复用父类逻辑）
+            # Code processing (reuse parent class logic)
             from autogen.coding.utils import silence_pip, _get_file_name_from_content
             from hashlib import md5
             
             code = silence_pip(code_block.code, lang)
 
-            # 文件名处理（复用父类逻辑）
+            # Filename processing (reuse parent class logic)
             try:
                 filename = _get_file_name_from_content(code, self._work_dir)
             except ValueError:
@@ -215,7 +215,7 @@ class EnhancedDockerCommandLineCodeExecutor(DockerCommandLineCodeExecutor):
             if not filename:
                 filename = f"tmp_code_{md5(code.encode()).hexdigest()}.{lang}"
 
-            # 保存文件（复用父类逻辑）
+            # Save file (reuse parent class logic)
             code_path = self._work_dir / filename
             with code_path.open("w", encoding="utf-8") as fout:
                 fout.write(code)
@@ -225,10 +225,10 @@ class EnhancedDockerCommandLineCodeExecutor(DockerCommandLineCodeExecutor):
                 outputs.append(f"Code saved to {str(code_path)}\n")
                 continue
 
-            # 关键修改：使用绝对路径而不是相对路径
+            # Key modification: use absolute paths instead of relative paths
             container_file_path = str(code_path.resolve())
             
-            # 执行命令（复用父类逻辑）
+            # Execute command (reuse parent class logic)
             from autogen.code_utils import _cmd, TIMEOUT_MSG
             command = ["timeout", str(self._timeout), _cmd(lang), container_file_path]
             result = self._container.exec_run(command)
@@ -243,7 +243,7 @@ class EnhancedDockerCommandLineCodeExecutor(DockerCommandLineCodeExecutor):
             if exit_code != 0:
                 break
 
-        # 返回结果（复用父类逻辑）
+        # Return result (reuse parent class logic)
         code_file = str(files[0]) if files else None
         return CommandLineCodeResult(exit_code=last_exit_code, output="".join(outputs), code_file=code_file)
 

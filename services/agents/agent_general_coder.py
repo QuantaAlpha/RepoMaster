@@ -279,15 +279,15 @@ def main():
         llm_config=llm_config,
         code_execution_config=code_execution_config,
     )
-    # args = {"task_description":"计算2022年AMD股票数据的最大回撤，并输出股票走势图。","read_local_file_path":{"stock_data":"coding/4roumnst/get_stock_data_ticker_symbolamd_start_da.csv"},"required_libraries":["pandas","matplotlib","numpy"]}
+    # args = {"task_description":"Calculate the maximum drawdown of AMD stock data in 2022 and output stock trend chart.","read_local_file_path":{"stock_data":"coding/4roumnst/get_stock_data_ticker_symbolamd_start_da.csv"},"required_libraries":["pandas","matplotlib","numpy"]}
     args = {
-        # "task_description": "使用akshare获取茅台公司去年的股票数据，并保存到本地。",
+        # "task_description": "Use akshare to get Moutai company's stock data from last year and save it locally.",
         # "read_local_file_path": None,
         # "required_libraries": ["akshare", "pandas"],
-        # "context": "获取茅台公司去年的股票数据，并保存为CSV文件。",
-        "task_description": "计算英伟达2024年的最大回撤",
-        # "context": "获取贵州茅台（股票代码：600519）过去一年的股票数据，并保存为CSV文件。",
-        # "task_description": "import akshare as ak\nimport pandas as pd\nfrom datetime import datetime, timedelta\n\n# 获取当前日期和一年前的日期\nend_date = datetime.now()\nstart_date = end_date - timedelta(days=365)\n\n# 格式化日期\nstart_date_str = start_date.strftime('%Y-%m-%d')\nend_date_str = end_date.strftime('%Y-%m-%d')\n\n# 获取贵州茅台股票数据\nstock_data = ak.stock_zh_a_hist(symbol='600519', period='daily', start_date=start_date_str, end_date=end_date_str)\n\n# 保存数据到CSV文件\nstock_data.to_csv('maotai_stock_data.csv', index=False)\n\nprint('数据已保存到maotai_stock_data.csv')"
+        # "context": "Get Moutai company's stock data from last year and save as CSV file.",
+        "task_description": "Calculate NVIDIA's maximum drawdown in 2024",
+        # "context": "Get Guizhou Moutai (stock code: 600519) stock data from the past year and save as CSV file.",
+        # "task_description": "import akshare as ak\nimport pandas as pd\nfrom datetime import datetime, timedelta\n\n# Get current date and date from one year ago\nend_date = datetime.now()\nstart_date = end_date - timedelta(days=365)\n\n# Format dates\nstart_date_str = start_date.strftime('%Y-%m-%d')\nend_date_str = end_date.strftime('%Y-%m-%d')\n\n# Get Guizhou Moutai stock data\nstock_data = ak.stock_zh_a_hist(symbol='600519', period='daily', start_date=start_date_str, end_date=end_date_str)\n\n# Save data to CSV file\nstock_data.to_csv('maotai_stock_data.csv', index=False)\n\nprint('Data has been saved to maotai_stock_data.csv')"
     }
     # Create an async function to run the coroutine
     async def run_task():

@@ -1,31 +1,31 @@
 
 def filter_duplicate_commands(commands):
     """
-    简单的命令去重函数:
-    1. 对带文件名的脚本，提取文件名进行匹配
-    2. 对普通命令，去除空格后比较
+    Simple command deduplication function:
+    1. For scripts with filenames, extract filename for matching
+    2. For regular commands, remove spaces before comparison
     """
     import re
     
     unique_commands = []
-    seen_filenames = set()  # 记录已见过的文件名
-    seen_shell_cmds = set() # 记录已见过的shell命令
+    seen_filenames = set()  # Record seen filenames
+    seen_shell_cmds = set() # Record seen shell commands
     
     for cmd_type, cmd_content in commands:
-        # 检查是否包含文件名定义 (# filename: xxx)
+        # Check if it contains filename definition (# filename: xxx)
         filename_match = re.search(r'#\s*filename:\s*([\w.-]+)', cmd_content)
         # import pdb; pdb.set_trace()
         # 
         if filename_match:
-            # 有文件名，按文件名去重
+            # Has filename, deduplicate by filename
             filename = filename_match.group(1)
             if filename not in seen_filenames:
                 seen_filenames.add(filename)
                 seen_shell_cmds.add(f"{cmd_type} {filename}")
                 unique_commands.append([cmd_type, cmd_content])
         else:
-            # 无文件名的shell命令，规范化后比较
-            # 规范化: 去除前导/尾随空格，将多个空格替换为单个空格
+            # Shell commands without filename, normalize before comparison
+            # Normalize: remove leading/trailing spaces, replace multiple spaces with single space
             norm_content = re.sub(r'\s+', ' ', cmd_content.strip())            
             if norm_content not in seen_shell_cmds:
                 seen_shell_cmds.add(norm_content)
@@ -51,7 +51,7 @@ def get_case_data():
 if __name__ == "__main__":
 
   code_exec = get_case_data()
-  # 使用该函数过滤命令
+  # Use this function to filter commands
   filtered_commands, seen_shell_cmds = filter_duplicate_commands(code_exec)
   print(filtered_commands)
   print(seen_shell_cmds)

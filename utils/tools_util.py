@@ -273,13 +273,13 @@ def display_pd_and_save_data(df: DataFrame, file_path, num_rows=5):
     return markdown_data
 
 def remove_work_dir_prefix(filename, work_dir):
-    # 规范化路径
+    # Normalize paths
     work_dir = os.path.normpath(work_dir)
     filename = os.path.normpath(filename)
 
-    # 检查 filename 是否包含 work_dir
+    # Check if filename contains work_dir
     if os.path.commonpath([work_dir, filename]) == work_dir:
-        # 如果包含，获取相对路径
+        # If it contains, get relative path
         return os.path.relpath(filename, work_dir)
     else:
         return filename

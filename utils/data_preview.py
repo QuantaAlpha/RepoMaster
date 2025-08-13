@@ -35,7 +35,7 @@ def file_tree(path, depth=0, max_depth=3, show_size=True) -> str:
     files = [p for p in Path(path).iterdir() if not p.is_dir()]
     dirs = [p for p in Path(path).iterdir() if p.is_dir()]
     
-    # 根据深度逐级减少显示的文件和目录数量
+    # Reduce the number of files and directories displayed level by level based on depth
     if depth == 0:
         max_n = 10 if len(files) > 30 else  15
         max_dirs = 8 if len(dirs) > 30 else 10
@@ -174,13 +174,13 @@ def generate_preview(base_path, include_file_details=True, simple=False, max_dep
     return result
 
 def _parse_ipynb_file(file_path):
-    """解析.ipynb文件，提取代码单元格，去掉输出
+    """Parse .ipynb file, extract code cells, remove outputs
     
     Args:
-        file_path: .ipynb文件路径
+        file_path: .ipynb file path
         
     Returns:
-        提取的Python代码内容字符串
+        Extracted Python code content string
     """
     try:
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
@@ -188,11 +188,11 @@ def _parse_ipynb_file(file_path):
         
         code_cells = []
         
-        # 提取所有代码单元格的内容
+        # Extract all code cell contents
         if 'cells' in notebook:
             for cell in notebook['cells']:
                 if cell.get('cell_type') == 'code':
-                    # 只提取代码单元格的源代码，忽略输出
+                    # Only extract source code from code cells, ignore outputs
                     source = cell.get('source', [])
                     if isinstance(source, list):
                         code_cells.append(''.join(source))
@@ -201,7 +201,7 @@ def _parse_ipynb_file(file_path):
         
         return '\n\n'.join(code_cells)
     except Exception as e:
-        return f"无法解析.ipynb文件 {file_path}: {str(e)}"
+        return f"Unable to parse .ipynb file {file_path}: {str(e)}"
 
 if __name__ == '__main__':
     res = generate_preview('/mnt/ceph/huacan/Code/Tasks/CodeAgent/data/mle-bench-data/data/dog-breed-identification')

@@ -16,7 +16,7 @@ def stringify_output(func):
         result = func(*args, **kwargs)
         return result
 
-    # 根据函数是否是协程来返回对应的包装器
+    # Return corresponding wrapper based on whether the function is a coroutine
     return async_wrapper if inspect.iscoroutinefunction(func) else sync_wrapper
 
 

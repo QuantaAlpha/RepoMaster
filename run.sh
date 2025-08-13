@@ -21,6 +21,6 @@ export PYTHONPATH=$(pwd):$PYTHONPATH
 
 # python3 core/tool_code_explorer.py
 
-# python3 core/agent_scheduler.py #> logs/agent_scheduler.md
+python3 core/agent_scheduler.py #> logs/agent_scheduler.md
 
-streamlit run frontend_st/app_autogen_enhanced.py
+# streamlit run frontend_st/app_autogen_enhanced.py

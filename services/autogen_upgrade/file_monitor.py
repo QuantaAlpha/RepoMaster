@@ -19,22 +19,22 @@ def should_ignore_path(path: Path) -> bool:
     Returns:
         True if the path should be ignored, False otherwise
     """
-    # 忽略的目录名
+    # Ignored directory names
     ignored_dirs = ['__pycache__', '.git', '.svn', '.hg', 'node_modules', '.venv', 'venv', '.env', 'env', '.pytest_cache', '.mypy_cache', '.tox', 'dist', 'build', 'egg-info', '.eggs', '.idea', '.vscode', '.DS_Store']
     
-    # 忽略的文件扩展名
+    # Ignored file extensions
     ignored_extensions = ['.pyc', '.pyo', '.pyd', '.so', '.dll', '.dylib', '.log', '.tmp', '.bak', '.swp', '.DS_Store']
     
-    # 检查是否是忽略的目录
+    # Check if it's an ignored directory
     for part in path.parts:
         if part in ignored_dirs:
             return True
     
-    # 检查文件扩展名
+    # Check file extension
     if path.suffix.lower() in ignored_extensions:
         return True
     
-    # 检查隐藏文件（以.开头的文件，但不包括相对路径的.和..）
+    # Check hidden files (files starting with ., but not including . and .. from relative paths)
     if path.name.startswith('.') and path.name not in {'.', '..'}:
         return True
     
@@ -77,7 +77,7 @@ def get_directory_files(directory: Path) -> Dict[str, Dict]:
     
     try:
         for item in directory.rglob("*"):
-            # 忽略不需要的文件和目录
+            # Ignore unwanted files and directories
             if should_ignore_path(item):
                 continue
                 
@@ -211,7 +211,7 @@ def compare_and_display_new_files(before_files: Dict[str, Dict], after_files: Di
     for file_path, info in after_files.items():
         if file_path not in before_files:
             path_obj = Path(file_path)
-            # 应用过滤逻辑，忽略不需要的文件
+            # Apply filtering logic, ignore unwanted files
             if not should_ignore_path(path_obj):
                 new_file_paths.append(path_obj)
     

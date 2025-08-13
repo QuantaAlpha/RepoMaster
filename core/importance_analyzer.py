@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """
-代码重要性分析器 - 用于评估代码库中各组件的重要性
+Code Importance Analyzer - Used to evaluate the importance of various components in a code repository
 
-此模块提供了多种方法来分析代码重要性，包括：
-1. 基于权重的综合评分模型
-2. 语义分析
-3. 代码复杂度分析
-4. Git提交历史分析
+This module provides multiple methods to analyze code importance, including:
+1. Weight-based comprehensive scoring model
+2. Semantic analysis
+3. Code complexity analysis
+4. Git commit history analysis
 """
 
 import os
@@ -16,23 +16,23 @@ import networkx as nx
 from typing import Dict, List, Set, Tuple, Optional, Union, Any
 
 class ImportanceAnalyzer:
-    """代码重要性分析器类，用于评估代码库中各组件的重要性"""
+    """Code importance analyzer class, used to evaluate the importance of various components in a code repository"""
     
     def __init__(self, repo_path: str, modules: Dict, classes: Dict, 
                  functions: Dict, imports: Dict, code_tree: Dict,
                  call_graph: Optional[nx.DiGraph] = None, weights: Optional[Dict] = None):
         """
-        初始化重要性分析器
+        Initialize importance analyzer
         
         Args:
-            repo_path: 代码仓库的路径
-            modules: 模块信息字典
-            classes: 类信息字典
-            functions: 函数信息字典
-            imports: 导入信息字典
-            code_tree: 代码树结构
-            call_graph: 函数调用图 (可选)
-            weights: 重要性计算的权重 (可选)
+            repo_path: Path to the code repository
+            modules: Module information dictionary
+            classes: Class information dictionary
+            functions: Function information dictionary
+            imports: Import information dictionary
+            code_tree: Code tree structure
+            call_graph: Function call graph (optional)
+            weights: Weights for importance calculation (optional)
         """
         self.repo_path = repo_path
         self.modules = modules
@@ -42,25 +42,25 @@ class ImportanceAnalyzer:
         self.code_tree = code_tree
         self.call_graph = call_graph
         
-        # 定义重要性计算的权重
+        # Define weights for importance calculation
         default_weights = {
-            'key_component': 0.0,    # 关键组件的权重
-            'usage': 2.0,            # 使用频率的权重
-            'imports_relationships': 3, # 模块间引用关系的权重
-            'complexity': 1.0,       # 代码复杂度的权重
-            'semantic': 0.5,         # 语义重要性的权重
-            'documentation': 0.0,    # 文档完整性的权重
-            'git_history': 4.0,      # Git历史的权重
-            'size': 0.0              # 代码大小的权重
+            'key_component': 0.0,    # Weight for key components
+            'usage': 2.0,            # Weight for usage frequency
+            'imports_relationships': 3, # Weight for inter-module reference relationships
+            'complexity': 1.0,       # Weight for code complexity
+            'semantic': 0.5,         # Weight for semantic importance
+            'documentation': 0.0,    # Weight for documentation completeness
+            'git_history': 4.0,      # Weight for Git history
+            'size': 0.0              # Weight for code size
         }
 
         
-        # 如果传入自定义权重，则更新默认权重
+        # If custom weights are provided, update default weights
         self.weights = default_weights
         if weights:
             self.weights.update(weights)
         
-        # 重要的语义关键词
+        # Important semantic keywords
         self.important_keywords = [
             'main', 'core', 'engine', 'api', 'service',
             'controller', 'manager', 'handler', 'processor',
@@ -68,28 +68,28 @@ class ImportanceAnalyzer:
             'executor', 'scheduler', 'config', 'security'
         ]
         
-        # 构建模块引用关系图
+        # Build module dependency graph
         self.module_dependency_graph = self._build_module_dependency_graph()
 
     def _build_module_dependency_graph(self) -> nx.DiGraph:
-        """构建模块之间的引用关系图"""
+        """Build dependency graph between modules"""
         graph = nx.DiGraph()
         
-        # 添加所有模块作为节点
+        # Add all modules as nodes
         for module_id in self.modules:
             graph.add_node(module_id)
         
-        # 添加导入关系作为边
+        # Add import relationships as edges
         for module_id, imports_list in self.imports.items():
             for imp in imports_list:
                 if imp['type'] == 'import':
                     imported_module = imp['name']
-                    # 检查导入的是否为已知模块
+                    # Check if the imported module is a known module
                     if imported_module in self.modules:
                         graph.add_edge(module_id, imported_module)
                 elif imp['type'] == 'importfrom':
                     imported_module = imp['module']
-                    # 检查导入的是否为已知模块
+                    # Check if the imported module is a known module
                     if imported_module in self.modules:
                         graph.add_edge(module_id, imported_module)
         
@@ -97,19 +97,19 @@ class ImportanceAnalyzer:
 
     def calculate_node_importance(self, node: Dict) -> float:
         """
-        计算节点的重要性分数
+        Calculate importance score of a node
         
         Args:
-            node: 节点信息
+            node: Node information
             
         Returns:
-            重要性分数 (0.0 - 10.0)
+            Importance score (0.0 - 10.0)
         """
-        # 如果节点类型不是module或package，返回0
+        # If node type is not module or package, return 0
         if 'type' not in node:
             return 0.0
         
-        # 根据节点类型选择不同的计算方法
+        # Choose different calculation methods based on node type
         if node['type'] == 'module':
             return self._calculate_module_importance(node)
         elif node['type'] == 'package':
@@ -118,38 +118,38 @@ class ImportanceAnalyzer:
             return 0.0
     
     def _calculate_module_importance(self, node: Dict) -> float:
-        """计算模块的重要性分数"""
+        """Calculate importance score of a module"""
         importance = 0.0
         
-        # # 1. 检查是否是关键组件
+        # # 1. Check if it's a key component
         # key_component_score = self._check_key_component(node)
         # importance += key_component_score * self.weights['key_component']
         
-        # 2. 使用频率分析
+        # 2. Usage frequency analysis
         usage_score = self._analyze_usage(node)
         importance += usage_score * self.weights['usage']
         
-        # 3. 模块间引用关系分析
+        # 3. Inter-module reference relationship analysis
         imports_score = self._analyze_imports_relationships(node)
         importance += imports_score * self.weights['imports_relationships']
         
-        # 4. 代码复杂度分析
+        # 4. Code complexity analysis
         complexity_score = self._analyze_complexity(node)
         importance += complexity_score * self.weights['complexity']
         
-        # 5. 语义重要性分析
+        # 5. Semantic importance analysis
         semantic_score = self._analyze_semantic_importance(node)
         importance += semantic_score * self.weights['semantic']
         
-        # # 6. 文档完整性分析
+        # # 6. Documentation completeness analysis
         # documentation_score = self._analyze_documentation(node)
         # importance += documentation_score * self.weights['documentation']
         
-        # 7. Git历史分析
+        # 7. Git history analysis
         git_score = self._analyze_git_history(node)
         importance += git_score * self.weights['git_history']
         
-        # 归一化处理，保证分数在合理范围内
+        # Normalization to ensure score is within reasonable range
         return min(importance, 10.0)
     
     def _calculate_package_importance(self, node: Dict) -> float:

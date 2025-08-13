@@ -45,7 +45,7 @@ def get_llm_config(timeout: int = 120, temperature: float = 0.7):
     #     "temperature": temperature,
     # }
     
-    # 尝试获取Azure配置，如果不存在则使用OpenAI配置
+    # Try to get Azure configuration, if not available use OpenAI configuration
     if all(key in os.environ for key in ["AZURE_OPENAI_MODEL", "AZURE_OPENAI_API_KEY", "AZURE_OPENAI_BASE_URL"]):
         return {
             "config_list": [{
@@ -75,34 +75,34 @@ def get_code_abs_token(content):
     return len(encoding.encode(content))
 
 def should_ignore_path(path: str) -> bool:
-    """判断给定路径是否应该被忽略"""
+    """Determine whether a given path should be ignored"""
 
-    # 统一定义要忽略的目录和文件模式，如果参数中没有提供，使用默认值
+    # Unified definition of directories and file patterns to ignore, use default values if not provided in parameters
 
-    # 对于.ipynb文件，特殊处理，我们希望解析它们
+    # For .ipynb files, special handling, we want to parse them
     if path.endswith('.ipynb') and not any(part in ignored_dirs for part in path.split(os.sep)):
         return False
     
     if path.startswith('.') or path.startswith('__'):
         return True
     
-    # 如果是图片文件，则忽略
+    # If it's an image file, ignore it
     if path.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.ico', '.webp')):
         return True
     
-    # 如果是视频文件，则忽略
+    # If it's a video file, ignore it
     if path.endswith(('.mp4', '.avi', '.mov', '.wmv', '.flv', '.mpeg', '.mpg', '.m4v', '.mkv', '.webm')):
         return True
     
-    # 如果是音频文件，则忽略
+    # If it's an audio file, ignore it
     if path.endswith(('.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac', '.wma', '.m4b', '.m4p')):
         return True
     
-    # 如果是压缩文件，则忽略
+    # If it's a compressed file, ignore it
     if path.endswith(('.zip', '.rar', '.tar', '.gz', '.bz2', '.7z', '.iso', '.dmg', '.pkg', '.deb', '.rpm', '.msi', '.exe', '.app', '.dmg', '.pkg', '.deb', '.rpm', '.msi', '.exe', '.app')):
         return True
     
-    # 如果是PDF文件，则忽略
+    # If it's a PDF file, ignore it
     if path.endswith(('.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx')):
         return True
     
@@ -125,11 +125,11 @@ def _get_code_abs(filename, source_code, max_token=3000, child_context=False):
         filename,
         source_code,
         color=False,
-        line_number=False,  # 显示行号
-        child_context=child_context,  # 不显示子上下文
+        line_number=False,  # Show line numbers
+        child_context=child_context,  # Don't show child context
         last_line=False,
-        margin=0,  # 不设置边距
-        mark_lois=False,  # 不标记感兴趣的行
+        margin=0,  # Don't set margins
+        mark_lois=False,  # Don't mark lines of interest
         loi_pad=0,
         show_top_of_file_parent_scope=False,
     )
@@ -139,55 +139,55 @@ def _get_code_abs(filename, source_code, max_token=3000, child_context=False):
     important_lines = []
     
     for i, line in enumerate(context.lines):
-        # 匹配函数定义、类定义、导入语句等
+        # Match function definitions, class definitions, import statements, etc.
         if re.match(r'^\s*(def|class)\s+', line):
-            # 函数和类定义是最重要的结构
+            # Function and class definitions are the most important structures
             important_lines.append(i)
             
-            # 检查当前行是否包含单行docstring
+            # Check if current line contains single-line docstring
             if ('"""' in line and line.count('"""') >= 2) or ("'''" in line and line.count("'''") >= 2):
-                # 单行docstring，已经在important_lines中，无需额外处理
+                # Single-line docstring, already in important_lines, no additional processing needed
                 pass
             else:
-                # 检查紧随其后的行是否是docstring的开始
+                # Check if the following line is the start of a docstring
                 docstring_start = i + 1
                 if docstring_start < len(context.lines):
                     next_line = context.lines[docstring_start]
-                    # 检测docstring开始
+                    # Detect docstring start
                     triple_double = '"""' in next_line
                     triple_single = "'''" in next_line
                     
                     if triple_double or triple_single:
                         quote_type = '"""' if triple_double else "'''"
                         
-                        # 检查是否是单行docstring
+                        # Check if it's a single-line docstring
                         if next_line.count(quote_type) >= 2:
-                            # 单行docstring
+                            # Single-line docstring
                             important_lines.append(docstring_start)
                         else:
-                            # 多行docstring，查找结束标记
+                            # Multi-line docstring, find the end marker
                             for j in range(docstring_start, len(context.lines)):
-                                important_lines.append(j)  # 将docstring的每一行都添加到重要行
+                                important_lines.append(j)  # Add each line of docstring to important lines
                                 if j > docstring_start and quote_type in context.lines[j]:
-                                    break  # 找到结束标记
+                                    break  # Found end marker
         elif re.match(r'^\s*(import|from)\s+', line) and i < 50:
-            # 只关注文件开头的导入语句
+            # Only focus on import statements at the beginning of the file
             structure_lines.append(i)
-        # 匹配方法参数和重要变量定义
+        # Match method parameters and important variable definitions
         elif re.match(r'^\s+[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[A-Z]', line) or re.search(r'__init__', line):
-            # 常量变量和初始化参数更重要
+            # Constant variables and initialization parameters are more important
             # import pdb;pdb.set_trace()
             # structure_lines.append(i)
             pass
         
-    # 添加找到的结构行作为感兴趣的行
+    # Add found structure lines as lines of interest
     context.lines_of_interest = set(important_lines)
     context.add_lines_of_interest(structure_lines)
         
-    # 添加上下文
+    # Add context
     context.add_context()
     
-    # 格式化并输出结果
+    # Format and output result
     formatted_code = context.format()
     # import pdb;pdb.set_trace()
     formatted_code = '\n'.join([line[1:] for line in formatted_code.split('\n')])
@@ -197,18 +197,18 @@ def _get_code_abs(filename, source_code, max_token=3000, child_context=False):
 
 def filter_pip_output(logs_all):
     """
-    解析pip install的输出结果，删除以下几种情况：
-    1. 包已存在（已安装）- "Requirement already satisfied"
-    2. 依赖解析和安装 - "Collecting"
-    3. 缓存使用信息 - "Using cached"
+    Parse pip install output results and remove the following cases:
+    1. Package already exists (already installed) - "Requirement already satisfied"
+    2. Dependency resolution and installation - "Collecting"
+    3. Cache usage information - "Using cached"
     
     Args:
-        output_lines (str or list): pip install的输出结果，可以是字符串或行列表
+        output_lines (str or list): pip install output results, can be string or list of lines
         
     Returns:
-        list: 过滤后的输出行列表
+        list: Filtered list of output lines
     """
-    # 将字符串转换为行列表
+    # Convert string to list of lines
     if isinstance(logs_all, str):
         logs_lines = logs_all.strip().split('\n')
     else:
@@ -216,7 +216,7 @@ def filter_pip_output(logs_all):
         
     import re
     
-    # 验证这是否是pip输出
+    # Verify if this is pip output
     is_pip_output = False
     pip_indicators = [
         r"Successfully installed ",
@@ -232,7 +232,7 @@ def filter_pip_output(logs_all):
     ]
     pip_regexes = [re.compile(pattern) for pattern in pip_indicators]
     
-    # 首先检查是否为pip输出
+    # First check if it's pip output
     for line in logs_lines:
         for regex in pip_regexes:
             try:
@@ -245,11 +245,11 @@ def filter_pip_output(logs_all):
         if is_pip_output:
             break
     
-    # 如果不是pip输出，原样返回
+    # If not pip output, return as is
     if not is_pip_output:
         return logs_all
     
-    # 定义要过滤的正则表达式模式
+    # Define regex patterns to filter
     filter_patterns = [
         r"^\s*Requirement already satisfied:",
         r"^\s*Collecting\s+\S+",
@@ -265,7 +265,7 @@ def filter_pip_output(logs_all):
     
     filter_regexes = [re.compile(pattern) for pattern in filter_patterns]
     
-    # 过滤行
+    # Filter lines
     filtered_lines = []
     for line in logs_lines:
         should_keep = True
@@ -281,21 +281,21 @@ def filter_pip_output(logs_all):
 
 def get_pip_install_command(execute_result):
     """
-    从pip install的输出结果中提取安装命令
+    Extract installation commands from pip install output results
     """
     exitcode, logs_all = execute_result
     
     prompt = f"""
-    从以下pip install的输出结果中提取安装命令：
+    Extract installation commands from the following pip install output results:
     {logs_all}
     
-    请返回一个包含安装命令的列表，每个命令占一行。
+    Please return a list containing installation commands, one command per line.
     """ 
     
     client = OpenAIWrapper(**get_llm_config())
     response = client.create(
         messages=[
-            {"role": "system", "content": "你是一个专业的Python开发者，擅长从pip install的输出结果中提取安装命令。"},
+            {"role": "system", "content": "You are a professional Python developer, skilled at extracting installation commands from pip install output results."},
             {"role": "user", "content": prompt}
         ]
     )
@@ -303,19 +303,19 @@ def get_pip_install_command(execute_result):
 
 def cut_logs_by_token(logs_all, max_token: int = 4000):
     """
-    根据token数量限制，切割日志，保留头尾各一半
-    如果日志是单行或少量长行，则直接截断文本
+    Cut logs based on token count limit, keeping half at head and half at tail
+    If logs are single line or few long lines, truncate text directly
     """    
     if get_code_abs_token(logs_all) <= max_token:
         return logs_all
 
     encoding = tiktoken.encoding_for_model("gpt-4o")
     
-    # 切割日志
+    # Cut logs
     logs_lines = logs_all.strip().split('\n')
     
     # if len(logs_lines) == 1 or (len(logs_lines) < 5 and get_code_abs_token(logs_all) / len(logs_lines) > max_token / 2):
-    # 直接按字符处理单行长文本
+    # Process single long text directly by characters
     tokens = encoding.encode(logs_all)
     
     half_token = max_token // 2
@@ -325,12 +325,12 @@ def cut_logs_by_token(logs_all, max_token: int = 4000):
     head_text = encoding.decode(head_tokens)
     tail_text = encoding.decode(tail_tokens)
     
-    return f"{head_text}\n\n>>> ...省略的内容... <<<\n\n{tail_text}"
+    return f"{head_text}\n\n>>> ...omitted content... <<<\n\n{tail_text}"
     
-    # 分配token额度，头尾各一半
+    # Allocate token quota, half for head and half for tail
     half_token = max_token // 2
     
-    # 保留头部
+    # Keep head
     head_lines = []
     head_tokens = 0
     for line in logs_lines:
@@ -340,43 +340,43 @@ def cut_logs_by_token(logs_all, max_token: int = 4000):
         head_lines.append(line)
         head_tokens += line_tokens
     
-    # 保留尾部
+    # Keep tail
     tail_lines = []
     tail_tokens = 0
     for line in reversed(logs_lines):
         line_tokens = get_code_abs_token(line) + 1  # +1 for newline
         if tail_tokens + line_tokens > half_token:
             break
-        tail_lines.insert(0, line)  # 插入到列表开头
+        tail_lines.insert(0, line)  # Insert at beginning of list
         tail_tokens += line_tokens
     
-    # 组合结果
+    # Combine results
     result_lines = []
     result_lines.extend(head_lines)
     
-    # 如果头尾之间有省略的行，添加省略提示
+    # If there are omitted lines between head and tail, add omission indicator
     if len(head_lines) + len(tail_lines) < len(logs_lines):
-        result_lines.append("\n>>> ...省略的日志... <<<\n")
+        result_lines.append("\n>>> ...omitted logs... <<<\n")
     
-    # 确保不会重复添加尾部的行
+    # Ensure tail lines are not duplicated
     for line in tail_lines:
         if line not in head_lines[-len(tail_lines):]:
             result_lines.append(line)
     cut_logs = '\n'.join(result_lines)
     
-    # 最终检查，确保不超过最大限制
+    # Final check to ensure it doesn't exceed maximum limit
     if get_code_abs_token(cut_logs) > max_token*1.5:
-        # 如果还是太长，直接截断
+        # If still too long, truncate directly
         encoding = tiktoken.encoding_for_model("gpt-4o")
         tokens = encoding.encode(cut_logs)
         cut_logs = encoding.decode(tokens[:max_token])
-        cut_logs += "\n\n>>> ...截断的内容... <<<\n\n"
+        cut_logs += "\n\n>>> ...truncated content... <<<\n\n"
 
     return cut_logs
 
 def cut_execute_result_by_token(logs_all, max_token: int = 4000):
     """
-    根据token数量限制，切割执行结果，保留头尾各一半
+    Cut execution results based on token count limit, keeping half at head and half at tail
     """
     cut_logs = cut_logs_by_token(logs_all, max_token)
     
@@ -384,40 +384,40 @@ def cut_execute_result_by_token(logs_all, max_token: int = 4000):
 
 
 def _create_virtual_env(venv_path):
-    """创建虚拟环境并安装基础依赖"""
+    """Create virtual environment and install basic dependencies"""
     
-    # 使用autogen的方法创建虚拟环境
+    # Use autogen's method to create virtual environment
     venv_context = create_virtual_env(venv_path)
     
-    # 安装基础依赖 - 使用 . 代替 source，兼容sh和bash
-    # 并明确指定使用bash执行命令
+    # Install basic dependencies - use . instead of source, compatible with sh and bash
+    # And explicitly specify using bash to execute commands
     activate_script = os.path.join(venv_path, "bin", "activate")
     activate_cmd = f"bash -c '. {activate_script} && "
     
-    print(f"开始安装LLM相关依赖到虚拟环境: {venv_path}", flush=True)
+    print(f"Starting to install LLM-related dependencies to virtual environment: {venv_path}", flush=True)
     
-    # 更新pip
+    # Update pip
     subprocess.run(f"{activate_cmd} pip install -U pip'", shell=True)
     
-    # 获取requirements文件的绝对路径
+    # Get absolute path of requirements file
     current_dir = os.path.dirname(os.path.abspath(__file__))
     requirements_path = os.path.join(os.path.dirname(current_dir), "enviroment/llm_requirements.txt")
     
-    # 检查requirements文件是否存在
+    # Check if requirements file exists
     if os.path.exists(requirements_path):
-        print(f"使用requirements文件安装依赖: {requirements_path}")
-        # 使用requirements文件安装所有依赖
+        print(f"Installing dependencies using requirements file: {requirements_path}")
+        # Install all dependencies using requirements file
         subprocess.run(
             f"{activate_cmd} pip install -r {requirements_path}'",
             shell=True
         )
     else:
-        print(f"⚠️ 警告: requirements文件不存在 {requirements_path}，使用备用方式安装")
-        # 备用方式: 直接安装关键依赖
+        print(f"⚠️ Warning: requirements file does not exist {requirements_path}, using fallback installation method")
+        # Fallback method: directly install key dependencies
         subprocess.run(
             f"{activate_cmd} pip install numpy pandas torch transformers==4.35.0 tokenizers'",
             shell=True
         )
     
-    print(f"虚拟环境创建并安装完成: {venv_path}", flush=True)
+    print(f"Virtual environment created and installation completed: {venv_path}", flush=True)
     return venv_context

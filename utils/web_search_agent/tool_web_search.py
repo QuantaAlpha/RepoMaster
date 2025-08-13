@@ -160,7 +160,7 @@ class WebSearchAgent:
             A string containing the generated answer based on web search results.
         """
         try:
-            # 直接在当前事件循环中执行同步函数
+            # Execute synchronous function directly in the current event loop
             with st.chat_message("assistant", avatar="🔷"):
                 colored_header(label="Web Search", description="", color_name="violet-70")
                 
@@ -174,17 +174,17 @@ class WebSearchAgent:
             return "[]"
 
     def _deduplicate_results(self, new_results: List[Dict], existing_results: List[Dict]) -> List[Dict]:
-        """基于语义和URL的去重"""
-        # 实现需要接入embedding模型计算相似度
+        """Deduplication based on semantics and URL"""
+        # Implementation requires connecting to embedding model to calculate similarity
         return [res for res in new_results if not any(self._is_similar(res, exist) for exist in existing_results)]
     
     def _sort_results_by_relevance(self, query: str, results: List[Dict]) -> List[Dict]:
-        """基于查询相关性的排序"""
-        # 实现需要结合关键词匹配和语义相关性评分
+        """Sorting based on query relevance"""
+        # Implementation requires combining keyword matching and semantic relevance scoring
         return sorted(results, key=lambda x: self._relevance_score(query, x), reverse=True)
     
     def _calculate_confidence(self, query: str, context: str) -> float:
-        """计算答案置信度（0-1）"""
+        """Calculate answer confidence (0-1)"""
         messages = [
             {"role": "system", "content": "Rate confidence in answering (0-1) based on:"},
             {"role": "user", "content": f"Query: {query}\nContext: {context[:3000]}"}
@@ -194,6 +194,6 @@ class WebSearchAgent:
 
 if __name__ == "__main__":
     web_search_agent = WebSearchAgent()
-    query = "2024年美国大选民众支持卡马拉·哈里斯的更多原因"
+    query = "More reasons why the public supports Kamala Harris in the 2024 US election"
     answer = web_search_agent.web_agent_answer(query)
     print(f"Answer: {answer}")  

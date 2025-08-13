@@ -20,7 +20,7 @@ from services.agents.agent_general_coder import GeneralCoder
 from utils.tools_util import get_autogen_message_history
 
 import traceback
-import tiktoken  # 添加这个导入用于计算token数量
+import tiktoken  # Add this import for calculating token count
 from copy import deepcopy
 
 from utils.tool_summary import generate_summary
@@ -99,7 +99,7 @@ def get_researcher_system_message():
     return DEEP_SEARCH_SYSTEM_PROMPT.format(current_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")) #+ thinking_prompt
 
 
-# 新增的Autogen深度搜索实现
+# New Autogen deep search implementation
 class AutogenDeepSearchAgent:
     def __init__(self, llm_config=None, code_execution_config=None, return_chat_history=False, save_log=False):
         self.web_browser = WebBrowser()
@@ -109,13 +109,13 @@ class AutogenDeepSearchAgent:
         self.return_chat_history = return_chat_history
         self.save_log = save_log
         
-        # 添加消息历史摘要相关参数
-        self.max_tool_messages_before_summary = 2  # 累积多少轮工具调用后进行摘要
+        # Add message history summary related parameters
+        self.max_tool_messages_before_summary = 2  # How many rounds of tool calls before summarizing
         self.current_tool_call_count = 0
-        self.token_limit = 2000  # 设置token数量限制
-        self.encoding = tiktoken.get_encoding("cl100k_base")  # 使用OpenAI的编码器
+        self.token_limit = 2000  # Set token count limit
+        self.encoding = tiktoken.get_encoding("cl100k_base")  # Use OpenAI's encoder
         
-        # 创建研究员智能体 - 负责思考和分析
+        # Create researcher agent - responsible for thinking and analysis
         self.researcher = ExtendedAssistantAgent(
             name="researcher",
             system_message=get_researcher_system_message(),
@@ -124,7 +124,7 @@ class AutogenDeepSearchAgent:
             is_termination_msg=lambda x: (x.get("content", "") and len(x.get("content", "").split("TERMINATE")[-1])<5) or (x.get("content", "") and '<TERMINATE>' in x.get("content", "")),
         )
         
-        # 创建执行者智能体 - 负责执行搜索和浏览操作
+        # Create executor agent - responsible for executing search and browse operations
         self.executor = DeepSearchExecutor(
             name="executor",
             system_message=EXECUTOR_SYSTEM_PROMPT,
@@ -145,14 +145,14 @@ class AutogenDeepSearchAgent:
             chat_history_provider=self._get_researcher_chat_history
         )
         
-        # 注册工具函数
+        # Register tool functions
         self._register_tools()
         
-        # 修改智能体的消息处理方法以支持动态摘要
+        # Modify agent message handling methods to support dynamic summarization
         self._patch_agent_message_handlers()
         
     def _register_tools(self):
-        """注册工具函数到执行者智能体"""
+        """Register tool functions to executor agent"""
         register_toolkits(
             [
                 self.agent_tool_library.searching,
@@ -164,42 +164,42 @@ class AutogenDeepSearchAgent:
         )
     
     def _patch_agent_message_handlers(self):
-        """修补智能体的消息处理方法以支持动态摘要"""
-        # 保存原始方法
+        """Patch agent message handling methods to support dynamic summarization"""
+        # Save original methods
         original_executor_receive = self.executor._process_received_message
         original_researcher_receive = self.researcher._process_received_message
         
-        # 为执行者添加消息处理拦截
+        # Add message handling interception for executor
         def executor_receive_with_summary(message, sender, silent):
-            # 检查是否是来自研究员的函数调用
+            # Check if it's a function call from the researcher
             message_history = deepcopy(self.executor.chat_messages[self.researcher])
             if sender == self.researcher and len(message_history)>1:
                 if 'tool_responses' in message_history[-1] and 'tool_calls' in message_history[-2]:
-                    # 增加工具调用计数
+                    # Increase tool call count
                     self._summarize_tool_response(message_history, message)
                     self.current_tool_call_count += 1
             
-            # 正常处理消息
+            # Process message normally
             return original_executor_receive(message, sender, silent)
         
-        # 为研究员添加消息处理拦截
+        # Add message handling interception for researcher
         def researcher_receive_with_summary(message, sender, silent):
-            # 检查是否是来自执行者的工具响应
+            # Check if it's a tool response from the executor
             if sender == self.executor and self.current_tool_call_count >= self.max_tool_messages_before_summary:
-                # 执行消息历史摘要
-                # 重置计数器
+                # Execute message history summarization
+                # Reset counter
                 self.current_tool_call_count = 0
             
-            # 正常处理消息
+            # Process message normally
             return original_researcher_receive(message, sender, silent)
         
-        # 替换原始方法
+        # Replace original methods
         self.executor._process_received_message = executor_receive_with_summary
         self.researcher._process_received_message = researcher_receive_with_summary
     
     def _summarize_tool_response(self, chat_history, current_message):
-        """对消息历史进行摘要处理"""
-        # 获取当前对话历史
+        """Summarize message history"""
+        # Get current conversation history
         
         tool_calls = chat_history[-2]['tool_calls']
         tool_responses_list = chat_history[-1]['tool_responses']
@@ -224,7 +224,7 @@ class AutogenDeepSearchAgent:
             elif not isinstance(tool_calls, str):
                 tool_calls = str(tool_calls)
             
-            # 计算token数量而不是字符数
+            # Calculate token count instead of character count
             token_count = len(self.encoding.encode(tool_responses))
             if token_count < self.token_limit:
                 continue
@@ -232,7 +232,7 @@ class AutogenDeepSearchAgent:
             # chat_history.append(current_message)
             chat_history = json.dumps(chat_history[:-2], ensure_ascii=False)
             
-            # 生成摘要
+            # Generate summary
             response_summary = self._generate_summary_for_search_result(chat_history, tool_responses)
             # print(response_summary)
             summary_list.append(response_summary)
@@ -247,19 +247,19 @@ class AutogenDeepSearchAgent:
             
 
     def _generate_summary_for_search_result(self, messages, tool_responses):
-        """为一组消息生成摘要"""
+        """Generate summary for a set of messages"""
         
-        # 使用LLM生成摘要
+        # Use LLM to generate summary
         summary_prompt = DEEP_SEARCH_CONTEXT_SUMMARY_PROMPT.format(tool_responses=tool_responses, messages=messages)
         
-        # 使用研究员的LLM配置创建一个临时客户端来生成摘要
+        # Use researcher's LLM config to create a temporary client for summary generation
         from autogen.oai import OpenAIWrapper
         client = OpenAIWrapper(**self.llm_config)
         
-        # 创建消息列表
+        # Create message list
         messages_list = [{"role": "user", "content": summary_prompt}]
         
-        # 直接使用client的create方法，不传递额外的API参数
+        # Directly use client's create method without passing additional API parameters
         response = client.create(messages=messages_list)
             
         summary = response.choices[0].message.content
@@ -268,15 +268,15 @@ class AutogenDeepSearchAgent:
     
     async def deep_search(self, query: str) -> str:
         """
-        执行深度搜索并返回结果
+        Execute deep search and return results
         
-        参数:
-            query: 用户的查询问题
+        Args:
+            query: User's query question
             
-        返回:
-            搜索结果和回答
+        Returns:
+            Search results and answer
         """
-        # 重置工具调用计数
+        # Reset tool call count
         self.current_tool_call_count = 0
         
         self.original_query = query
@@ -290,7 +290,7 @@ class AutogenDeepSearchAgent:
         self.agent_tool_library.update_chat_history({"original_query": self.original_query})
         self.researcher.update_system_message(get_researcher_system_message())
         
-        # 启动对话
+        # Start conversation
         chat_result = await self.executor.a_initiate_chat(
             self.researcher,
             message=initial_message,
@@ -306,8 +306,8 @@ class AutogenDeepSearchAgent:
         return final_answer
     
     def _extract_final_answer(self, chat_result) -> str:
-        """从聊天历史中提取最终答案"""
-        # 提取最终结果
+        """Extract final answer from chat history"""
+        # Extract final result
 
         final_answer = chat_result.summary
         
@@ -331,19 +331,19 @@ class AutogenDeepSearchAgent:
     
     def web_agent_answer(self, query: Annotated[str, "The initial search query"]) -> str:
         """
-        执行深度搜索并返回结果
+        Execute deep search and return results
         
-        参数:
-            query: 用户的查询问题
+        Args:
+            query: User's query question
             
-        返回:
-            搜索结果的JSON字符串
+        Returns:
+            JSON string of search results
         """
         return asyncio.run(self.deep_search(query))
     
     async def run(self, query: str) -> str:
         """
-        执行深度搜索并返回结果（异步版本）
+        Execute deep search and return results (async version)
         """
         self.return_chat_history = True
         final_answer, chat_result = await self.deep_search(query)
@@ -354,13 +354,13 @@ class AutogenDeepSearchAgent:
     
     async def a_web_agent_answer(self, query: Annotated[str, "The initial search query"]) -> str:
         """
-        执行深度搜索并返回结果（异步版本）
+        Execute deep search and return results (async version)
         
-        参数:
-            query: 用户的查询问题
+        Args:
+            query: User's query question
             
-        返回:
-            搜索结果的JSON字符串
+        Returns:
+            JSON string of search results
         """
         try:
             return await self.deep_search(query)
@@ -369,7 +369,7 @@ class AutogenDeepSearchAgent:
             error_msg += "Detailed error information:\n"
             error_msg += traceback.format_exc()
             print(error_msg)
-            # 记录到日志文件（可选）
+            # Log to file (optional)
             with open("search_error_log.txt", "a") as f:
                 f.write(f"[{datetime.now()}] Query: {query}\n")
                 f.write(error_msg)
@@ -378,27 +378,27 @@ class AutogenDeepSearchAgent:
 
     def _get_researcher_chat_history(self) -> dict:
         """
-        获取researcher的当前chat_history，用于传递给code_tool
+        Get researcher's current chat_history for passing to code_tool
         
-        这个方法会：
-        1. 获取researcher和executor之间的最新对话历史
-        2. 过滤掉工具响应消息，只保留有用的对话内容
-        3. 限制消息长度和数量，避免传递过多信息
-        4. 添加上下文信息如当前时间和原始查询
+        This method will:
+        1. Get the latest conversation history between researcher and executor
+        2. Filter out tool response messages, keeping only useful conversation content
+        3. Limit message length and count to avoid passing too much information
+        4. Add context information like current time and original query
         
         Returns:
-            dict: 包含处理后的chat_history和相关上下文信息
+            dict: Contains processed chat_history and related context information
         """
         try:
             result = {
                 "current_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
             
-            # 添加原始查询信息
+            # Add original query information
             if hasattr(self, 'original_query'):
                 result["original_query"] = self.original_query
             
-            # 获取researcher和executor之间的对话历史
+            # Get conversation history between researcher and executor
             if hasattr(self.researcher, 'chat_messages') and self.executor in self.researcher.chat_messages:
                 chat_messages = self.researcher.chat_messages[self.executor]
                 
@@ -424,13 +424,13 @@ if __name__ == "__main__":
     
     load_dotenv("/mnt/ceph/huacan/Code/Tasks/envs/.env")
     
-    # 使用新的AutogenDeepSearchAgent
+    # Use new AutogenDeepSearchAgent
     deep_search_agent = AutogenDeepSearchAgent()
-    # 设置测试查询
-    # query = "autogen的groupchat是什么流程架构，它的底层system prompt是什么"
-    # query = "北京到余姚的最便宜的机票价格"
-    # query = "查询今日沪市科创板新股国泰君安的申购代码"
-    query = "半导体行业2024年毛利率top30的公司有哪些，并进行排名"
-    # query = "Free & free trial accounts can no longer use chat with premium models on Cursor Version 0.45 or less. Please upgrade to Pro or use Cursor Version 0.46 or later. Install Cursor at https://www.cursor.com/downloads or update from within the editor.遇到这个问题怎么解决，cursor还能继续免费使用么"
+    # Set test query
+    # query = "What is the process architecture of autogen's groupchat, and what is its underlying system prompt"
+    # query = "Cheapest flight price from Beijing to Yuyao"
+    # query = "Query today's subscription code for the new stock Guotaijunan on Shanghai Stock Exchange STAR Market"
+    query = "Which companies have the top 30 gross profit margins in the semiconductor industry in 2024, and rank them"
+    # query = "Free & free trial accounts can no longer use chat with premium models on Cursor Version 0.45 or less. Please upgrade to Pro or use Cursor Version 0.46 or later. Install Cursor at https://www.cursor.com/downloads or update from within the editor. How to solve this problem, can cursor continue to be used for free?"
     answer = deep_search_agent.web_agent_answer(query)
     print(f"Answer: {answer}")  
