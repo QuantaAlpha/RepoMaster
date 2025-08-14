@@ -21,4 +21,4 @@ export PYTHONPATH=$(pwd):$PYTHONPATH
 
 # python3 src/core/agent_scheduler.py #> logs/agent_scheduler.md
 
-streamlit run frontend_st/app_autogen_enhanced.py
+nohup streamlit run src/frontend/app_autogen_enhanced.py --server.fileWatcherType none > logs/streamlit.log 2>&1 &

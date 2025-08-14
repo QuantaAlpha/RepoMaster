@@ -17,35 +17,35 @@ from src.utils.data_preview import file_tree, _parse_ipynb_file
 
 class CodeExplorerTools:
     def __init__(self, repo_path: str, work_dir: Optional[str] = None, docker_work_dir: Optional[str] = None, init_embeddings: bool = False):
-        """初始化代码仓库探索工具
+        """Initialize code repository exploration tool
         
         Args:
-            repo_path: 代码仓库本地路径
-            work_dir: 工作目录
+            repo_path: Local path of code repository
+            work_dir: Working directory
         """
         self.context_lines = 0
         
         self.repo_path = repo_path
         self.work_dir = work_dir.rstrip('/') if work_dir else ''
         
-        # 统一定义要忽略的目录和文件模式
+        # Uniformly define directories and file patterns to ignore
         self.ignored_dirs = ignored_dirs
         self.ignored_file_patterns = ignored_file_patterns
         
         self._build_new_tree()
         
-        # 初始化数据结构
+        # Initialize data structures
         self._initialize_data_structures()
         
-        # 初始化向量搜索相关属性
+        # Initialize vector search related properties
         self.init_embeddings = init_embeddings
         
         if init_embeddings:
             self.retriever = self.init_embeddings()
     
     def _build_new_tree(self):
-        """构建新的代码树"""
-        print(f"正在分析代码仓库: {self.repo_path}")
+        """Build new code tree"""
+        print(f"Analyzing code repository: {self.repo_path}")
         self.builder = GlobalCodeTreeBuilder(
             self.repo_path,
         )
@@ -53,8 +53,8 @@ class CodeExplorerTools:
         self.code_tree = self.builder.code_tree
     
     def _initialize_data_structures(self):
-        """初始化内部数据结构"""
-        # 确保code_tree包含所需的基本结构
+        """Initialize internal data structures"""
+        # Ensure code_tree contains necessary basic structure
         if not hasattr(self, 'code_tree'):
             self.code_tree = {'modules': {}, 'classes': {}, 'functions': {}}
         

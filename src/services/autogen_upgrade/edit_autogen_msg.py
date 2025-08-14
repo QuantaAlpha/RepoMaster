@@ -4,10 +4,10 @@ import re
 
 
 class MessageUtils:
-    """AutoGen消息处理工具库
+    """AutoGen message processing utility library
     
-    提供一系列方法用于读取、添加、修改和删除AutoGen消息列表中的元素。
-    特别处理工具调用、函数调用和角色信息等复杂情况。
+    Provides a series of methods for reading, adding, modifying, and deleting elements in AutoGen message lists.
+    Specially handles complex situations such as tool calls, function calls, and role information.
     """
     
     @staticmethod

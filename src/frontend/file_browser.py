@@ -34,7 +34,17 @@ class FileBrowserManager:
             '.png': '🖼️',
             '.gif': '🖼️',
             '.mp4': '🎬',
+            '.avi': '🎬',
+            '.mov': '🎬',
+            '.wmv': '🎬',
+            '.flv': '🎬',
+            '.webm': '🎬',
+            '.mkv': '🎬',
             '.mp3': '🎵',
+            '.wav': '🎵',
+            '.aac': '🎵',
+            '.ogg': '🎵',
+            '.flac': '🎵',
             '.zip': '📦',
             '.json': '📋',
             '.csv': '📊',
@@ -74,7 +84,17 @@ class FileBrowserManager:
             '.png': '#10b981',
             '.gif': '#10b981',
             '.mp4': '#7c3aed',     # Video purple
+            '.avi': '#7c3aed',     # Video purple
+            '.mov': '#7c3aed',     # Video purple
+            '.wmv': '#7c3aed',     # Video purple
+            '.flv': '#7c3aed',     # Video purple
+            '.webm': '#7c3aed',    # Video purple
+            '.mkv': '#7c3aed',     # Video purple
             '.mp3': '#f59e0b',     # Audio orange
+            '.wav': '#f59e0b',     # Audio orange
+            '.aac': '#f59e0b',     # Audio orange
+            '.ogg': '#f59e0b',     # Audio orange
+            '.flac': '#f59e0b',    # Audio orange
             '.zip': '#374151',     # Archive gray
             '.csv': '#059669',     # CSV green
             '.xlsx': '#059669',    # Excel green
@@ -472,6 +492,12 @@ class FileBrowserManager:
             except Exception as e:
                 st.warning(f"⚠️ Unable to display image: {str(e)}")
         
+        elif file_path.lower().endswith(('.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv')):
+            self._render_video_preview(file_path)
+        
+        elif file_path.lower().endswith(('.mp3', '.wav', '.aac', '.ogg', '.flac')):
+            self._render_audio_preview(file_path)
+        
         elif file_path.lower().endswith(('.pdf',)):
             self._render_pdf_preview(file_path)
         
@@ -722,6 +748,38 @@ class FileBrowserManager:
         except Exception as e:
             st.error(f"❌ Unable to preview PDF file: {str(e)}")
             st.info("💡 PDF preview requires browser support, recommend downloading the file to view")
+    
+    def _render_video_preview(self, file_path: str):
+        """Render video file preview"""
+        st.markdown("**🎬 Video File Preview:**")
+        
+        try:
+            # 显示文件信息
+            file_size = self.get_file_size(file_path)
+            st.info(f"📄 Video file size: {file_size}")
+            
+            # 尝试使用streamlit的内置视频播放器
+            st.video(file_path)
+            
+        except Exception as e:
+            st.error(f"❌ Unable to preview video file: {str(e)}")
+            st.info("💡 Video preview requires browser support, recommend downloading the file to view")
+    
+    def _render_audio_preview(self, file_path: str):
+        """Render audio file preview"""
+        st.markdown("**🎵 Audio File Preview:**")
+        
+        try:
+            # 显示文件信息
+            file_size = self.get_file_size(file_path)
+            st.info(f"📄 Audio file size: {file_size}")
+            
+            # 尝试使用streamlit的内置音频播放器
+            st.audio(file_path)
+            
+        except Exception as e:
+            st.error(f"❌ Unable to preview audio file: {str(e)}")
+            st.info("💡 Audio preview requires browser support, recommend downloading the file to view")
     
     def _render_directory_stats(self):
         """Render directory statistics"""

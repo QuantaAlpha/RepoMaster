@@ -22,7 +22,7 @@ from src.utils.utils_config import AppConfig
 
 from streamlit_extras.colored_header import colored_header
 
-# 尝试导入UI样式管理器
+# Try to import UI style manager
 try:
     from src.frontend.ui_styles import UIComponentRenderer, UIStyleManager
 except ImportError:
@@ -35,7 +35,7 @@ from autogen.runtime_logging import log_event, log_function_use, log_new_agent, 
 F = TypeVar("F", bound=Callable[..., Any])
 
 class EnhancedMessageProcessor:
-    """增强版消息处理器 - 静态工具类"""
+    """Enhanced message processor - static tool class"""
     
     @staticmethod
     def create_display_info(
@@ -625,7 +625,7 @@ class EnhancedMessageProcessor:
                 st.code(content)
 
 def read_html_as_image(file):
-    """将HTML转换为图像"""
+    """Convert HTML to image"""
     if isinstance(file, str):
         with open(file, 'r', encoding='utf-8') as file:
             content = file.read()
@@ -642,7 +642,7 @@ def read_html_as_image(file):
     return img
 
 def convert_pdf_to_images(pdf_file):
-    """将PDF转换为图像"""
+    """Convert PDF to images"""
     if isinstance(pdf_file, str):
         images = convert_from_path(pdf_file)
     else:
@@ -650,13 +650,13 @@ def convert_pdf_to_images(pdf_file):
     return images
 
 def save_temp_file(uploaded_file, temp_path):
-    """保存临时文件"""
+    """Save temporary file"""
     with open(temp_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
     return temp_path
 
 def run_pdf_html_reader():
-    """PDF和HTML阅读器界面"""
+    """PDF and HTML reader interface"""
     import streamlit as st
     
     st.title('Display Local HTML and PDF Content as Images')
@@ -688,13 +688,13 @@ def check_openai_message(message, st):
             if st is not None:
                 content = message.get("content", "")
                 
-                # 过滤系统消息
+                # Filter system messages
                 if (content.lstrip().startswith("[Current User Question]:") or 
                     content.lstrip().startswith("[History Message]:") or 
                     content == json.dumps(st.session_state.messages, ensure_ascii=False)):
                     return False
                 
-                # 避免重复显示相同消息
+                # Avoid displaying duplicate messages
                 if (hasattr(st.session_state, 'messages') and 
                     st.session_state.messages and 
                     content == st.session_state.messages[-1].get('content', '')):
@@ -706,7 +706,7 @@ def check_openai_message(message, st):
     return True
 
 class TrackableUserProxyAgent(UserProxyAgent):
-    """增强版用户代理"""
+    """Enhanced user agent"""
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -779,7 +779,7 @@ class TrackableUserProxyAgent(UserProxyAgent):
         return super()._process_received_message(message, sender, silent)
     
     def get_func_result(self, function_call, func_return, arguments):
-        """获取函数结果"""
+        """Get function results"""
         if arguments is not None:
             try:
                 df = pd.read_csv(arguments['save_path'])
@@ -797,7 +797,7 @@ Data has been saved and is ready for further analysis."""
         return func_return
     
     def add_func_params(self, function_call):
-        """添加函数参数"""
+        """Add function parameters"""
         arguments = None
         if function_call.get('name', '') in self.data_save_func_list:
             try:
@@ -828,7 +828,7 @@ class TrackableAssistantAgent(AssistantAgent):
             self.work_dir = AppConfig.get_instance().get_current_session()['work_dir']
 
     def chat_messages_for_summary(self, agent: Agent) -> list[dict[str, Any]]:
-        """获取用于摘要的消息列表"""
+        """Get message list for summary"""
         messages = self._oai_messages[agent]
         if messages and 'tool_calls' in messages[-1]:
             messages = messages[:-1]
@@ -905,7 +905,7 @@ class TrackableGroupChatManager(GroupChatManager):
                 self.st.session_state._current_new_files.extend(new_files)
 
     def _process_received_message(self, message, sender, silent):
-        """处理接收到的消息"""
+        """Handle received messages"""
         if self.st is not None and not silent:
             with self.st.chat_message("human", avatar="👤"):
                 colored_header(label=f"Group Manager: {sender.name}", description="", color_name="green-70")

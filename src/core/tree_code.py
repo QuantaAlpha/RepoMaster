@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-全局代码树构建器 - 用于解析Python代码仓库并创建一个结构化的代码树
-可以将代码树保存到本地，并生成适合LLM浏览分析的上下文内容
+Global code tree builder - Used to parse Python code repositories and create a structured code tree
+Can save code tree locally and generate context content suitable for LLM browsing and analysis
 """
 
 import os
@@ -21,16 +21,16 @@ from src.core.code_utils import _get_code_abs, get_code_abs_token, should_ignore
 from src.core.repo_summary import generate_repository_summary
 import glob
 from src.utils.data_preview import _parse_ipynb_file
-# 导入重要性分析器
+# Import importance analyzer
 try:
     from src.core.importance_analyzer import ImportanceAnalyzer
 except ImportError:
-    # 尝试相对导入
+    # Try relative import
     try:
         from src.core.importance_analyzer import ImportanceAnalyzer
     except ImportError:
         ImportanceAnalyzer = None
-        logging.warning("无法导入ImportanceAnalyzer，代码重要性分析将不可用。")
+        logging.warning("Cannot import ImportanceAnalyzer, code importance analysis will not be available.")
 
 # 修改tree-sitter导入
 import tree_sitter

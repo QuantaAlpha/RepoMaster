@@ -39,6 +39,10 @@ class FilePreviewGenerator:
             # 根据文件类型生成不同的预览
             if file_ext in ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg']:
                 return FilePreviewGenerator._generate_image_preview(uploaded_file)
+            elif file_ext in ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv']:
+                return FilePreviewGenerator._generate_video_preview(uploaded_file)
+            elif file_ext in ['mp3', 'wav', 'aac', 'ogg', 'flac']:
+                return FilePreviewGenerator._generate_audio_preview(uploaded_file)
             elif file_ext in ['csv']:
                 return FilePreviewGenerator._generate_csv_preview(uploaded_file, max_preview_size)
             elif file_ext in ['xlsx', 'xls']:
@@ -343,6 +347,26 @@ class FilePreviewGenerator:
             return '📁'
     
     @staticmethod
+    def _generate_video_preview(uploaded_file):
+        """生成视频文件预览"""
+        try:
+            # 对于视频文件，返回简单的emoji预览，避免HTML嵌套问题
+            return '🎬'
+            
+        except Exception:
+            return '🎬'
+    
+    @staticmethod
+    def _generate_audio_preview(uploaded_file):
+        """生成音频文件预览"""
+        try:
+            # 对于音频文件，返回简单的emoji预览，避免HTML嵌套问题
+            return '🎵'
+            
+        except Exception:
+            return '🎵'
+    
+    @staticmethod
     def _get_fallback_icon(file_ext):
         """获取备用图标"""
         icons = {
@@ -351,7 +375,10 @@ class FilePreviewGenerator:
             "html": "🌐", "doc": "📄", "docx": "📄",
             "ppt": "📊", "pptx": "📊", "md": "📝", "markdown": "📝",
             "png": "🖼️", "jpg": "🖼️", "jpeg": "🖼️", 
-            "gif": "🖼️", "bmp": "🖼️", "svg": "🖼️"
+            "gif": "🖼️", "bmp": "🖼️", "svg": "🖼️",
+            "mp4": "🎬", "avi": "🎬", "mov": "🎬", "wmv": "🎬", 
+            "flv": "🎬", "webm": "🎬", "mkv": "🎬",
+            "mp3": "🎵", "wav": "🎵", "aac": "🎵", "ogg": "🎵", "flac": "🎵"
         }
         return icons.get(file_ext, "📁")
 
@@ -1109,8 +1136,8 @@ class UIComponentRenderer:
             uploaded_files = st.file_uploader(
                 "Choose files", # This label will be hidden by CSS
                 accept_multiple_files=True,
-                type=['txt', 'csv', 'xlsx', 'xls', 'json', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg', 'doc', 'docx', 'ppt', 'pptx'],
-                help="Supports multiple file formats",
+                type=['txt', 'csv', 'xlsx', 'xls', 'json', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg', 'doc', 'docx', 'ppt', 'pptx', 'mp4', 'mp3', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'wav', 'aac', 'ogg', 'flac'],
+                help="Supports multiple file formats including videos and audio",
                 label_visibility="collapsed",
                 key=uploader_key  # Use dynamic key
             )
@@ -1156,7 +1183,7 @@ class UIComponentRenderer:
         # 使用FilePreviewGenerator生成真实的文件内容预览
         preview_content = FilePreviewGenerator.generate_preview_html(uploaded_file)
         
-        # 渲染文件卡片，包含真实内容预览
+        # 渲染文件卡片
         card_html = f"""
         <div class="uploaded-file-card">
             <div class="file-thumbnail">
