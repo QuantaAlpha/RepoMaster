@@ -33,10 +33,10 @@ class FilePreviewGenerator:
             file_ext = filename.split('.')[-1].lower() if '.' in filename else ''
             file_size = uploaded_file.size
             
-            # 重置文件指针到开始位置
+            # Reset file pointer to the beginning
             uploaded_file.seek(0)
             
-            # 根据文件类型生成不同的预览
+            # Generate different previews based on file type
             if file_ext in ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg']:
                 return FilePreviewGenerator._generate_image_preview(uploaded_file)
             elif file_ext in ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv']:
@@ -61,10 +61,10 @@ class FilePreviewGenerator:
                 return FilePreviewGenerator._generate_generic_preview(uploaded_file, max_preview_size)
                 
         except Exception as e:
-            # 如果预览生成失败，返回默认图标
+            # If preview generation fails, return default icon
             return FilePreviewGenerator._get_fallback_icon(file_ext)
         finally:
-            # 确保文件指针重置
+            # Ensure file pointer is reset
             try:
                 uploaded_file.seek(0)
             except:
@@ -72,36 +72,36 @@ class FilePreviewGenerator:
     
     @staticmethod
     def _generate_image_preview(uploaded_file):
-        """生成图片预览"""
+        """Generate image preview"""
         try:
-            # 读取图片数据
+            # Read image data
             image_data = uploaded_file.read()
             
-            # 使用PIL处理图片
+            # Process image using PIL
             image = Image.open(BytesIO(image_data))
             
-            # 创建固定尺寸的缩略图 - 与容器高度匹配
+            # Create fixed-size thumbnail - match container height
             container_size = (80, 80)
             
-            # 计算保持宽高比的缩放尺寸
+            # Calculate scaled size while maintaining aspect ratio
             image.thumbnail(container_size, Image.Resampling.LANCZOS)
             
-            # 创建一个固定尺寸的画布，居中放置缩略图
-            canvas = Image.new('RGBA', container_size, (255, 255, 255, 0))  # 透明背景
+            # Create a fixed-size canvas and center the thumbnail
+            canvas = Image.new('RGBA', container_size, (255, 255, 255, 0))  # Transparent background
             
-            # 计算居中位置
+            # Calculate center position
             x = (container_size[0] - image.width) // 2
             y = (container_size[1] - image.height) // 2
             
-            # 将图片粘贴到画布中央
+            # Paste image to canvas center
             canvas.paste(image, (x, y))
             
-            # 转换为base64
+            # Convert to base64
             buffer = BytesIO()
             canvas.save(buffer, format='PNG')
             img_str = base64.b64encode(buffer.getvalue()).decode()
             
-            # 返回优化的HTML，确保图片完美适配容器
+            # Return optimized HTML, ensure image perfectly fits container
             return f'''<img src="data:image/png;base64,{img_str}" 
                 style="width: 80px; height: 80px; object-fit: contain; border-radius: 0.5rem; display: block; margin: 0 auto;">'''
             
@@ -110,34 +110,34 @@ class FilePreviewGenerator:
     
     @staticmethod
     def _generate_csv_preview(uploaded_file, max_rows=4):
-        """生成CSV文件预览"""
+        """Generate CSV file preview"""
         try:
-            # 读取CSV文件
+            # Read CSV file
             content = uploaded_file.read().decode('utf-8')
             df = pd.read_csv(StringIO(content))
             
-            # 获取前几行数据
+            # Get first few rows of data
             preview_df = df.head(max_rows)
             
-            # 限制列数，避免过宽
+            # Limit columns to avoid excessive width
             if len(preview_df.columns) > 3:
                 preview_df = preview_df.iloc[:, :3]
                 cols_truncated = len(df.columns) - 3
             else:
                 cols_truncated = 0
             
-            # 生成HTML表格 - 优化容器适配
+            # Generate HTML table - optimized for container
             html = '<div style="width: 100%; height: 100%; font-size: 0.6rem; padding: 0.25rem; overflow: hidden; display: flex; flex-direction: column; justify-content: center;">'
             html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.5rem;">'
             
-            # 表头
+            # Table header
             html += '<tr>'
             for col in preview_df.columns:
                 col_name = col[:6] + '..' if len(str(col)) > 6 else str(col)
                 html += f'<th style="background: #f1f5f9; padding: 0.1rem; border: 1px solid #e2e8f0; font-size: 0.45rem; line-height: 1;">{col_name}</th>'
             html += '</tr>'
             
-            # 数据行 - 限制显示行数以适应容器
+            # Data rows - limit display rows to fit container
             display_rows = min(len(preview_df), 3)
             for _, row in preview_df.head(display_rows).iterrows():
                 html += '<tr>'
@@ -148,7 +148,7 @@ class FilePreviewGenerator:
             
             html += '</table>'
             
-            # 显示数据统计 - 简化版本
+            # Show data statistics - simplified version
             if len(df) > display_rows or cols_truncated > 0:
                 html += f'<div style="text-align: center; margin-top: 0.2rem; font-size: 0.35rem; color: #64748b; line-height: 1;">'
                 html += f'{len(df)}×{len(df.columns)}'
@@ -162,28 +162,28 @@ class FilePreviewGenerator:
     
     @staticmethod
     def _generate_excel_preview(uploaded_file, max_rows=4):
-        """生成Excel文件预览"""
+        """Generate Excel file preview"""
         try:
-            # 读取Excel文件的第一个工作表
+            # Read first worksheet of Excel file
             df = pd.read_excel(uploaded_file, nrows=max_rows)
             
-            # 限制列数
+            # Limit number of columns
             if len(df.columns) > 3:
                 df = df.iloc[:, :3]
             
-            # 生成类似CSV的预览 - 优化容器适配
+            # Generate CSV-like preview - optimized for container
             html = '<div style="width: 100%; height: 100%; font-size: 0.6rem; padding: 0.25rem; overflow: hidden; display: flex; flex-direction: column; justify-content: center;">'
             html += '<div style="background: #10b981; color: white; padding: 0.1rem; text-align: center; font-size: 0.4rem; margin-bottom: 0.2rem; border-radius: 0.2rem;">Excel</div>'
             html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.5rem;">'
             
-            # 表头
+            # Table header
             html += '<tr>'
             for col in df.columns:
                 col_name = col[:6] + '..' if len(str(col)) > 6 else str(col)
                 html += f'<th style="background: #f1f5f9; padding: 0.1rem; border: 1px solid #e2e8f0; font-size: 0.45rem; line-height: 1;">{col_name}</th>'
             html += '</tr>'
             
-            # 数据行 - 限制显示行数
+            # Display rows - limit display rows to fit container
             display_rows = min(len(df), 2)
             for _, row in df.head(display_rows).iterrows():
                 html += '<tr>'
@@ -200,20 +200,20 @@ class FilePreviewGenerator:
     
     @staticmethod
     def _generate_json_preview(uploaded_file, max_items=6):
-        """生成JSON文件预览"""
+        """Generate JSON file preview"""
         try:
             content = uploaded_file.read().decode('utf-8')
             data = json.loads(content)
             
             html = '<div style="width: 100%; height: 100%; font-size: 0.55rem; padding: 0.25rem; font-family: monospace; background: #f8fafc; border-radius: 0.25rem; overflow: hidden; display: flex; align-items: center; justify-content: center;">'
             
-            # 递归显示JSON结构（简化版，更紧凑）
+            # Recursively display JSON structure (simplified, more compact)
             def format_json_preview(obj, level=0, max_level=1):
                 if level > max_level:
                     return "..."
                 
                 if isinstance(obj, dict):
-                    items = list(obj.items())[:2]  # 只显示前2个键值对
+                    items = list(obj.items())[:2]  # Only show first 2 key-value pairs
                     result = "{"
                     for i, (k, v) in enumerate(items):
                         if i > 0:
@@ -226,7 +226,7 @@ class FilePreviewGenerator:
                 elif isinstance(obj, list):
                     if len(obj) == 0:
                         return "[]"
-                    items = obj[:1]  # 只显示第1个元素
+                    items = obj[:1]  # Only show first element
                     result = "["
                     for i, item in enumerate(items):
                         if i > 0:
@@ -252,7 +252,7 @@ class FilePreviewGenerator:
     
     @staticmethod
     def _generate_text_preview(uploaded_file, max_lines=4):
-        """生成文本文件预览"""
+        """Generate text file preview"""
         try:
             content = uploaded_file.read().decode('utf-8')
             lines = content.split('\n')[:max_lines]
@@ -260,11 +260,11 @@ class FilePreviewGenerator:
             html = '<div style="width: 100%; height: 100%; font-size: 0.55rem; padding: 0.25rem; font-family: monospace; background: #f8fafc; border-radius: 0.25rem; overflow: hidden; display: flex; flex-direction: column; justify-content: center; line-height: 1.1;">'
             
             for i, line in enumerate(lines):
-                # 限制每行长度以适应小容器
+                # Limit line length to fit small container
                 if len(line) > 15:
                     line = line[:15] + '..'
                 
-                # 简单的Markdown高亮
+                # Simple Markdown highlighting
                 if line.startswith('#'):
                     html += f'<div style="color: #dc2626; font-weight: bold; font-size: 0.5rem;">{line}</div>'
                 elif line.startswith('*') or line.startswith('-'):
@@ -272,7 +272,7 @@ class FilePreviewGenerator:
                 else:
                     html += f'<div style="color: #334155; font-size: 0.5rem;">{line}</div>'
             
-            # 修复f-string中的反斜杠问题
+            # Fix backslash issue in f-string
             total_lines = len(content.split('\n'))
             if total_lines > max_lines:
                 remaining_lines = total_lines - max_lines
@@ -286,9 +286,9 @@ class FilePreviewGenerator:
     
     @staticmethod
     def _generate_pdf_preview(uploaded_file):
-        """生成PDF文件预览"""
+        """Generate PDF file preview"""
         try:
-            # PDF预览比较复杂，这里显示文件信息
+            # PDF preview is complex, display file info here
             file_size = uploaded_file.size
             
             html = '<div style="width: 100%; height: 100%; font-size: 0.6rem; padding: 0.25rem; text-align: center; background: #fef2f2; border-radius: 0.25rem; display: flex; flex-direction: column; justify-content: center; align-items: center;">'
@@ -309,7 +309,7 @@ class FilePreviewGenerator:
     
     @staticmethod
     def _generate_doc_preview(uploaded_file):
-        """生成Word文档预览"""
+        """Generate Word document preview"""
         html = '<div style="width: 100%; height: 100%; font-size: 0.6rem; padding: 0.25rem; text-align: center; background: #eff6ff; border-radius: 0.25rem; display: flex; flex-direction: column; justify-content: center; align-items: center;">'
         html += '<div style="color: #2563eb; font-size: 1.8rem; margin-bottom: 0.2rem;">📄</div>'
         html += '<div style="color: #1e40af; font-size: 0.5rem; font-weight: bold;">Word</div>'
@@ -318,7 +318,7 @@ class FilePreviewGenerator:
     
     @staticmethod
     def _generate_ppt_preview(uploaded_file):
-        """生成PowerPoint文档预览"""
+        """Generate PowerPoint document preview"""
         html = '<div style="width: 100%; height: 100%; font-size: 0.6rem; padding: 0.25rem; text-align: center; background: #fefce8; border-radius: 0.25rem; display: flex; flex-direction: column; justify-content: center; align-items: center;">'
         html += '<div style="color: #ca8a04; font-size: 1.8rem; margin-bottom: 0.2rem;">📊</div>'
         html += '<div style="color: #92400e; font-size: 0.5rem; font-weight: bold;">PowerPoint</div>'
@@ -327,9 +327,9 @@ class FilePreviewGenerator:
     
     @staticmethod
     def _generate_generic_preview(uploaded_file, max_chars=60):
-        """生成通用文件预览"""
+        """Generate generic file preview"""
         try:
-            # 尝试以文本方式读取
+            # Try to read as text
             content = uploaded_file.read().decode('utf-8', errors='ignore')
             if content.strip():
                 preview_text = content[:max_chars]
@@ -348,9 +348,9 @@ class FilePreviewGenerator:
     
     @staticmethod
     def _generate_video_preview(uploaded_file):
-        """生成视频文件预览"""
+        """Generate video file preview"""
         try:
-            # 对于视频文件，返回简单的emoji预览，避免HTML嵌套问题
+            # For video files, return simple emoji preview to avoid HTML nesting issues
             return '🎬'
             
         except Exception:
@@ -358,9 +358,9 @@ class FilePreviewGenerator:
     
     @staticmethod
     def _generate_audio_preview(uploaded_file):
-        """生成音频文件预览"""
+        """Generate audio file preview"""
         try:
-            # 对于音频文件，返回简单的emoji预览，避免HTML嵌套问题
+            # For audio files, return simple emoji preview to avoid HTML nesting issues
             return '🎵'
             
         except Exception:
@@ -368,7 +368,7 @@ class FilePreviewGenerator:
     
     @staticmethod
     def _get_fallback_icon(file_ext):
-        """获取备用图标"""
+        """Get fallback icon"""
         icons = {
             "csv": "📊", "xlsx": "📈", "xls": "📈",
             "json": "📋", "txt": "📄", "pdf": "📕",
@@ -383,20 +383,20 @@ class FilePreviewGenerator:
         return icons.get(file_ext, "📁")
 
 class UIStyleManager:
-    """UI样式管理器"""
+    """UI Style Manager"""
     
     def __init__(self):
         self.current_theme = "dark"
     
     @staticmethod
     def get_main_styles():
-        """获取主要样式"""
+        """Get main styles"""
         return """
         <style>
-        /* 导入现代字体 */
+        /* Import modern fonts */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
-        /* CSS变量定义 */
+        /* CSS variable definitions */
         :root {
             --primary-color: #6366f1;
             --primary-dark: #4f46e5;
@@ -415,25 +415,25 @@ class UIStyleManager:
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
         
-        /* 全局样式重置 */
+        /* Global style reset */
         .stApp {
             background: linear-gradient(135deg, var(--background-primary) 0%, var(--background-secondary) 100%);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         
-        /* 隐藏Streamlit默认元素 */
+        /* Hide Streamlit default elements */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
         
-        /* 主容器样式 */
+        /* Main container styles */
         .main-container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 0;
         }
         
-        /* 顶部导航栏样式 */
+        /* Top navigation bar styles */
         .top-navigation {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -462,7 +462,7 @@ class UIStyleManager:
             background-clip: text;
         }
         
-        /* 侧边栏样式优化 */
+        /* Sidebar style optimization */
         .css-1d391kg {
             background: var(--background-secondary);
             border-right: 1px solid var(--border-color);
@@ -472,7 +472,7 @@ class UIStyleManager:
             padding: 1rem;
         }
         
-        /* 新建对话按钮 */
+        /* New chat button */
         .new-chat-button {
             width: 100%;
             background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
@@ -491,7 +491,7 @@ class UIStyleManager:
             box-shadow: var(--shadow-lg) !important;
         }
         
-        /* 聊天历史样式 */
+        /* Chat history styles */
         .chat-history-section {
             margin-bottom: 2rem;
         }
@@ -545,7 +545,7 @@ class UIStyleManager:
             color: var(--text-muted);
         }
         
-        /* 删除按钮样式 */
+        /* Delete button styles */
         .delete-chat-button {
             background: transparent !important;
             color: var(--text-muted) !important;
@@ -572,7 +572,7 @@ class UIStyleManager:
             transform: scale(0.95) !important;
         }
         
-        /* 聊天项布局优化 */
+        /* Chat item layout optimization */
         .chat-item-container {
             display: flex;
             gap: 0.5rem;
@@ -590,7 +590,7 @@ class UIStyleManager:
             align-items: center;
         }
         
-        /* 聊天消息样式 */
+        /* Chat message styles */
         .chat-message {
             margin-bottom: 1.5rem;
             animation: slideIn 0.3s ease-out;
@@ -672,7 +672,7 @@ class UIStyleManager:
             margin-left: auto;
         }
         
-        /* 工具执行样式 */
+        /* Tool execution styles */
         .tool-execution {
             background: var(--background-tertiary);
             border: 1px solid var(--warning-color);
@@ -711,7 +711,7 @@ class UIStyleManager:
             40% { transform: scale(1); }
         }
         
-        /* 文件预览样式 */
+        /* File preview styles */
         .file-preview {
             background: var(--background-primary);
             border: 1px solid var(--border-color);
@@ -729,7 +729,7 @@ class UIStyleManager:
             font-weight: 600;
         }
         
-        /* 输入区域样式 */
+        /* Input area styles */
         .stChatInput {
             background: var(--background-secondary);
             border: 1px solid var(--border-color);
@@ -742,9 +742,9 @@ class UIStyleManager:
             color: var(--text-primary);
         }
         
-        /* 文件上传区域样式 - 现在通过内联样式处理 */
+        /* File upload area styles - now handled via inline styles */
         
-        /* 已上传文件网格 */
+        /* Uploaded files grid */
         .uploaded-files-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -791,7 +791,7 @@ class UIStyleManager:
             border-radius: 0.5rem;
         }
         
-        /* 确保非图片内容也能正确居中显示 */
+        /* Ensure non-image content can also be centered correctly */
         .file-thumbnail > div {
             width: 100%;
             height: 100%;
@@ -819,7 +819,7 @@ class UIStyleManager:
             color: var(--text-muted);
         }
         
-        /* 按钮样式优化 */
+        /* Button style optimization */
         .stButton > button {
             background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
             color: white;
@@ -836,7 +836,7 @@ class UIStyleManager:
             box-shadow: var(--shadow-lg);
         }
         
-        /* 展开器样式 */
+        /* Expander styles */
         .streamlit-expanderHeader {
             background: var(--background-tertiary);
             border: 1px solid var(--border-color);
@@ -851,14 +851,14 @@ class UIStyleManager:
             border-radius: 0 0 0.5rem 0.5rem;
         }
         
-        /* 代码块样式 */
+        /* Code block styles */
         .stCode {
             background: var(--background-primary);
             border: 1px solid var(--border-color);
             border-radius: 0.5rem;
         }
         
-        /* 滚动条样式 */
+        /* Scrollbar styles */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -876,7 +876,7 @@ class UIStyleManager:
             background: var(--primary-color);
         }
         
-        /* 响应式设计 */
+        /* Responsive design */
         @media (max-width: 768px) {
             .message-container {
                 max-width: 95%;
@@ -895,7 +895,7 @@ class UIStyleManager:
     
     @staticmethod
     def get_sidebar_styles():
-        """获取侧边栏专用样式"""
+        """Get sidebar-specific styles"""
         return """
         <style>
         .sidebar-button {
@@ -925,19 +925,19 @@ class UIStyleManager:
         """
     
     def apply_main_styles(self):
-        """应用主要样式"""
+        """Apply main styles"""
         st.markdown(self.get_main_styles(), unsafe_allow_html=True)
     
     def apply_sidebar_styles(self):
-        """应用侧边栏样式"""
+        """Apply sidebar styles"""
         st.markdown(self.get_sidebar_styles(), unsafe_allow_html=True)
 
 class UIComponentRenderer:
-    """UI组件渲染器"""
+    """UI Component Renderer"""
     
     @staticmethod
     def render_top_navigation(title="Finance DeepResearch Assistant", user_name="User"):
-        """渲染顶部导航栏"""
+        """Render top navigation bar"""
         st.markdown(f"""
         <div class="top-navigation">
             <div class="nav-content">
@@ -951,7 +951,7 @@ class UIComponentRenderer:
     
     @staticmethod
     def render_chat_message(content, role="user", avatar="👤", timestamp=None):
-        """渲染聊天消息"""
+        """Render chat messages"""
         import datetime
         
         if timestamp is None:
@@ -1000,7 +1000,7 @@ class UIComponentRenderer:
     
     @staticmethod
     def render_file_preview(filename, content_preview="", file_type="unknown"):
-        """渲染文件预览"""
+        """Render file preview"""
         icons = {
             "csv": "📊",
             "xlsx": "📈", 
@@ -1026,22 +1026,22 @@ class UIComponentRenderer:
     
     @staticmethod
     def render_file_upload_area():
-        """渲染文件上传区域 - 合并自定义样式和原生上传器"""
+        """Render file upload area - merge custom styles with native uploader"""
         import streamlit as st
         
-        # 获取动态key，用于重置文件上传器
+        # Get dynamic key for resetting file uploader
         if "file_uploader_key" not in st.session_state:
             st.session_state.file_uploader_key = 0
         uploader_key = f"unified_file_uploader_{st.session_state.file_uploader_key}"
         
-        # 使用容器来包装，确保正确的层级关系
+        # Use container to wrap, ensuring correct hierarchy
         upload_container = st.container()
         
         with upload_container:
-            # 添加自定义样式，让原生上传器看起来像我们的设计
+            # Add custom styles to make native uploader look like our design
             st.markdown("""
             <style>
-            /* 重写当前页面的文件上传器样式 - 上下分层布局 */
+            /* Override current page file uploader styles - top-bottom layered layout */
             div[data-testid="stFileUploader"] {
                 border: 2px dashed #cbd5e1 !important;
                 border-radius: 1rem !important;
@@ -1079,7 +1079,7 @@ class UIComponentRenderer:
                 position: relative !important;
             }
             
-            /* 下层：Streamlit组件区域 */
+            /* Bottom layer: Streamlit component area */
             div[data-testid="stFileUploader"] > div {
                 flex: 1 !important;
                 display: flex !important;
@@ -1090,7 +1090,7 @@ class UIComponentRenderer:
                 min-height: 70px !important;
             }
             
-            /* 优化原生上传区域 */
+            /* Optimize native upload area */
             div[data-testid="stFileUploaderDropzone"] {
                 width: 100% !important;
                 height: 100% !important;
@@ -1113,26 +1113,26 @@ class UIComponentRenderer:
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08) !important;
             }
             
-            /* 优化拖拽区域文字 */
+            /* Optimize drag area text */
             div[data-testid="stFileUploaderDropzone"] span {
                 color: #64748b !important;
                 font-size: 0.875rem !important;
                 font-weight: 500 !important;
             }
             
-            /* 隐藏原生标签 */
+            /* Hide native labels */
             div[data-testid="stFileUploader"] label {
                 display: none !important;
             }
             
-            /* 让整个区域都可以拖拽 */
+            /* Make entire area draggable */
             div[data-testid="stFileUploader"] {
                 cursor: pointer !important;
             }
             </style>
             """, unsafe_allow_html=True)
             
-            # 使用原生文件上传器，但样式已被覆盖，使用动态key
+            # Use native file uploader, but styles are overridden, use dynamic key
             uploaded_files = st.file_uploader(
                 "Choose files", # This label will be hidden by CSS
                 accept_multiple_files=True,
@@ -1154,8 +1154,8 @@ class UIComponentRenderer:
         
         st.markdown("#### 📁 Uploaded Files")
         
-        # 创建网格布局
-        cols = st.columns(min(len(uploaded_files), 4))  # 最多4列，更紧凑
+        # Create grid layout
+        cols = st.columns(min(len(uploaded_files), 4))  # Maximum 4 columns, more compact
         
         for i, uploaded_file in enumerate(uploaded_files):
             col_idx = i % 4
@@ -1167,12 +1167,12 @@ class UIComponentRenderer:
         """Render simplified file card (with real content preview)"""
         import streamlit as st
         
-        # 获取文件信息
+        # Get file information
         filename = uploaded_file.name
         file_size = uploaded_file.size
         file_ext = filename.split('.')[-1].lower() if '.' in filename else ''
         
-        # 格式化文件大小
+        # Format file size
         if file_size < 1024:
             size_str = f"{file_size} B"
         elif file_size < 1024 * 1024:
@@ -1180,10 +1180,10 @@ class UIComponentRenderer:
         else:
             size_str = f"{file_size / (1024 * 1024):.1f} MB"
         
-        # 使用FilePreviewGenerator生成真实的文件内容预览
+        # Use FilePreviewGenerator to generate real file content preview
         preview_content = FilePreviewGenerator.generate_preview_html(uploaded_file)
         
-        # 渲染文件卡片
+        # Render file card
         card_html = f"""
         <div class="uploaded-file-card">
             <div class="file-thumbnail">
@@ -1240,22 +1240,22 @@ class ChatHistoryManager:
         
         try:
             if isinstance(timestamp, str):
-                # 处理包含下划线的时间戳格式（如 1748465159_7745898）
+                # Handle timestamp format with underscores (e.g., 1748465159_7745898)
                 if '_' in timestamp:
-                    # 提取下划线前的主要时间戳部分
+                    # Extract main timestamp part before underscore
                     main_timestamp = timestamp.split('_')[0]
                     dt = datetime.datetime.fromtimestamp(float(main_timestamp))
                 elif '.' in timestamp:
-                    # 处理包含小数点的时间戳
+                    # Handle timestamp with decimal point
                     dt = datetime.datetime.fromtimestamp(float(timestamp))
                 elif timestamp.isdigit():
-                    # 处理纯数字时间戳
+                    # Handle pure numeric timestamp
                     dt = datetime.datetime.fromtimestamp(float(timestamp))
                 else:
-                    # 尝试解析日期时间字符串格式
+                    # Try to parse datetime string format
                     dt = datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
             else:
-                # 处理数字类型的时间戳
+                # Handle numeric timestamp
                 dt = datetime.datetime.fromtimestamp(float(timestamp))
             
             now = datetime.datetime.now()
@@ -1272,7 +1272,7 @@ class ChatHistoryManager:
             else:
                 return "Just now"
         except Exception as e:
-            # 如果解析失败，返回原始时间戳的简化版本
+            # If parsing fails, return simplified version of original timestamp
             try:
                 if isinstance(timestamp, str) and '_' in timestamp:
                     return f"ID: {timestamp.split('_')[0][-4:]}"

@@ -6,10 +6,13 @@ import asyncio
 import traceback
 import pandas as pd
 import datetime
+from pathlib import Path
 from autogen import AssistantAgent, UserProxyAgent, GroupChatManager
 from autogen.oai.client import OpenAIWrapper
 from autogen.agentchat.conversable_agent import ConversableAgent as Agent
 from typing import Union, Dict, Callable, Any, TypeVar, List, Tuple
+
+from src.services.autogen_upgrade.file_monitor import get_directory_files, compare_and_display_new_files
 
 from autogen.formatting_utils import colored
 
@@ -47,18 +50,18 @@ class EnhancedMessageProcessor:
         new_files: List[str] = None
     ) -> Dict:
         """
-        创建标准的显示信息格式
+        Create standard display information format
         
         Args:
-            message_content: 消息内容
-            sender_name: 发送者名称
-            receiver_name: 接收者名称
-            sender_role: 发送者角色 ('user' 或 'assistant')
-            llm_config: LLM配置字典
-            new_files: 新文件列表
+            message_content: Message content
+            sender_name: Sender name
+            receiver_name: Receiver name
+            sender_role: Sender role ('user' or 'assistant')
+            llm_config: LLM configuration dictionary
+            new_files: New file list
             
         Returns:
-            标准格式的显示信息字典
+            Standard format display information dictionary
         """
         import datetime
         import json
@@ -89,22 +92,22 @@ class EnhancedMessageProcessor:
         check_duplicate: bool = True
     ):
         """
-        添加显示消息到session_state.display_messages中
+        Add display message to session_state.display_messages
         
         Args:
-            st: streamlit对象
-            message_content: 消息内容
-            sender_name: 发送者名称
-            receiver_name: 接收者名称
-            sender_role: 发送者角色
-            llm_config: LLM配置字典
-            new_files: 新文件列表
-            check_duplicate: 是否检查重复消息
+            st: streamlit object
+            message_content: Message content
+            sender_name: Sender name
+            receiver_name: Receiver name
+            sender_role: Sender role
+            llm_config: LLM configuration dictionary
+            new_files: New file list
+            check_duplicate: Whether to check for duplicate messages
         """
         if not hasattr(st.session_state, 'display_messages'):
             st.session_state.display_messages = []
         
-        # 内部调用create_display_info创建标准格式
+        # Internal call to create_display_info to create standard format
         display_info = EnhancedMessageProcessor.create_display_info(
             message_content=message_content,
             sender_name=sender_name,
@@ -114,59 +117,100 @@ class EnhancedMessageProcessor:
             new_files=new_files
         )
             
-        # 检查重复（可选）
+        # Check for duplicates (optional)
         if check_duplicate and st.session_state.display_messages:
             last_message = st.session_state.display_messages[-1]
             if last_message.get("message", {}).get("content") == message_content:
-                return  # 跳过重复消息
+                return  # Skip duplicate message
         
         st.session_state.display_messages.append(display_info)
     
     @staticmethod
     def add_message_to_session(st, role: str, content: str, check_duplicate: bool = True):
         """
-        将消息添加到session_state.messages中
+        Add messages to session_state.messages
         
         Args:
-            st: streamlit对象
-            role: 消息角色 ('user' 或 'assistant')
-            content: 消息内容
-            check_duplicate: 是否检查重复消息
+            st: streamlit object
+            role: Message role ('user' or 'assistant')
+            content: Message content
+            check_duplicate: Whether to check for duplicate messages
         """
         if not hasattr(st.session_state, 'messages'):
             st.session_state.messages = []
             
         message = {"role": role, "content": content}
         
-        # 检查重复（可选）
+        # Check for duplicates (optional)
         if check_duplicate and st.session_state.messages:
             if st.session_state.messages[-1] == message:
-                return  # 跳过重复消息
+                return  # Skip duplicate message
         
         st.session_state.messages.append(message)
     
     @staticmethod
     def get_latest_files(directory: str) -> List[str]:
-        """获取目录中的最新文件"""
+        """
+        Get latest files in directory (deprecated)
+        
+        Note: This function is deprecated, please use file_monitor.get_directory_files() instead,
+        which provides more powerful recursive file detection, file filtering and structured information features.
+        
+        Args:
+            directory: Directory path
+            
+        Returns:
+            File path list (only includes specific extensions, non-recursive)
+        """
+        import warnings
+        warnings.warn(
+            "get_latest_files() is deprecated. Use file_monitor.get_directory_files() instead for better functionality.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        
         new_files = []
         for ext in ['*.png', '*.jpg', '*.jpeg', '*.csv', '*.xlsx', '*.json', '*.txt', '*.pdf', '*.html']:
             new_files.extend(glob.glob(os.path.join(directory, ext)))
         return new_files
     
     @staticmethod
-    def detect_new_files(work_dir: str, previous_files: List[str]) -> Tuple[List[str], List[str]]:
-        """检测新文件并返回当前文件列表和新文件列表"""
-        current_files = EnhancedMessageProcessor.get_latest_files(work_dir)
-        new_files = list(set(current_files) - set(previous_files))
-        return current_files, new_files
+    def detect_new_files(work_dir: str, previous_files_info: Dict[str, Dict] = None) -> Tuple[Dict[str, Dict], List[str]]:
+        """
+        Detect new file changes using powerful file_monitor functionality
+        
+        Args:
+            work_dir: Working directory path
+            previous_files_info: Previous file information dictionary (from get_directory_files)
+            
+        Returns:
+            Tuple[Current file information dictionary, New file path list]
+        """
+        if not work_dir or not os.path.exists(work_dir):
+            return {}, []
+        
+        work_dir_path = Path(work_dir)
+        current_files_info = get_directory_files(work_dir_path)
+        
+        if previous_files_info is None:
+            # If no previous file information, return all current files
+            new_file_paths = list(current_files_info.keys())
+        else:
+            # Find newly added files
+            new_file_paths = [
+                file_path for file_path in current_files_info.keys()
+                if file_path not in previous_files_info
+            ]
+        
+        return current_files_info, new_file_paths
     
     @staticmethod
     def display_single_file(file_path: str, st):
-        """显示单个文件"""
+        """Display single file"""
         file_name = os.path.basename(file_path)
         file_ext = file_path.split('.')[-1].lower()
         
-        # 生成唯一的key，基于文件路径
+        # Generate unique key based on file path
         import hashlib
         file_key = hashlib.md5(file_path.encode()).hexdigest()[:8]
         
@@ -181,7 +225,7 @@ class EnhancedMessageProcessor:
                     df = pd.read_excel(file_path)
                 
                 st.markdown(f"**📊 {file_name}**")
-                st.dataframe(df.head(100))  # 只显示前100行
+                st.dataframe(df.head(100))  # Only show first 100 rows
                 
                 if len(df) > 100:
                     st.info(f"Showing first 100 rows, total {len(df)} rows")
@@ -232,7 +276,7 @@ class EnhancedMessageProcessor:
             try:
                 pdf_images = convert_pdf_to_images(file_path)
                 st.markdown(f"**📕 {file_name}**")
-                for i, img in enumerate(pdf_images[:3]):  # 只显示前3页
+                for i, img in enumerate(pdf_images[:3]):  # Only show first 3 pages
                     st.image(img, caption=f"Page {i+1}", use_column_width=True)
                 if len(pdf_images) > 3:
                     st.info(f"Showing first 3 pages, total {len(pdf_images)} pages")
@@ -254,7 +298,7 @@ class EnhancedMessageProcessor:
     
     @staticmethod
     def display_new_files_header(new_files_count: int, st):
-        """显示新文件标题"""
+        """Display new files header"""
         if new_files_count > 0:
             st.markdown(f"""
             <div style="background: var(--secondary-color); color: white; padding: 0.75rem 1rem; border-radius: 0.5rem; margin: 1rem 0; text-align: center; font-weight: 600;">
@@ -263,34 +307,299 @@ class EnhancedMessageProcessor:
             """, unsafe_allow_html=True)
     
     @staticmethod
-    def display_files_batch(work_dir: str, previous_files: List[str], st) -> Tuple[List[str], List[str]]:
-        """批量显示文件并返回更新后的文件列表和新文件列表"""
+    def display_files_batch(work_dir: str, previous_files_info: Dict[str, Dict], st) -> Tuple[Dict[str, Dict], List[str]]:
+        """
+        Display files in batch and return updated file information and new file list
+        
+        Args:
+            work_dir: Working directory path
+            previous_files_info: Previous file information dictionary
+            st: streamlit object
+            
+        Returns:
+            Tuple[Current file information dictionary, New file path list]
+        """
         if work_dir is None or st is None:
-            return previous_files, []
+            return previous_files_info or {}, []
         
         try:
-            current_files, new_files = EnhancedMessageProcessor.detect_new_files(work_dir, previous_files)
+            work_dir_path = Path(work_dir)
+            if not work_dir_path.exists():
+                return previous_files_info or {}, []
             
-            if new_files:
-                EnhancedMessageProcessor.display_new_files_header(len(new_files), st)
+            # Use powerful file_monitor functionality
+            current_files_info = get_directory_files(work_dir_path)
+            
+            if previous_files_info is None:
+                previous_files_info = {}
+            
+            # Directly use compare_and_display_new_files to get formatted display information
+            file_changes_info = compare_and_display_new_files(
+                previous_files_info, current_files_info, work_dir_path
+            )
+            
+            # Get new file list
+            new_file_paths = [
+                file_path for file_path in current_files_info.keys()
+                if file_path not in previous_files_info
+            ]
+            
+            if new_file_paths and file_changes_info != "No new files generated during execution":
+                # Display new files header and structured information
+                EnhancedMessageProcessor.display_new_files_header(len(new_file_paths), st)
                 
-                for file_path in new_files:
-                    EnhancedMessageProcessor.display_single_file(file_path, st)
+
                 
-                return current_files, new_files
+                # Try to use compact one-line display method, fallback to simplified version if failed
+                try:
+                    EnhancedMessageProcessor.display_files_compact(new_file_paths, st)
+                except Exception as e:
+                    print(f"display_files_compact failed, using simple version: {e}")
+                    EnhancedMessageProcessor.display_files_compact_simple(new_file_paths, st)
+            
+            return current_files_info, new_file_paths
             
         except Exception as e:
             print(f"\n{'-'*30}\ndisplay_files_batch ERROR: {e}\n{'-'*30}\n")
         
-        return previous_files, []
+        return previous_files_info or {}, []
+
+    @staticmethod
+    def get_file_priority(file_path: str) -> int:
+        """Get file display priority, lower number means higher priority"""
+        ext = file_path.split('.')[-1].lower() if '.' in file_path else ''
+        image_exts = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg']
+        if ext in image_exts:
+            return 0  # Image files have highest priority
+        elif ext in ['pdf']:
+            return 1  # PDF files have second priority
+        elif ext in ['csv', 'xlsx', 'json']:
+            return 2  # Data files
+        else:
+            return 3  # Other files
+
+    @staticmethod
+    def display_files_compact_simple(new_files: List[str], st):
+        """Simplified compact file display (fallback option)"""
+        if not new_files or not st:
+            return
+        
+        try:
+            # Sort file list by priority, images first
+            sorted_files = sorted(new_files, key=EnhancedMessageProcessor.get_file_priority)
+            
+            # Limit display file count
+            display_files = sorted_files[:8]
+            if len(new_files) > 8:
+                st.info(f"📁 Generated {len(new_files)} files, prioritizing display of images and other important files (first 8)")
+            
+            # Create column layout
+            cols = st.columns(len(display_files))
+            
+            for i, file_path in enumerate(display_files):
+                with cols[i]:
+                    filename = os.path.basename(file_path)
+                    file_size = os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                    
+                    # Format file size
+                    if file_size < 1024:
+                        size_str = f"{file_size} B"
+                    elif file_size < 1024 * 1024:
+                        size_str = f"{file_size / 1024:.1f} KB"
+                    else:
+                        size_str = f"{file_size / (1024 * 1024):.1f} MB"
+                    
+                    # Get file icon
+                    file_ext = filename.split('.')[-1].lower() if '.' in filename else ''
+                    icon_map = {
+                        'png': '🖼️', 'jpg': '🖼️', 'jpeg': '🖼️', 'gif': '🖼️',
+                        'pdf': '📕', 'csv': '📊', 'xlsx': '📈', 'json': '📋',
+                        'txt': '📄', 'py': '🐍', 'html': '🌐', 'css': '🎨',
+                        'md': '📝', 'yml': '⚙️', 'yaml': '⚙️', 'xml': '📋'
+                    }
+                    icon = icon_map.get(file_ext, '📄')
+                    
+                    # Display file information
+                    st.markdown(f"""
+                    <div style="text-align: center; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; background: #f8fafc;">
+                        <div style="font-size: 2rem; margin-bottom: 0.25rem;">{icon}</div>
+                        <div style="font-size: 0.7rem; font-weight: 600; color: #334155; margin-bottom: 0.1rem;" title="{filename}">
+                            {filename[:10]}{'...' if len(filename) > 10 else ''}
+                        </div>
+                        <div style="font-size: 0.6rem; color: #64748b;">{size_str}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+        
+        except Exception as e:
+            print(f"\n{'-'*30}\ndisplay_files_compact_simple ERROR: {e}\n{'-'*30}\n")
+
+    @staticmethod
+    def display_files_compact(new_files: List[str], st):
+        """Compact one-line display for new files (reusing file_browser.py display logic)"""
+        if not new_files or not st:
+            return
+        
+        # Add necessary CSS styles
+        st.markdown("""
+        <style>
+        .uploaded-file-card {
+            background: var(--background-secondary, #f1f5f9);
+            border: 1px solid var(--border-color, #cbd5e1);
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+            cursor: default;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .uploaded-file-card:hover {
+            border-color: var(--primary-color, #6366f1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .file-thumbnail {
+            width: 100%;
+            height: 80px;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ffffff, #e2e8f0);
+            border: 1px solid var(--border-color, #cbd5e1);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .file-thumbnail img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 0.5rem;
+        }
+        
+        .file-thumbnail > div {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .file-card-info {
+            text-align: center;
+        }
+        
+        .file-card-name {
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+            word-break: break-word;
+            line-height: 1.2;
+        }
+        
+        .file-card-size {
+            font-size: 0.7rem;
+            color: var(--text-muted, #64748b);
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        try:
+            # Sort file list by priority, images first
+            sorted_files = sorted(new_files, key=EnhancedMessageProcessor.get_file_priority)
+            
+            # Create mock uploaded_files object to display thumbnails
+            mock_files = []
+            for file_path in sorted_files[:8]:  # Display maximum 8 files
+                if os.path.isfile(file_path):
+                    # Create a simple mock object to simulate uploaded_file
+                    class MockFile:
+                        def __init__(self, filepath):
+                            self.name = os.path.basename(filepath)
+                            self.size = os.path.getsize(filepath)
+                            self._filepath = filepath
+                        
+                        def read(self):
+                            try:
+                                with open(self._filepath, 'rb') as f:
+                                    return f.read()
+                            except:
+                                return b''
+                        
+                        def seek(self, pos):
+                            pass
+                    
+                    mock_files.append(MockFile(file_path))
+            
+            if mock_files:
+                # Create one-line display column layout, maximum 8 columns
+                file_count = len(mock_files)
+                if file_count > 8:
+                    st.info(f"📁 Generated {len(new_files)} files, prioritizing display of preview for images and other important files (first 8)")
+                    file_count = 8
+                
+                cols = st.columns(file_count)
+                
+                for i, mock_file in enumerate(mock_files[:file_count]):
+                    with cols[i]:
+                        # Get file information
+                        filename = mock_file.name
+                        file_size = mock_file.size
+                        
+                        # Format file size
+                        if file_size < 1024:
+                            size_str = f"{file_size} B"
+                        elif file_size < 1024 * 1024:
+                            size_str = f"{file_size / 1024:.1f} KB"
+                        else:
+                            size_str = f"{file_size / (1024 * 1024):.1f} MB"
+                        
+                        # Use FilePreviewGenerator to generate real file content preview
+                        try:
+                            from src.frontend.ui_styles import FilePreviewGenerator
+                            preview_content = FilePreviewGenerator.generate_preview_html(mock_file)
+                        except (ImportError, Exception) as e:
+                            # If import fails or preview generation fails, use fallback icon
+                            file_ext = filename.split('.')[-1].lower() if '.' in filename else ''
+                            icon_map = {
+                                'png': '🖼️', 'jpg': '🖼️', 'jpeg': '🖼️', 'gif': '🖼️',
+                                'pdf': '📕', 'csv': '📊', 'xlsx': '📈', 'json': '📋',
+                                'txt': '📄', 'py': '🐍', 'html': '🌐', 'css': '🎨',
+                                'md': '📝', 'yml': '⚙️', 'yaml': '⚙️', 'xml': '📋'
+                            }
+                            preview_content = icon_map.get(file_ext, '📄')
+                        
+                        # Render compact file card
+                        card_html = f"""
+                        <div class="uploaded-file-card">
+                            <div class="file-thumbnail">
+                                {preview_content}
+                            </div>
+                            <div class="file-card-info">
+                                <div class="file-card-name" title="{filename}">{filename[:12]}{'...' if len(filename) > 12 else ''}</div>
+                                <div class="file-card-size">{size_str}</div>
+                            </div>
+                        </div>
+                        """
+                        
+                        st.markdown(card_html, unsafe_allow_html=True)
+        
+        except Exception as e:
+            print(f"\n{'-'*30}\ndisplay_files_compact ERROR: {e}\n{'-'*30}\n")
 
     @staticmethod
     def process_tool_calls(tool_calls, st):
-        """处理工具调用显示"""
+        """Process tool call display"""
         if not tool_calls:
             return
         
-        # 获取所有unique的function names
+        # Get all unique function names
         function_names = []
         function_call_list = []
         for tool_call in tool_calls:
@@ -308,7 +617,7 @@ class EnhancedMessageProcessor:
         function_content = ' | '.join([f"{k}: {str(v)[:min(len(str(v)),400)]}" for calls in function_call_list for k,v in calls.items()])
         function_content = EnhancedMessageProcessor.fliter_message(function_content)
         
-        # 显示工具执行状态
+        # Display tool execution status
         if function_names:
             tools_text = " | ".join(function_names)
             st.markdown(f"""
@@ -330,7 +639,7 @@ class EnhancedMessageProcessor:
             </style>
             """, unsafe_allow_html=True)
         
-        # 显示详细参数
+        # Display detailed parameters
         with st.expander(f"🔧 Click to expand tool call details ({len(tool_calls)} items), Preview: 📋 {function_content}", expanded=False):
             for i, tool_call in enumerate(tool_calls):
                 function_call = tool_call.get("function", {})
@@ -368,52 +677,52 @@ class EnhancedMessageProcessor:
         save_to_history: bool = True,
         timestamp: str = None,
     ):
-        """增强版Streamlit消息显示"""        
+        """Enhanced Streamlit message display"""        
         try:
-            # 初始化新文件记录
+            # Initialize new file records
             if st is not None and save_to_history:
                 if not hasattr(st.session_state, '_current_new_files'):
                     st.session_state._current_new_files = []
             
-            # 确保message是字典格式
+            # Ensure message is in dictionary format
             if isinstance(message, str):
                 message = {"content": message}
             elif not isinstance(message, dict):
                 message = {"content": str(message)}
             
-            # 只在非重现模式下保存完整的显示信息
+            # Only save complete display information in non-replay mode
             if save_to_history and st is not None:
                 EnhancedMessageProcessor.save_display_info(
                     st, message, sender_name, receiver_name, llm_config, sender_role
                 )
             
-            # 处理工具响应
+            # Process tool responses
             if message.get("tool_responses"):
                 for idx, tool_response in enumerate(message["tool_responses"]):
-                    # 直接处理tool_response，避免递归调用
+                    # Process tool_response directly, avoid recursive calls
                     if tool_response.get("role") in ["function", "tool"]:
-                        # 只在第一个tool_response时显示标题
+                        # Only show title for first tool_response
                         show_title = (idx == 0)
                         EnhancedMessageProcessor.display_function_tool_message(st, tool_response, show_title)
                 
                 if message.get("role") == "tool":
                     return
 
-            # 处理function/tool角色的消息
+            # Process function/tool role messages
             if message.get("role") in ["function", "tool"]:
                 EnhancedMessageProcessor.display_function_tool_message(st, message, first_display)
             
             else:
-                # 处理普通消息内容
+                # Process regular message content
                 content = message.get("content")
                 if content:
                     content = EnhancedMessageProcessor.fliter_message(content)
                     
-                    # 添加时间戳 - 使用传入的timestamp或当前时间
+                    # Add timestamp - use passed timestamp or current time
                     if timestamp:
-                        # 如果传入了timestamp，需要转换格式
+                        # If timestamp is passed, need to convert format
                         try:
-                            # 从ISO格式转换为显示格式
+                            # Convert from ISO format to display format
                             dt = datetime.datetime.fromisoformat(timestamp)
                             display_timestamp = dt.strftime("%H:%M:%S")
                         except:
@@ -430,7 +739,7 @@ class EnhancedMessageProcessor:
                     
                     st.markdown(content)
                 
-                # 处理function_call
+                # Process function_call
                 if "function_call" in message and message["function_call"]:
                     function_call = dict(message["function_call"])
                     function_name = function_call.get('name', 'Unknown function')
@@ -450,11 +759,11 @@ class EnhancedMessageProcessor:
                         except:
                             st.code(function_call.get("arguments", "no arguments found"))
                 
-                # 处理tool_calls
+                # Process tool_calls
                 if "tool_calls" in message and message["tool_calls"]:
                     EnhancedMessageProcessor.process_tool_calls(message["tool_calls"], st)
 
-            # 保存到消息历史
+            # Save to message history
             if sender_role is not None and st is not None and "messages" in st.session_state:
                 history_entry = {"role": sender_role}
                 
@@ -481,7 +790,7 @@ class EnhancedMessageProcessor:
 
     @staticmethod
     def save_display_info(st, message: Dict, sender_name: str, receiver_name: str, llm_config: Dict, sender_role: str):
-        """保存完整的显示信息用于历史对话重现"""
+        """Save complete display information for historical conversation replay"""
         if st is None or sender_role is None:
             return
             
@@ -489,14 +798,14 @@ class EnhancedMessageProcessor:
             st.session_state.display_messages = []
         
         try:
-            # 将Agent对象转换为可序列化的字典
+            # Convert Agent object to serializable dictionary
             sender_info = {
                 "name": sender_name,
                 "description": "",
                 "system_message": "",
             }
             
-            # 获取当前检测到的新文件信息（如果存在的话）
+            # Get currently detected new file information (if exists)
             new_files = getattr(st.session_state, '_current_new_files', [])
             
             display_info = {
@@ -506,12 +815,12 @@ class EnhancedMessageProcessor:
                 "llm_config": llm_config if llm_config else {},
                 "sender_role": sender_role,
                 "timestamp": datetime.datetime.now().isoformat(),
-                "new_files": json.dumps(new_files) if new_files else "[]"  # 转为JSON格式保存
+                "new_files": json.dumps(new_files) if new_files else "[]"  # Save as JSON format
             }
             
             st.session_state.display_messages.append(display_info)
             
-            # 清除临时的新文件记录
+            # Clear temporary new file records
             st.session_state._current_new_files = []
             
         except Exception as e:
@@ -519,11 +828,11 @@ class EnhancedMessageProcessor:
 
     @staticmethod
     def replay_display_messages(st, display_messages: List[Dict]):
-        """重现历史显示消息 - 直接调用streamlit_display_message"""
+        """Replay historical display messages - directly call streamlit_display_message"""
         
-        # 初始化或重置local_files状态，确保重现历史时不重复展示文件
-        if "local_files" not in st.session_state:
-            st.session_state["local_files"] = []
+        # Initialize or reset local_files_info state to ensure no duplicate file display during history replay
+        if "local_files_info" not in st.session_state:
+            st.session_state["local_files_info"] = {}
         
         for i, display_info in enumerate(display_messages):
             try:
@@ -533,10 +842,10 @@ class EnhancedMessageProcessor:
                 llm_config = display_info["llm_config"]
                 sender_role = display_info["sender_role"]
                 
-                # 获取历史记录的时间戳
+                # Get historical record timestamp
                 historical_timestamp = display_info.get("timestamp", None)
                 
-                # 获取历史记录的新文件信息
+                # Get historical record new file information
                 new_files_json = display_info.get("new_files", "[]")
                 if isinstance(new_files_json, str):
                     try:
@@ -546,14 +855,23 @@ class EnhancedMessageProcessor:
                 else:
                     new_files = new_files_json if isinstance(new_files_json, list) else []
                 
-                # 如果有新文件需要展示
+                # If there are new files to display
                 if new_files:
                     EnhancedMessageProcessor.display_new_files_header(len(new_files), st)
                     
+                    # Filter existing files and use compact display
+                    existing_files = []
                     for file_path in new_files:
                         file_path = 'coding/'+file_path.split('/coding/')[-1]
-                        if os.path.exists(file_path):  # 检查文件是否仍然存在
-                            EnhancedMessageProcessor.display_single_file(file_path, st)
+                        if os.path.exists(file_path):  # Check if file still exists
+                            existing_files.append(file_path)
+                    
+                    if existing_files:
+                        try:
+                            EnhancedMessageProcessor.display_files_compact(existing_files, st)
+                        except Exception as e:
+                            print(f"Compact display failed in replay, using simple version: {e}")
+                            EnhancedMessageProcessor.display_files_compact_simple(existing_files, st)
                 
                 if sender_role == "assistant":
                     with st.chat_message("user", avatar="🔷" if i<len(display_messages)-1 else "✨"):
@@ -564,8 +882,8 @@ class EnhancedMessageProcessor:
                             receiver_name=receiver_name,
                             llm_config=llm_config,
                             sender_role=sender_role,
-                            save_to_history=False,  # 重现历史时不保存
-                            timestamp=historical_timestamp,  # 传递历史时间戳
+                            save_to_history=False,  # Don't save during history replay
+                            timestamp=historical_timestamp,  # Pass historical timestamp
                         )
                 else:
                     with st.chat_message("assistant", avatar="👨‍💼" if i!=0 else "✨"):
@@ -576,8 +894,8 @@ class EnhancedMessageProcessor:
                             receiver_name=receiver_name,
                             llm_config=llm_config,
                             sender_role=sender_role,
-                            save_to_history=False,  # 重现历史时不保存
-                            timestamp=historical_timestamp,  # 传递历史时间戳
+                            save_to_history=False,  # Don't save during history replay
+                            timestamp=historical_timestamp,  # Pass historical timestamp
                         )
                 
             except Exception as e:
@@ -585,7 +903,7 @@ class EnhancedMessageProcessor:
 
     @staticmethod
     def display_function_tool_message(st, message_data: Dict, show_title: bool = False):
-        """处理function/tool角色消息的显示逻辑"""
+        """Handle display logic for function/tool role messages"""
         id_key = "name" if message_data["role"] == "function" else "tool_call_id"
         tool_id = message_data.get(id_key, "No id found")
         content = message_data.get("content", "")
@@ -598,13 +916,13 @@ class EnhancedMessageProcessor:
         if show_title:
             st.markdown(f"📚 **Response Details Expand**")
         
-        # 创建更清晰的预览内容
+        # Create clearer preview content
         if len(content) > 300:
             preview_content = content[:300] + "..."
         else:
             preview_content = content
         
-        # 使用多行格式的标题，增强视觉区分
+        # Use multi-line format title to enhance visual distinction
         expander_title = f"""🔥 Length: {len(content)} characters
 📋 Preview: {preview_content}"""
         
@@ -683,7 +1001,7 @@ def check_openai_message(message, st):
             not message.get("tool_responses")):
             return False
         
-        # 检查内容类型
+        # Check content type
         elif isinstance(message.get("content"), str):
             if st is not None:
                 content = message.get("content", "")
@@ -749,23 +1067,23 @@ class TrackableUserProxyAgent(UserProxyAgent):
             if self.st is not None and not silent:
                 with self.st.chat_message("assistant", avatar="👨‍💼"):
                     colored_header(label=f"{sender.name}", description="", color_name="violet-70")
-                    # 在显示消息前先处理文件展示和记录
+                    # Process file display and recording before showing message
                     if hasattr(self, 'work_dir') and self.work_dir:
-                        previous_files = self.st.session_state.get("local_files", [])
-                        current_files, new_files = EnhancedMessageProcessor.display_files_batch(
+                        previous_files_info = self.st.session_state.get("local_files_info", {})
+                        current_files_info, new_files = EnhancedMessageProcessor.display_files_batch(
                             self.work_dir, 
-                            previous_files, 
+                            previous_files_info, 
                             self.st
                         )
-                        self.st.session_state["local_files"] = current_files
+                        self.st.session_state["local_files_info"] = current_files_info
                         
-                        # 记录新文件信息，供后续的save_display_info使用
+                        # Record new file information for subsequent save_display_info use
                         if new_files:
                             if not hasattr(self.st.session_state, '_current_new_files'):
                                 self.st.session_state._current_new_files = []
                             self.st.session_state._current_new_files.extend(new_files)
                     
-                    # 先处理message
+                    # Process message first
                     processed_message = self._message_to_dict(message)
                     EnhancedMessageProcessor.streamlit_display_message(
                         st=self.st,
@@ -774,7 +1092,7 @@ class TrackableUserProxyAgent(UserProxyAgent):
                         receiver_name=self.name,
                         llm_config=self.llm_config,
                         sender_role="assistant",
-                        save_to_history=True,  # 正常对话时保存
+                        save_to_history=True,  # Save during normal conversation
                     )
         return super()._process_received_message(message, sender, silent)
     
@@ -835,20 +1153,20 @@ class TrackableAssistantAgent(AssistantAgent):
         return messages
     
     def display_files(self):
-        """显示文件"""
+        """Display files"""
         if self.work_dir is None or self.st is None:
             return
         
         try:
-            previous_files = self.st.session_state.get("local_files", [])
-            current_files, new_files = EnhancedMessageProcessor.display_files_batch(
+            previous_files_info = self.st.session_state.get("local_files_info", {})
+            current_files_info, new_files = EnhancedMessageProcessor.display_files_batch(
                 self.work_dir, 
-                previous_files, 
+                previous_files_info, 
                 self.st
             )
-            self.st.session_state["local_files"] = current_files
+            self.st.session_state["local_files_info"] = current_files_info
             
-            # 记录新文件信息，供后续的save_display_info使用
+            # Record new file information for subsequent save_display_info use
             if new_files:
                 if not hasattr(self.st.session_state, '_current_new_files'):
                     self.st.session_state._current_new_files = []
@@ -863,7 +1181,7 @@ class TrackableAssistantAgent(AssistantAgent):
                 with self.st.chat_message("assistant", avatar="🔷"):
                     colored_header(label=f"{sender.name}", description="", color_name="violet-70")
                     self.display_files()  
-                    # 先处理message
+                    # Process message first
                     processed_message = self._message_to_dict(message)
                     EnhancedMessageProcessor.streamlit_display_message(
                         st=self.st,
@@ -872,7 +1190,7 @@ class TrackableAssistantAgent(AssistantAgent):
                         receiver_name=self.name,
                         llm_config=self.llm_config,
                         sender_role="user",
-                        save_to_history=True,  # 正常对话时保存
+                        save_to_history=True,  # Save during normal conversation
                     )
         return super()._process_received_message(message, sender, silent)
 
@@ -882,15 +1200,15 @@ class TrackableGroupChatManager(GroupChatManager):
         super().__init__(*args, **kwargs)
         self.work_dir = work_dir
         self.st = _streamlit
-        self.latest_files = []
+        self.latest_files_info = {}
 
     def display_files(self):
-        """显示文件"""
+        """Display files"""
         if self.work_dir is None:
             return
         
-        current_files, new_files = EnhancedMessageProcessor.detect_new_files(self.work_dir, self.latest_files)
-        self.latest_files = current_files
+        current_files_info, new_files = EnhancedMessageProcessor.detect_new_files(self.work_dir, self.latest_files_info)
+        self.latest_files_info = current_files_info
 
         if new_files:
             EnhancedMessageProcessor.display_new_files_header(len(new_files), self.st)
@@ -898,7 +1216,7 @@ class TrackableGroupChatManager(GroupChatManager):
             for file_path in new_files:
                 EnhancedMessageProcessor.display_single_file(file_path, self.st)
             
-            # 记录新文件信息，供后续的save_display_info使用
+            # Record new file information for subsequent save_display_info use
             if self.st is not None:
                 if not hasattr(self.st.session_state, '_current_new_files'):
                     self.st.session_state._current_new_files = []
@@ -913,10 +1231,10 @@ class TrackableGroupChatManager(GroupChatManager):
                 message = self._message_to_dict(message)
 
                 if message.get('content'):
-                    # 限制内容长度以避免显示问题
+                    # Limit content length to avoid display issues
                     content = message.get('content', '')
                     if len(content) > 20000:
-                        content = content[:20000] + "\n\n[内容已截断...]"
+                        content = content[:20000] + "\n\n[Content truncated...]"
                     message['content'] = content
                 
                 _print_received_message(message, sender=sender, st=self.st, agent_name=self.name)

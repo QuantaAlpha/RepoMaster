@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Python包错误提取工具
+Python Package Error Extraction Tool
 
-此脚本用于从Python执行结果或日志文件中提取与包相关的错误，
-并提供详细的错误分析和修复建议。
+This script is used to extract package-related errors from Python execution results or log files,
+and provide detailed error analysis and fix suggestions.
 
-使用方法：
-1. 作为模块导入:
+Usage:
+1. Import as module:
    from package_error_extractor import PackageErrorExtractor
    extractor = PackageErrorExtractor()
    errors = extractor.extract_errors_from_text(error_text)
 
-2. 作为脚本直接运行:
+2. Run as script directly:
    python package_error_extractor.py
    
-   这将运行内置的测试样例，展示各种包错误的识别和分析。
+   This will run built-in test cases, demonstrating identification and analysis of various package errors.
 """
 
 import re
@@ -26,11 +26,11 @@ import json
 
 
 class PackageErrorExtractor:
-    """Python包错误提取器类"""
+    """Python package error extractor class"""
     
     def __init__(self):
-        """初始化错误模式和分类"""
-        # 错误模式字典: {错误类型: (正则模式, 捕获组说明)}
+        """Initialize error patterns and classifications"""
+        # Error pattern dictionary: {error_type: (regex_pattern, capture_group_description)}
         self.error_patterns = {
             "missing_package": (
                 r"(?:ImportError|ModuleNotFoundError): No module named ['\"]([^'\"]+)['\"]",
@@ -78,33 +78,33 @@ class PackageErrorExtractor:
             ),
         }
         
-        # 修复建议字典
+        # Fix suggestion dictionary
         self.fix_suggestions = {
-            "missing_package": "使用 pip 安装缺失的包: pip install {package_name}",
-            "import_name_error": "检查包 {package_name} 的版本是否正确。该组件 {component_name} 可能在新版本中添加或在当前版本中不存在。",
-            "attribute_error": "检查包 {package_name} 的文档，确认 {attribute_name} 是否存在或需要额外导入。",
-            "version_conflict": "安装所需版本的包: pip install {package_name}=={required_version} 或使用虚拟环境隔离依赖。",
-            "syntax_error_in_package": "包 {package_name} 可能安装不完整或损坏。尝试重新安装: pip uninstall {package_name} && pip install {package_name}",
-            "import_error_in_package": "包 {package_name} 内部依赖问题: {error_details}。检查其依赖是否完整安装。",
-            "dependency_error": "安装缺失的依赖: pip install {dependency_name}",
-            "dll_load_error": "模块 {module_name} 加载DLL失败: {error_details}。可能需要安装系统级依赖或VC++运行库。",
-            "permission_error": "包 {package_name} 访问权限问题。尝试以管理员/sudo权限运行或检查文件权限。",
-            "pkg_resources_error": "分发包 {package_name} 未找到。尝试: pip install {package_name}",
-            "incompatible_version": "包版本冲突: {package1} {version1} 与 {package2} {version2} 不兼容。创建虚拟环境或调整依赖版本。",
+            "missing_package": "Install the missing package using pip: pip install {package_name}",
+            "import_name_error": "Check if package {package_name} version is correct. Component {component_name} may have been added in newer versions or doesn't exist in current version.",
+            "attribute_error": "Check the documentation of package {package_name} to confirm if {attribute_name} exists or requires additional imports.",
+            "version_conflict": "Install the required version of package: pip install {package_name}=={required_version} or use virtual environment to isolate dependencies.",
+            "syntax_error_in_package": "Package {package_name} may be incompletely installed or corrupted. Try reinstalling: pip uninstall {package_name} && pip install {package_name}",
+            "import_error_in_package": "Package {package_name} internal dependency issue: {error_details}. Check if its dependencies are completely installed.",
+            "dependency_error": "Install the missing dependency: pip install {dependency_name}",
+            "dll_load_error": "Module {module_name} failed to load DLL: {error_details}. May need to install system-level dependencies or VC++ runtime.",
+            "permission_error": "Package {package_name} access permission issue. Try running with administrator/sudo privileges or check file permissions.",
+            "pkg_resources_error": "Distribution package {package_name} not found. Try: pip install {package_name}",
+            "incompatible_version": "Package version conflict: {package1} {version1} is incompatible with {package2} {version2}. Create virtual environment or adjust dependency versions.",
         }
 
     def extract_errors_from_text(self, text: str) -> List[Dict]:
-        """从文本中提取所有包相关错误
+        """Extract all package-related errors from text
         
         Args:
-            text: 包含错误信息的文本
+            text: Text containing error information
             
         Returns:
-            错误信息列表，每项包含错误类型、匹配内容和相关详情
+            List of error information, each item contains error type, match content and related details
         """
         results = []
         
-        # 对每个错误模式进行匹配
+        # Match each error pattern
         for error_type, (pattern, capture_groups) in self.error_patterns.items():
             matches = re.finditer(pattern, text, re.MULTILINE | re.IGNORECASE)
             
@@ -115,19 +115,19 @@ class PackageErrorExtractor:
                     "details": {}
                 }
                 
-                # 提取捕获组信息
+                # Extract capture group information
                 for i, group_name in enumerate(capture_groups, 1):
                     if i <= len(match.groups()):
                         error_info["details"][group_name] = match.group(i)
                 
-                # 根据错误类型和详情生成修复建议
-                suggestion_template = self.fix_suggestions.get(error_type, "无可用修复建议")
+                # Generate fix suggestion based on error type and details
+                suggestion_template = self.fix_suggestions.get(error_type, "No fix suggestion available")
                 try:
                     error_info["suggestion"] = suggestion_template.format(**error_info["details"])
                 except KeyError:
-                    error_info["suggestion"] = "无法生成修复建议，详情不完整"
+                    error_info["suggestion"] = "Cannot generate fix suggestion, details incomplete"
                 
-                # 获取错误上下文（前后各3行）
+                # Get error context (3 lines before and after)
                 error_line_match = re.search(r'(?:.*\n){0,3}' + re.escape(match.group(0)) + r'(?:\n.*){0,3}', text)
                 if error_line_match:
                     error_info["context"] = error_line_match.group(0)
@@ -137,39 +137,39 @@ class PackageErrorExtractor:
         return results
 
     def extract_errors_from_file(self, file_path: str) -> List[Dict]:
-        """从文件中提取包相关错误
+        """Extract package-related errors from file
         
         Args:
-            file_path: 错误日志文件路径
+            file_path: Error log file path
             
         Returns:
-            错误信息列表
+            List of error information
         """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             return self.extract_errors_from_text(content)
         except UnicodeDecodeError:
-            # 尝试其他编码
+            # Try other encodings
             try:
                 with open(file_path, 'r', encoding='latin-1') as f:
                     content = f.read()
                 return self.extract_errors_from_text(content)
             except Exception as e:
-                print(f"读取文件时出错: {e}")
+                print(f"Error reading file: {e}")
                 return []
         except Exception as e:
-            print(f"处理文件时出错: {e}")
+            print(f"Error processing file: {e}")
             return []
 
     def get_error_summary(self, errors: List[Dict]) -> Dict:
-        """生成错误摘要信息
+        """Generate error summary information
         
         Args:
-            errors: 错误信息列表
+            errors: List of error information
             
         Returns:
-            包含错误摘要的字典
+            Dictionary containing error summary
         """
         if not errors:
             return {"total_errors": 0, "error_types": {}}
@@ -186,27 +186,27 @@ class PackageErrorExtractor:
                 summary["error_types"][error_type] = 0
             summary["error_types"][error_type] += 1
             
-            # 收集受影响的包
+            # Collect affected packages
             for key, value in error["details"].items():
                 if "package" in key or "module" in key:
-                    # 提取基础包名（去除子模块）
+                    # Extract base package name (remove submodules)
                     base_package = value.split('.')[0]
                     summary["affected_packages"].add(base_package)
         
-        # 转换为列表以便JSON序列化
+        # Convert to list for JSON serialization
         summary["affected_packages"] = list(summary["affected_packages"])
         
         return summary
 
     def generate_fix_commands(self, errors: List[Dict]) -> Tuple[List[str], List[str]]:
-        """生成可能的修复命令
+        """Generate possible fix commands
         
         Args:
-            errors: 错误信息列表
-            install_packages: 可以在安装的包列表
+            errors: List of error information
+            install_packages: List of packages that can be installed
             
         Returns:
-            修复命令列表
+            List of fix commands
         """
         fix_commands = []
         install_packages = []
@@ -219,7 +219,7 @@ class PackageErrorExtractor:
                 install_packages.append(details["package_name"])
             if error_type == "missing_package" and "package_name" in details:
                 package = details["package_name"]
-                base_package = package.split('.')[0]  # 获取基础包名
+                base_package = package.split('.')[0]  # Get base package name
                 if base_package not in seen_packages:
                     fix_commands.append(f"pip install {base_package}")
                     seen_packages.add(base_package)
@@ -243,9 +243,9 @@ class PackageErrorExtractor:
                     fix_commands.append(f"pip uninstall -y {package} && pip install --no-cache-dir {package}")
                     seen_packages.add(package)
         
-        # 添加创建虚拟环境的建议
+        # Add virtual environment suggestion
         if fix_commands:
-            fix_commands.insert(0, "# 建议在虚拟环境中安装依赖，以避免版本冲突")
+            fix_commands.insert(0, "# Recommend installing dependencies in virtual environment to avoid version conflicts")
             fix_commands.insert(1, "python -m venv venv")
             fix_commands.insert(2, "# Windows: venv\\Scripts\\activate")
             fix_commands.insert(3, "# Linux/Mac: source venv/bin/activate")
@@ -253,133 +253,133 @@ class PackageErrorExtractor:
         return fix_commands, install_packages
 
     def print_errors(self, errors: List[Dict]):
-        """打印错误信息到控制台
+        """Print error information to console
         
         Args:
-            errors: 错误信息列表
+            errors: List of error information
         """
         if not errors:
-            print("未发现任何包相关错误。")
+            print("No package-related errors found.")
             return
             
         summary = self.get_error_summary(errors)
         fix_commands, install_packages = self.generate_fix_commands(errors)
         
         print("=" * 80)
-        print("Python包错误分析报告")
+        print("Python Package Error Analysis Report")
         print("=" * 80)
         print()
-        print("摘要:")
-        print(f"- 发现 {summary['total_errors']} 个包相关错误")
-        print(f"- 受影响的包: {', '.join(summary['affected_packages'])}")
+        print("Summary:")
+        print(f"- Found {summary['total_errors']} package-related errors")
+        print(f"- Affected packages: {', '.join(summary['affected_packages'])}")
         print()
-        print("错误类型分布:")
+        print("Error type distribution:")
         
         for error_type, count in summary["error_types"].items():
-            print(f"- {self._friendly_error_name(error_type)}: {count}个")
+            print(f"- {self._friendly_error_name(error_type)}: {count} errors")
         
         print()
         
         if fix_commands:
-            print("建议修复命令:")
+            print("Suggested fix commands:")
             print("-" * 40)
             for cmd in fix_commands:
                 print(cmd)
             print("-" * 40)
             print()
         
-        print("详细错误信息:")
+        print("Detailed error information:")
         print()
         
         for i, error in enumerate(errors, 1):
-            print(f"错误 #{i}: {self._friendly_error_name(error['error_type'])}")
+            print(f"Error #{i}: {self._friendly_error_name(error['error_type'])}")
             print("-" * 40)
             
-            # 错误详情
-            print("详情:")
+            # Error details
+            print("Details:")
             for key, value in error["details"].items():
                 print(f"  {key}: {value}")
             
-            # 上下文
+            # Context
             if "context" in error:
-                print("\n上下文:")
+                print("\nContext:")
                 print(f"{error['context']}")
             
-            # 修复建议
-            print("\n修复建议:")
+            # Fix suggestion
+            print("\nFix suggestion:")
             print(f"{error['suggestion']}")
             
             print("\n" + "=" * 80 + "\n")
 
     def _friendly_error_name(self, error_type: str) -> str:
-        """将错误类型转换为友好的描述
+        """Convert error type to friendly description
         
         Args:
-            error_type: 错误类型代码
+            error_type: Error type code
             
         Returns:
-            错误类型的友好描述
+            Friendly description of error type
         """
         name_map = {
-            "missing_package": "缺少包",
-            "import_name_error": "导入名称错误",
-            "attribute_error": "属性错误",
-            "version_conflict": "版本冲突",
-            "syntax_error_in_package": "包中的语法错误",
-            "import_error_in_package": "包导入错误",
-            "dependency_error": "依赖错误",
-            "dll_load_error": "DLL加载错误",
-            "permission_error": "权限错误",
-            "pkg_resources_error": "资源分发错误",
-            "incompatible_version": "版本不兼容"
+            "missing_package": "Missing Package",
+            "import_name_error": "Import Name Error",
+            "attribute_error": "Attribute Error",
+            "version_conflict": "Version Conflict",
+            "syntax_error_in_package": "Syntax Error in Package",
+            "import_error_in_package": "Package Import Error",
+            "dependency_error": "Dependency Error",
+            "dll_load_error": "DLL Load Error",
+            "permission_error": "Permission Error",
+            "pkg_resources_error": "Resource Distribution Error",
+            "incompatible_version": "Incompatible Version"
         }
         return name_map.get(error_type, error_type)
 
 
 def main():
-    """主函数: 运行错误提取测试用例"""
-    print("运行Python包错误提取器测试用例...")
+    """Main function: Run error extraction test cases"""
+    print("Running Python package error extractor test cases...")
     
     from test_messages import test_cases
     
     extractor = PackageErrorExtractor()
     
-    # 运行所有测试用例
+    # Run all test cases
     for case_name, error_text in test_cases.items():
         print("\n" + "=" * 80)
-        print(f"测试用例: {case_name}")
+        print(f"Test case: {case_name}")
         print("=" * 80)
         
-        # 提取错误
+        # Extract errors
         errors = extractor.extract_errors_from_text(error_text)
         
-        # 打印提取的错误
+        # Print extracted errors
         extractor.print_errors(errors)
         
-    # 组合测试用例
+    # Combined test case
     print("\n" + "=" * 80)
-    print("组合测试用例: 所有错误")
+    print("Combined test case: All errors")
     print("=" * 80)
     
-    # 合并所有测试文本
+    # Merge all test texts
     all_errors_text = "\n\n".join(test_cases.values())
     all_errors = extractor.extract_errors_from_text(all_errors_text)
     extractor.print_errors(all_errors)
     
-    # 示例: 如何在实际代码中使用此工具
+    # Example: How to use this tool in actual code
     print("\n" + "=" * 80)
-    print("实际应用示例")
+    print("Practical Application Example")
     print("=" * 80)
-    print("以下是如何在你的代码中使用此工具:")
+    print("Here's how to use this tool in your code:")
     print("""
-# 示例 1: 从日志文件中提取错误
+# Example 1: Extract errors from log file
 from package_error_extractor import PackageErrorExtractor
 
 extractor = PackageErrorExtractor()
 errors = extractor.extract_errors_from_file('error_log.txt')
 extractor.print_errors(errors)
 
-# 示例 2: 直接从错误文本中提取
+# Example 2: Extract directly from error text
 error_text = '''
 Traceback (most recent call last):
   File "example.py", line 10, in <module>
@@ -387,13 +387,13 @@ Traceback (most recent call last):
 ModuleNotFoundError: No module named 'pandas'
 '''
 errors = extractor.extract_errors_from_text(error_text)
-# 获取提取的错误详情
+# Get extracted error details
 for error in errors:
-    print(f"错误类型: {error['error_type']}")
-    print(f"详情: {error['details']}")
-    print(f"修复建议: {error['suggestion']}")
+    print(f"Error type: {error['error_type']}")
+    print(f"Details: {error['details']}")
+    print(f"Fix suggestion: {error['suggestion']}")
     
-# 示例 3: 生成修复命令
+# Example 3: Generate fix commands
 fix_commands, install_packages = extractor.generate_fix_commands(errors)
 for cmd in fix_commands:
     print(cmd)

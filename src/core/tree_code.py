@@ -32,11 +32,11 @@ except ImportError:
         ImportanceAnalyzer = None
         logging.warning("Cannot import ImportanceAnalyzer, code importance analysis will not be available.")
 
-# 修改tree-sitter导入
+# Modify tree-sitter import
 import tree_sitter
 from tree_sitter_language_pack import get_language, get_parser
 
-# 设置日志
+# Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -45,21 +45,21 @@ class GlobalCodeTreeBuilder:
     
     def __init__(self, repo_path: str):
         """
-        初始化代码树构建器
+        Initialize code tree builder
         
         Args:
-            repo_path: 代码仓库的路径
-            ignored_dirs: 要忽略的目录列表
-            ignored_file_patterns: 要忽略的文件模式列表
+            repo_path: Path to the code repository
+            ignored_dirs: List of directories to ignore
+            ignored_file_patterns: List of file patterns to ignore
         """
         self.repo_path = repo_path
-        self.call_graph = nx.DiGraph()  # 函数调用图
-        self.modules = {}  # 模块信息
-        self.functions = {}  # 函数信息
-        self.classes = {}  # 类信息
-        self.other_files = {}  # 其他文件信息
-        self.imports = defaultdict(list)  # 导入信息
-        self.code_tree = {  # 分层代码树
+        self.call_graph = nx.DiGraph()  # Function call graph
+        self.modules = {}  # Module information
+        self.functions = {}  # Function information
+        self.classes = {}  # Class information
+        self.other_files = {}  # Other file information
+        self.imports = defaultdict(list)  # Import information
+        self.code_tree = {  # Hierarchical code tree
             'modules': {},
             'stats': {
                 'total_modules': 0,
@@ -67,60 +67,60 @@ class GlobalCodeTreeBuilder:
                 'total_functions': 0,
                 'total_lines': 0
             },
-            'key_components': []  # 关键组件
+            'key_components': []  # Key components
         }
         
-        # 统一定义要忽略的目录和文件模式，如果参数中没有提供，使用默认值
+        # Uniformly define directories and file patterns to ignore, use defaults if not provided in parameters
         self.ignored_dirs = ignored_dirs
         self.ignored_file_patterns = ignored_file_patterns
         
-        # 检查是否支持Jupyter Notebook解析
+        # Check if Jupyter Notebook parsing is supported
         self.jupyter_support = False
         try:
             import nbformat
             self.jupyter_support = True
-            logger.info("成功加载nbformat库，将支持Jupyter Notebook解析")
+            logger.info("Successfully loaded nbformat library, will support Jupyter Notebook parsing")
         except ImportError:
-            logger.warning("无法导入nbformat库，将跳过Jupyter Notebook解析")
+            logger.warning("Unable to import nbformat library, will skip Jupyter Notebook parsing")
         
-        # 初始化tree-sitter
+        # Initialize tree-sitter
         self.parser = None
         self.python_language = None
         
         if tree_sitter is not None:
             try:
-                # 使用tree_sitter_languages简化语言加载
+                # Use tree_sitter_languages to simplify language loading
                 self.parser = get_parser('python')
                 self.python_language = get_language('python')
                 if self.parser and self.python_language:
-                    logger.info("成功加载tree-sitter Python语言")
+                    logger.info("Successfully loaded tree-sitter Python language")
                 else:
-                    logger.warning("无法加载tree-sitter Python语言")
+                    logger.warning("Unable to load tree-sitter Python language")
             except Exception as e:
-                logger.warning(f"无法初始化tree-sitter: {e}，将使用简单代码展示")
+                logger.warning(f"Unable to initialize tree-sitter: {e}, will use simple code display")
         else:
-            logger.warning("tree-sitter库不可用，将使用简单代码展示")
+            logger.warning("tree-sitter library not available, will use simple code display")
         
     def parse_repository(self) -> None:
-        """解析整个代码仓库"""
-        logger.info(f"开始解析代码仓库: {self.repo_path}")
+        """Parse the entire code repository"""
+        logger.info(f"Starting to parse code repository: {self.repo_path}")
         
-        # 查找并解析所有Python文件和Jupyter Notebook文件
+        # Find and parse all Python files and Jupyter Notebook files
         for root, dirs, files in os.walk(self.repo_path):
-            # 计算当前目录深度 (相对于仓库根目录)
+            # Calculate current directory depth (relative to repository root)
             rel_path = os.path.relpath(root, self.repo_path)
             current_depth = 0 if rel_path == '.' else len(rel_path.split(os.sep))
             
-            # 如果目录深度超过5，则跳过此目录及其子目录
+            # If directory depth exceeds 5, skip this directory and its subdirectories
             if current_depth > 3:
-                dirs[:] = []  # 清空dirs列表，这样os.walk就不会进入子目录
-                # logger.info(f"目录 {rel_path} 深度超过4，跳过此目录及其子目录")
+                dirs[:] = []  # Clear dirs list so os.walk won't enter subdirectories
+                # logger.info(f"Directory {rel_path} depth exceeds 4, skipping this directory and its subdirectories")
                 continue
             
-            # 就地修改dirs列表，跳过被忽略的目录
+            # Modify dirs list in place, skip ignored directories
             dirs[:] = [d for d in dirs if d not in self.ignored_dirs]
             
-            # 限制每个目录最多处理40个文件
+            # Limit processing to maximum 40 files per directory
             file_count = 0
             max_files_per_dir = 40
             
@@ -131,22 +131,22 @@ class GlobalCodeTreeBuilder:
             
             
             for file in files:
-                # 如果已经处理了40个文件，则忽略此目录中的剩余文件
+                # If already processed 40 files, ignore remaining files in this directory
                 if file_count >= max_files_per_dir:
-                    # logger.info(f"目录 {rel_path} 中文件超过{max_files_per_dir}个，忽略剩余文件")
+                    # logger.info(f"Directory {rel_path} contains more than {max_files_per_dir} files, ignoring remaining files")
                     break
                 
                 file_path = os.path.join(root, file)
                 rel_path = os.path.relpath(file_path, self.repo_path)
                 
-                # 使用统一的函数检查是否应该忽略
+                # Use unified function to check if should be ignored
                 if should_ignore_path(rel_path):
                     continue
                 
-                # 在处理文件前添加
+                # Add before processing files
                 file_size = os.path.getsize(file_path)
-                if file_size > 10 * 1024 * 1024:  # 跳过大于10MB的文件
-                    # logger.info(f"文件 {rel_path} 过大 ({file_size/1024/1024:.2f}MB)，跳过")
+                if file_size > 10 * 1024 * 1024:  # Skip files larger than 10MB
+                    # logger.info(f"File {rel_path} is too large ({file_size/1024/1024:.2f}MB), skipping")
                     continue
                 
                 try:
@@ -155,34 +155,34 @@ class GlobalCodeTreeBuilder:
                     else:
                         self._parse_other_file(file_path, rel_path)
                     
-                    # 成功处理文件后增加计数
+                    # Increment count after successfully processing file
                     file_count += 1
                     
                 except Exception as e:
-                    logger.error(f"解析文件 {rel_path} 时出错: {e}", exc_info=True)
+                    logger.error(f"Error parsing file {rel_path}: {e}", exc_info=True)
         
-        # 构建各种关系
+        # Build various relationships
         self._build_call_relationships()
         self._build_hierarchical_code_tree()
         
-        # 识别重要组件
+        # Identify key components
         self._identify_key_class()
         
-        # 识别重要模块
+        # Identify key modules
         key_modules = self._identify_key_modules()
         if key_modules:
             self.code_tree['key_modules'] = key_modules
-            logger.info(f"已识别 {len(key_modules)} 个关键模块")
+            logger.info(f"Identified {len(key_modules)} key modules")
         
-        logger.info(f"代码仓库解析完成，共发现 {len(self.modules)} 个模块，{len(self.classes)} 个类，{len(self.functions)} 个函数")
+        logger.info(f"Code repository parsing completed, found {len(self.modules)} modules, {len(self.classes)} classes, {len(self.functions)} functions")
     
     def _parse_python_file(self, file_path: str, rel_path: str) -> None:
         """
-        解析单个Python文件
+        Parse single Python file
         
         Args:
-            file_path: 文件的绝对路径
-            rel_path: 文件相对于仓库根目录的路径
+            file_path: Absolute path of the file
+            rel_path: Path relative to repository root
         """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -191,7 +191,7 @@ class GlobalCodeTreeBuilder:
             module_node = ast.parse(content, filename=rel_path)
             module_docstring = ast.get_docstring(module_node) or ""
             
-            # 创建模块ID，以点分隔的路径
+            # Create module ID with dot-separated path
             module_id = rel_path.replace('/', '.').replace('\\', '.').replace('.py', '')
             self.modules[module_id] = {
                 'path': rel_path,
@@ -201,22 +201,22 @@ class GlobalCodeTreeBuilder:
                 'classes': []
             }
             
-            # 处理导入语句
+            # Process import statements
             self._process_imports(module_node, module_id)
             
-            # 解析函数和类
+            # Parse functions and classes
             for node in ast.walk(module_node):
-                # 处理函数定义
+                # Process function definitions
                 if isinstance(node, ast.FunctionDef):
                     if not hasattr(node, 'parent_class'):
                         self._process_function(node, module_id, None)
                 
-                # 处理类定义
+                # Process class definitions
                 elif isinstance(node, ast.ClassDef):
                     class_id = f"{module_id}.{node.name}"
                     class_docstring = ast.get_docstring(node) or ""
                     
-                    # 分析类的继承关系
+                    # Analyze class inheritance relationships
                     base_classes = []
                     for base in node.bases:
                         if isinstance(base, ast.Name):
@@ -235,25 +235,25 @@ class GlobalCodeTreeBuilder:
                     
                     self.modules[module_id]['classes'].append(class_id)
                     
-                    # 处理类中的方法
+                    # Process methods in the class
                     for class_node in node.body:
                         if isinstance(class_node, ast.FunctionDef):
-                            # 为方法添加父类属性
+                            # Add parent class attribute for method
                             class_node.parent_class = class_id
                             self._process_function(class_node, module_id, class_id)
         
         except SyntaxError as e:
-            logger.warning(f"文件 {rel_path} 存在语法错误: {e}")
+            logger.warning(f"File {rel_path} has syntax errors: {e}")
         except Exception as e:
-            logger.error(f"处理文件 {rel_path} 时发生错误: {e}")
+            logger.error(f"Error processing file {rel_path}: {e}")
     
     def _parse_other_file(self, file_path: str, rel_path: str) -> None:
         """
-        解析非Python文件，包括Jupyter Notebook等
+        Parse non-Python files, including Jupyter Notebooks etc
         
         Args:
-            file_path: 文件的绝对路径
-            rel_path: 文件相对于仓库根目录的路径
+            file_path: Absolute path of the file
+            rel_path: Path relative to repository root
         """
         try:
             if file_path.endswith('.ipynb'):
@@ -261,27 +261,27 @@ class GlobalCodeTreeBuilder:
             else:
                 content = open(file_path, 'r', encoding='utf-8').read()
             
-            # 为非Python文件创建一个简单的模块记录
-            # 使用文件扩展名作为"语言"标识
-            file_ext = os.path.splitext(file_path)[1][1:]  # 去掉点号
+            # Create a simple module record for non-Python files
+            # Use file extension as "language" identifier
+            file_ext = os.path.splitext(file_path)[1][1:]  # Remove the dot
             module_id = rel_path.replace('/', '.').replace('\\', '.').replace(f'.{file_ext}', '')
             
             self.other_files[module_id] = {
                 'path': rel_path,
-                'docstring': f"非Python文件: {file_ext.upper()} 代码",
+                'docstring': f"Non-Python file: {file_ext.upper()} code",
                 'content': content,
                 'functions': [],
                 'classes': [],
                 'language': file_ext
             }
             
-            logger.debug(f"已记录非Python文件: {rel_path}")
+            logger.debug(f"Recorded non-Python file: {rel_path}")
         
         except Exception as e:
-            logger.error(f"处理非Python文件 {rel_path} 时出错: {e}")
+            logger.error(f"Error processing non-Python file {rel_path}: {e}")
     
     def _process_imports(self, module_node: ast.Module, module_id: str) -> None:
-        """处理模块中的导入语句"""
+        """Process import statements in the module"""
         for node in module_node.body:
             if isinstance(node, ast.Import):
                 for name in node.names:
@@ -301,7 +301,7 @@ class GlobalCodeTreeBuilder:
                     })
     
     def _process_function(self, node: ast.FunctionDef, module_id: str, class_id: Optional[str]) -> None:
-        """处理函数或方法定义"""
+        """Process function or method definition"""
         function_name = node.name
         if class_id:
             function_id = f"{class_id}.{function_name}"
@@ -312,10 +312,10 @@ class GlobalCodeTreeBuilder:
         
         docstring = ast.get_docstring(node) or ""
         
-        # 获取源代码
+        # Get source code
         source = self._get_source(self.modules[module_id]['content'], node)
         
-        # 分析函数参数
+        # Analyze function parameters
         parameters = []
         for arg in node.args.args:
             param_name = arg.arg
@@ -332,7 +332,7 @@ class GlobalCodeTreeBuilder:
                 'type': param_type
             })
         
-        # 分析函数返回类型
+        # Analyze function return type
         return_type = None
         if hasattr(node, 'returns') and node.returns:
             if isinstance(node.returns, ast.Name):
@@ -342,7 +342,7 @@ class GlobalCodeTreeBuilder:
             elif isinstance(node.returns, ast.Subscript):
                 return_type = self._get_subscript_annotation(node.returns)
         
-        # 分析函数体中的函数调用
+        # Analyze function calls in the function body
         calls = self._extract_function_calls(node)
         
         self.functions[function_id] = {
@@ -353,15 +353,15 @@ class GlobalCodeTreeBuilder:
             'parameters': parameters,
             'return_type': return_type,
             'calls': calls,
-            'called_by': [],  # 将在构建调用关系时填充
+            'called_by': [],  # Will be populated when building call relationships
             'source': source
         }
         
-        # 将节点添加到调用图中
+        # Add node to call graph
         self.call_graph.add_node(function_id)
     
     def _extract_function_calls(self, node: ast.FunctionDef) -> List[Dict]:
-        """从函数体中提取函数调用"""
+        """Extract function calls from function body"""
         calls = []
         
         for subnode in ast.walk(node):
@@ -373,20 +373,20 @@ class GlobalCodeTreeBuilder:
         return calls
     
     def _analyze_call(self, node: ast.Call) -> Optional[Dict]:
-        """分析函数调用表达式"""
+        """Analyze function call expression"""
         if isinstance(node.func, ast.Name):
-            # 简单函数调用 func()
+            # Simple function call func()
             return {'type': 'simple', 'name': node.func.id}
         
         elif isinstance(node.func, ast.Attribute):
-            # 属性调用 obj.method()
+            # Attribute call obj.method()
             if isinstance(node.func.value, ast.Name):
                 return {
                     'type': 'attribute',
                     'object': node.func.value.id,
                     'attribute': node.func.attr
                 }
-            # 嵌套属性调用 module.sub.func()
+            # Nested attribute call module.sub.func()
             return {
                 'type': 'nested_attribute',
                 'full_path': self._get_attribute_path(node.func)
@@ -395,7 +395,7 @@ class GlobalCodeTreeBuilder:
         return None
     
     def _get_attribute_path(self, node: ast.Attribute) -> str:
-        """获取完整的属性路径 (例如 module.submodule.function)"""
+        """Get complete attribute path (e.g. module.submodule.function)"""
         parts = []
         current = node
         
@@ -409,8 +409,8 @@ class GlobalCodeTreeBuilder:
         return '.'.join(reversed(parts))
     
     def _get_subscript_annotation(self, node: ast.Subscript) -> str:
-        """获取类型注解中的下标表达式 (例如 List[str])"""
-        # 处理 Python 3.8+
+        """Get subscript expression in type annotation (e.g. List[str])"""
+        # Handle Python 3.8+
         try:
             if isinstance(node.value, ast.Name):
                 container = node.value.id
@@ -419,7 +419,7 @@ class GlobalCodeTreeBuilder:
             else:
                 return "unknown"
             
-            # 兼容 Python 3.8 及之前
+            # Compatible with Python 3.8 and earlier
             if hasattr(node, 'slice') and isinstance(node.slice, ast.Index):
                 slice_value = node.slice.value
                 if isinstance(slice_value, ast.Name):
@@ -428,7 +428,7 @@ class GlobalCodeTreeBuilder:
                     param = self._get_attribute_path(slice_value)
                 else:
                     param = "unknown"
-            # 兼容 Python 3.9+
+            # Compatible with Python 3.9+
             elif hasattr(node, 'slice'):
                 if isinstance(node.slice, ast.Name):
                     param = node.slice.id
@@ -444,8 +444,8 @@ class GlobalCodeTreeBuilder:
             return "unknown"
     
     def _build_call_relationships(self) -> None:
-        """构建函数间的调用关系"""
-        logger.info("构建函数调用关系...")
+        """Build call relationships between functions"""
+        logger.info("Building function call relationships...")
         
         for func_id, func_info in self.functions.items():
             calls = func_info['calls']
@@ -455,32 +455,32 @@ class GlobalCodeTreeBuilder:
                 called_func_id = self._resolve_call(call, module_id, func_info['class'])
                 
                 if called_func_id and called_func_id in self.functions:
-                    # 添加到调用图
+                    # Add to call graph
                     self.call_graph.add_edge(func_id, called_func_id)
                     
-                    # 更新被调用函数的信息
+                    # Update called function information
                     if func_id not in self.functions[called_func_id]['called_by']:
                         self.functions[called_func_id]['called_by'].append(func_id)
     
     def _resolve_call(self, call: Dict, module_id: str, class_id: Optional[str]) -> Optional[str]:
-        """解析函数调用，返回被调用函数的ID"""
+        """Resolve function call and return the ID of the called function"""
         if call['type'] == 'simple':
-            # 检查同一模块中的函数
+            # Check functions in the same module
             direct_func_id = f"{module_id}.{call['name']}"
             if direct_func_id in self.functions:
                 return direct_func_id
             
-            # 检查同一类中的方法
+            # Check methods in the same class
             if class_id:
                 method_id = f"{class_id}.{call['name']}"
                 if method_id in self.functions:
                     return method_id
                 
-                # 检查父类中的方法
+                # Check methods in parent classes
                 if class_id in self.classes:
                     for base_class in self.classes[class_id]['base_classes']:
-                        # 尝试构造完整的基类路径
-                        # 如果是简单名称，尝试在同一模块中查找
+                        # Try to construct complete base class path
+                        # If it's a simple name, try to find it in the same module
                         if '.' not in base_class:
                             potential_base = f"{module_id}.{base_class}"
                             if potential_base in self.classes:
@@ -488,12 +488,12 @@ class GlobalCodeTreeBuilder:
                                 if base_method_id in self.functions:
                                     return base_method_id
                         else:
-                            # 已经是完整路径
+                            # Already a complete path
                             base_method_id = f"{base_class}.{call['name']}"
                             if base_method_id in self.functions:
                                 return base_method_id
             
-            # 检查导入的函数
+            # Check imported functions
             for imp in self.imports[module_id]:
                 if imp['type'] == 'importfrom' and imp['name'] == call['name']:
                     imported_module = imp['module']
@@ -505,14 +505,14 @@ class GlobalCodeTreeBuilder:
             obj_name = call['object']
             attr_name = call['attribute']
             
-            # 检查是否是类的实例方法调用
+            # Check if it's a class instance method call
             for cls_id in self.classes:
                 if cls_id.endswith(f".{obj_name}"):
                     method_id = f"{cls_id}.{attr_name}"
                     if method_id in self.functions:
                         return method_id
             
-            # 检查导入的模块
+            # Check imported modules
             for imp in self.imports[module_id]:
                 if ((imp['type'] == 'import' and imp['name'] == obj_name) or 
                     (imp['type'] == 'import' and imp['alias'] == obj_name)):
@@ -521,14 +521,14 @@ class GlobalCodeTreeBuilder:
                         return imported_func_id
         
         elif call['type'] == 'nested_attribute':
-            # 处理嵌套属性调用
+            # Handle nested attribute calls
             full_path = call['full_path']
             
-            # 检查完全匹配
+            # Check exact match
             if full_path in self.functions:
                 return full_path
             
-            # 检查部分匹配
+            # Check partial match
             for func_id in self.functions:
                 if func_id.endswith(f".{full_path}"):
                     return func_id
@@ -536,19 +536,19 @@ class GlobalCodeTreeBuilder:
         return None
     
     def _get_source(self, content: str, node: ast.AST) -> str:
-        """提取AST节点对应的源代码"""
+        """Extract source code corresponding to AST node"""
         source_lines = content.splitlines()
         if hasattr(node, 'lineno') and hasattr(node, 'end_lineno'):
-            start_line = node.lineno - 1  # AST行号从1开始，列表索引从0开始
+            start_line = node.lineno - 1  # AST line numbers start from 1, list indices start from 0
             end_line = node.end_lineno
             return "\n".join(source_lines[start_line:end_line])
         return ""
 
     def _build_hierarchical_code_tree(self) -> None:
-        """构建层次化的代码树结构，便于浏览和分析"""
-        logger.info("构建层次化代码树...")
+        """Build hierarchical code tree structure for easy browsing and analysis"""
+        logger.info("Building hierarchical code tree...")
         
-        # 计算统计信息
+        # Calculate statistics
         self.code_tree['stats']['total_modules'] = len(self.modules)
         self.code_tree['stats']['total_classes'] = len(self.classes)
         self.code_tree['stats']['total_functions'] = len(self.functions)
@@ -558,7 +558,7 @@ class GlobalCodeTreeBuilder:
             module_lines = len(module_info['content'].splitlines())
             total_lines += module_lines
             
-            # 创建模块节点
+            # Create module node
             path_parts = module_id.split('.')
             self._add_to_tree(self.code_tree['modules'], path_parts, {
                 'type': 'module',
@@ -568,10 +568,10 @@ class GlobalCodeTreeBuilder:
                 'classes': [],
                 'functions': [],
                 'lines': module_lines,
-                'is_notebook': module_info.get('is_notebook', False)  # 传递notebook标记
+                'is_notebook': module_info.get('is_notebook', False)  # Pass notebook flag
             })
             
-            # 添加类
+            # Add classes
             for class_id in module_info['classes']:
                 class_info = self.classes[class_id]
                 class_lines = len(class_info['source'].splitlines())
@@ -584,16 +584,16 @@ class GlobalCodeTreeBuilder:
                     'methods': [],
                     'base_classes': class_info['base_classes'],
                     'lines': class_lines,
-                    'from_notebook': class_info.get('from_notebook', False)  # 传递from_notebook标记
+                    'from_notebook': class_info.get('from_notebook', False)  # Pass from_notebook flag
                 }
                 
-                # 确保模块节点有classes键
+                # Ensure module node has classes key
                 if 'classes' not in self.code_tree['modules'][path_parts[0]]:
                     self.code_tree['modules'][path_parts[0]]['classes'] = []
                 
                 self.code_tree['modules'][path_parts[0]]['classes'].append(class_node)
                 
-                # 添加方法
+                # Add methods
                 for method_id in class_info['methods']:
                     method_info = self.functions[method_id]
                     method_lines = len(method_info['source'].splitlines())
@@ -612,7 +612,7 @@ class GlobalCodeTreeBuilder:
                     
                     class_node['methods'].append(method_node)
             
-            # 添加模块级函数
+            # Add module-level functions
             for func_id in module_info['functions']:
                 func_info = self.functions[func_id]
                 func_lines = len(func_info['source'].splitlines())
@@ -629,10 +629,10 @@ class GlobalCodeTreeBuilder:
                     'lines': func_lines
                 }
                 
-                # 获取模块节点的引用
+                # Get reference to module node
                 module_node = self._get_tree_node(self.code_tree['modules'], path_parts)
                 if module_node:
-                    # 确保模块节点有functions键
+                    # Ensure module node has functions key
                     if 'functions' not in module_node:
                         module_node['functions'] = []
                     
@@ -640,7 +640,7 @@ class GlobalCodeTreeBuilder:
         
         self.code_tree['stats']['total_lines'] = total_lines
         
-        # 初始化重要性分析器
+        # Initialize importance analyzer
         self.importance_analyzer = None
         if ImportanceAnalyzer is not None:
             try:
@@ -653,18 +653,18 @@ class GlobalCodeTreeBuilder:
                     code_tree=self.code_tree,
                     call_graph=self.call_graph
                 )
-                logger.info("已初始化代码重要性分析器")
+                logger.info("Initialized code importance analyzer")
             except Exception as e:
-                logger.error(f"初始化代码重要性分析器时出错: {e}")
+                logger.error(f"Error initializing code importance analyzer: {e}")
     
     def _add_to_tree(self, tree: Dict, path: List[str], node_data: Dict) -> None:
         """
-        在树结构中添加节点
+        Add node to tree structure
         
         Args:
-            tree: 树结构
-            path: 路径
-            node_data: 节点数据
+            tree: Tree structure
+            path: Path
+            node_data: Node data
         """
         if len(path) == 1:
             if path[0] not in tree:
@@ -685,14 +685,14 @@ class GlobalCodeTreeBuilder:
     
     def _get_tree_node(self, tree: Dict, path: List[str]) -> Optional[Dict]:
         """
-        获取树中的节点
+        Get node from tree
         
         Args:
-            tree: 树结构
-            path: 路径
+            tree: Tree structure
+            path: Path
             
         Returns:
-            找到的节点或None
+            Found node or None
         """
         if len(path) == 1:
             return tree.get(path[0])
@@ -706,66 +706,66 @@ class GlobalCodeTreeBuilder:
         return self._get_tree_node(tree[path[0]]['children'], path[1:])
     
     def _identify_key_components(self) -> None:
-        """识别代码库中的关键组件"""
-        logger.info("识别关键组件...")
+        """Identify key components in the codebase"""
+        logger.info("Identifying key components...")
         
-        # 只识别类级别的关键组件
+        # Only identify class-level key components
         try:
-            # 1. 计算类的重要性
+            # 1. Calculate class importance
             class_importance = {}
             
-            # 为每个类创建一个虚拟节点
+            # Create a virtual node for each class
             class_graph = nx.DiGraph()
             
-            # 添加所有类作为节点
+            # Add all classes as nodes
             for class_id in self.classes:
                 class_graph.add_node(class_id)
             
-            # 添加类之间的调用关系边
+            # Add call relationship edges between classes
             for class_id, class_info in self.classes.items():
-                # 获取该类的所有方法
+                # Get all methods of this class
                 methods = class_info['methods']
                 
-                # 记录该类调用的其他类
+                # Record other classes called by this class
                 called_classes = set()
                 
-                # 遍历该类的所有方法
+                # Iterate through all methods of this class
                 for method_id in methods:
                     if method_id in self.functions:
                         method_info = self.functions[method_id]
                         
-                        # 遍历该方法调用的所有函数
+                        # Iterate through all functions called by this method
                         for call in method_info['calls']:
                             called_func_id = self._resolve_call(call, method_info['module'], method_info['class'])
                             
                             if called_func_id and called_func_id in self.functions:
                                 called_func = self.functions[called_func_id]
                                 
-                                # 如果调用的是另一个类的方法
+                                # If calling a method of another class
                                 if called_func['class'] and called_func['class'] != class_id:
                                     called_classes.add(called_func['class'])
                 
-                # 为每个调用关系添加边
+                # Add edges for each call relationship
                 for called_class in called_classes:
                     class_graph.add_edge(class_id, called_class)
             
-            # 如果类图不为空，计算PageRank
+            # If class graph is not empty, calculate PageRank
             if len(class_graph.nodes()) > 0:
                 class_pagerank = nx.pagerank(class_graph, alpha=0.85, max_iter=100)
                 class_importance = class_pagerank
             
-            # 添加重要的类
+            # Add important classes
             key_components = []
             for class_id, score in sorted(class_importance.items(), key=lambda x: x[1], reverse=True):
                 class_info = self.classes[class_id]
                 
-                # 计算类的总行数
+                # Calculate total lines of the class
                 class_lines = len(class_info['source'].splitlines())
                 
-                # 计算类的方法数量
+                # Calculate number of methods in the class
                 methods_count = len(class_info['methods'])
                 
-                # 计算类被调用的次数（通过其方法）
+                # Calculate number of times the class is called (through its methods)
                 called_by_count = 0
                 for method_id in class_info['methods']:
                     if method_id in self.functions:
@@ -784,23 +784,23 @@ class GlobalCodeTreeBuilder:
                     'docstring': class_info['docstring'][:200] if class_info['docstring'] else ""
                 })
             
-            # 按重要性分数排序
+            # Sort by importance score
             self.code_tree['key_components'] = sorted(key_components, key=lambda x: x['importance_score'], reverse=True)
 
         except Exception as e:
-            logger.error(f"计算组件重要性时出错: {e}", exc_info=True)
+            logger.error(f"Error calculating component importance: {e}", exc_info=True)
             
-            # 备选方案：使用简单的启发式方法
+            # Fallback: use simple heuristic method
             try:
                 key_components = []
                 
-                # 处理类
+                # Process classes
                 class_stats = []
                 for class_id, class_info in self.classes.items():
-                    # 计算类的方法数量
+                    # Calculate number of methods in the class
                     methods_count = len(class_info['methods'])
                     
-                    # 计算类被调用的次数（通过其方法）
+                    # Calculate number of times the class is called (through its methods)
                     called_by_count = 0
                     calls_count = 0
                     
@@ -811,12 +811,12 @@ class GlobalCodeTreeBuilder:
                             calls_count += len([c for c in method_info['calls'] 
                                               if self._resolve_call(c, method_info['module'], method_info['class'])])
                     
-                    # 简单加权计算重要性分数
+                    # Simple weighted calculation of importance score
                     importance = (0.4 * called_by_count) + (0.3 * calls_count) + (0.3 * methods_count)
                     
                     class_stats.append((class_id, importance))
                 
-                # 获取重要度排名前10的类
+                # Get top 10 classes by importance ranking
                 for class_id, score in sorted(class_stats, key=lambda x: x[1], reverse=True)[:10]:
                     class_info = self.classes[class_id]
                     
@@ -832,54 +832,54 @@ class GlobalCodeTreeBuilder:
                         'docstring': class_info['docstring'][:200] if class_info['docstring'] else ""
                     })
                 
-                # 按重要性分数排序
+                # Sort by importance score
                 self.code_tree['key_components'] = sorted(key_components, key=lambda x: x['importance_score'], reverse=True)
                 
             except Exception as e:
-                logger.error(f"使用备选方案计算组件重要性时出错: {e}", exc_info=True)
+                logger.error(f"Error calculating component importance using fallback method: {e}", exc_info=True)
     
     def _identify_key_modules(self) -> List[Dict]:
-        """识别代码库中的关键模块"""
-        logger.info("识别关键模块...")
+        """Identify key modules in the codebase"""
+        logger.info("Identifying key modules...")
         
-        # 只识别模块级别的关键组件
+        # Only identify module-level key components
         if not self.modules:
-            logger.warning("没有模块信息，无法识别关键模块")
+            logger.warning("No module information available, unable to identify key modules")
             return []
         
-        # 检查模块数量是否过多
+        # Check if there are too many modules
         if len(self.modules) > 300:
-            logger.warning(f"模块数量过多({len(self.modules)})，跳过关键模块重要度计算")
+            logger.warning(f"Too many modules ({len(self.modules)}), skipping key module importance calculation")
             return []
             
         key_modules = []
         
         try:
-            # 收集所有模块并计算其重要性
+            # Collect all modules and calculate their importance
             module_importance = {}
             
-            # 检查是否有重要性分析器
+            # Check if importance analyzer is available
             if hasattr(self, 'importance_analyzer') and self.importance_analyzer is not None:
-                # 使用ImportanceAnalyzer计算重要性分数
+                # Use ImportanceAnalyzer to calculate importance scores
                 for module_id, module_info in self.modules.items():
-                    # 创建节点字典，确保它有'type'字段
+                    # Create node dictionary, ensure it has 'type' field
                     node_info = {'id': module_id, 'type': 'module'}
                     if 'docstring' in module_info:
                         node_info['docstring'] = module_info['docstring']
                     if 'path' in module_info:
                         node_info['path'] = module_info['path']
                     
-                    # 计算重要性分数
+                    # Calculate importance score
                     try:
                         importance_score = self.importance_analyzer.calculate_node_importance(node_info)
                         module_importance[module_id] = importance_score
                     except Exception as e:
-                        logger.warning(f"计算模块 {module_id} 重要性时出错: {e}")
-                        # 使用备用计算方法
+                        logger.warning(f"Error calculating importance for module {module_id}: {e}")
+                        # Use backup calculation method
                         module_importance[module_id] = self._calculate_node_importance(node_info)
             else:
-                # 使用内部方法计算重要性
-                logger.info("使用内部方法计算模块重要性")
+                # Use internal method to calculate importance
+                logger.info("Using internal method to calculate module importance")
                 for module_id, module_info in self.modules.items():
                     node_info = {
                         'id': module_id, 
@@ -893,16 +893,16 @@ class GlobalCodeTreeBuilder:
                     
                     module_importance[module_id] = self._calculate_node_importance(node_info)
             
-            # 按重要性排序并生成关键模块列表
-            for module_id, score in sorted(module_importance.items(), key=lambda x: x[1], reverse=True):  # 获取前15个最重要的模块
+            # Sort by importance and generate key modules list
+            for module_id, score in sorted(module_importance.items(), key=lambda x: x[1], reverse=True):  # Get top 15 most important modules
                 module_info = self.modules[module_id]
                 
-                # 计算模块的类和函数数量
+                # Calculate number of classes and functions in the module
                 classes_count = len(module_info.get('classes', []))
                 functions_count = len(module_info.get('functions', []))
                 lines_count = len(module_info.get('content', '').splitlines())
                 
-                # 添加到关键模块列表
+                # Add to key modules list
                 key_modules.append({
                     'id': module_id,
                     'name': module_id.split('.')[-1],
@@ -915,25 +915,25 @@ class GlobalCodeTreeBuilder:
                     'docstring': module_info.get('docstring', '')[:200] if module_info.get('docstring') else ""
                 })
             
-            logger.info(f"识别了 {len(key_modules)} 个关键模块")
+            logger.info(f"Identified {len(key_modules)} key modules")
             
-            # 将关键模块添加到代码树中
+            # Add key modules to code tree
             if 'key_modules' not in self.code_tree:
                 self.code_tree['key_modules'] = []
             
             self.code_tree['key_modules'] = sorted(key_modules, key=lambda x: x['importance_score'], reverse=True)
             
         except Exception as e:
-            logger.error(f"识别关键模块时出错: {e}", exc_info=True)
-            # 错误处理，确保返回一个有效的列表
+            logger.error(f"Error identifying key modules: {e}", exc_info=True)
+            # Error handling, ensure returning a valid list
             if not key_modules:
-                # 使用简单的启发式方法作为备选
-                for module_id, module_info in list(self.modules.items())[:10]:  # 只处理前10个模块
+                # Use simple heuristic method as fallback
+                for module_id, module_info in list(self.modules.items())[:10]:  # Only process first 10 modules
                     key_modules.append({
                         'id': module_id,
                         'name': module_id.split('.')[-1],
                         'type': 'module',
-                        'importance_score': 0.5,  # 默认中等重要性
+                        'importance_score': 0.5,  # Default medium importance
                         'path': module_info.get('path', ''),
                         'docstring': module_info.get('docstring', '')[:200] if module_info.get('docstring') else ""
                     })
@@ -941,36 +941,36 @@ class GlobalCodeTreeBuilder:
         return key_modules
     
     def _identify_key_class(self) -> None:
-        """利用ImportanceAnalyzer识别代码库中的关键组件"""
-        logger.info("使用ImportanceAnalyzer识别关键组件...")
+        """Use ImportanceAnalyzer to identify key components in the codebase"""
+        logger.info("Using ImportanceAnalyzer to identify key components...")
         
         if not hasattr(self, 'importance_analyzer') or self.importance_analyzer is None:
-            logger.warning("ImportanceAnalyzer不可用，将使用原始方法识别关键组件")
+            logger.warning("ImportanceAnalyzer not available, will use original method to identify key components")
             self._identify_key_components()
             return
         
         if len(self.modules) > 300:
-            logger.warning(f"模块数量过多({len(self.modules)})，跳过关键类重要度计算")
+            logger.warning(f"Too many modules ({len(self.modules)}), skipping key class importance calculation")
             return
             
         try:
-            # 收集所有类节点并计算其重要性
+            # Collect all class nodes and calculate their importance
             class_importance = {}
             for class_id, class_info in self.classes.items():
                 class_importance[class_id] = 0            
 
-            # 添加重要的类
+            # Add important classes
             key_components = []
             for class_id, score in sorted(class_importance.items(), key=lambda x: x[1], reverse=True):
                 class_info = self.classes[class_id]
                 
-                # 计算类的总行数
+                # Calculate total lines of the class
                 class_lines = len(class_info['source'].splitlines())
                 
-                # 计算类的方法数量
+                # Calculate number of methods in the class
                 methods_count = len(class_info['methods'])
                 
-                # 计算类被调用的次数（通过其方法）
+                # Calculate number of times the class is called (through its methods)
                 called_by_count = 0
                 for method_id in class_info['methods']:
                     if method_id in self.functions:
@@ -988,85 +988,85 @@ class GlobalCodeTreeBuilder:
                     'docstring': class_info['docstring'][:200] if class_info['docstring'] else ""
                 })
             
-            # 按重要性分数排序
+            # Sort by importance score
             self.code_tree['key_components'] = sorted(key_components, key=lambda x: x['importance_score'], reverse=True)
             
-            logger.info(f"使用ImportanceAnalyzer识别了 {len(key_components)} 个关键组件")
+            logger.info(f"Identified {len(key_components)} key components using ImportanceAnalyzer")
             
         except Exception as e:
-            logger.error(f"使用ImportanceAnalyzer计算组件重要性时出错: {e}", exc_info=True)
-            # 失败时回退到原始方法
-            logger.info("回退到原始方法识别关键组件")
+            logger.error(f"Error calculating component importance using ImportanceAnalyzer: {e}", exc_info=True)
+            # Fall back to original method when failed
+            logger.info("Falling back to original method to identify key components")
             self._identify_key_components()
     
     def save_code_tree(self, output_file: str) -> None:
         """
-        将代码树保存到文件
+        Save code tree to file
         
         Args:
-            output_file: 输出文件路径
+            output_file: Output file path
         """
-        # 确保代码树包含完整的类和函数信息
+        # Ensure code tree contains complete class and function information
         complete_tree = {
             'modules': self.code_tree['modules'],
             'stats': self.code_tree['stats'],
             'key_components': self.code_tree['key_components'],
-            'classes': self.classes,  # 添加完整的类信息
-            'functions': self.functions,  # 添加完整的函数信息
-            'imports': dict(self.imports)  # 添加导入信息
+            'classes': self.classes,  # Add complete class information
+            'functions': self.functions,  # Add complete function information
+            'imports': dict(self.imports)  # Add import information
         }
         
-        # 添加关键模块信息
+        # Add key modules information
         if 'key_modules' in self.code_tree:
             complete_tree['key_modules'] = self.code_tree['key_modules']
         
         with open(output_file, 'wb') as f:
             pickle.dump(complete_tree, f)
-        logger.info(f"代码树已保存到文件: {output_file}")
+        logger.info(f"Code tree saved to file: {output_file}")
     
     def _calculate_node_importance(self, node: Dict) -> float:
         """
-        计算节点的重要性分数
+        Calculate node importance score
         
         Args:
-            node: 节点信息
+            node: Node information
             
         Returns:
-            重要性分数
+            Importance score
         """
-        # 如果有专门的重要性分析器，使用它
+        # If there's a dedicated importance analyzer, use it
         if hasattr(self, 'importance_analyzer') and self.importance_analyzer is not None:
             try:
                 return self.importance_analyzer.calculate_node_importance(node)
             except Exception as e:
-                logger.warning(f"使用重要性分析器计算节点重要性时出错: {e}")
+                logger.warning(f"Error calculating node importance using importance analyzer: {e}")
         
-        # 回退到简单的重要性计算方法
+        # Fall back to simple importance calculation method
         importance = 0.0
         
-        # 如果是模块节点
+        # If it's a module node
         if node['type'] == 'module':
-            # 1. 检查是否包含关键组件
+            # 1. Check if it contains key components
             for component in self.code_tree['key_components']:
                 if component['module'] == node['id']:
                     importance += 1.0
             
-            # 2. 检查类和函数数量
+            # 2. Check number of classes and functions
             class_count = len(node.get('classes', []))
             func_count = len(node.get('functions', []))
             importance += (class_count * 0.3) + (func_count * 0.2)
             
-            # 3. 检查文档完整性
+            # 3. Check documentation completeness
             if node.get('docstring'):
                 importance += 0.2
             
-            # 4. 检查代码行数（归一化到0-1之间）
+            # 4. Check lines of code (normalized to 0-1 range)
             if 'lines' in node:
                 importance += min(node['lines'] / 1000, 1.0) * 0.3
         
-        # 如果是包节点
+        # If it's a package node
         elif node['type'] == 'package':
-            # 递归计算子节点的重要性
+            # Recursively calculate importance of child nodes
             if 'children' in node:
                 for child in node['children'].values():
                     importance += self._calculate_node_importance(child) * 0.5
@@ -1075,68 +1075,68 @@ class GlobalCodeTreeBuilder:
 
     def _append_package_structure(self, content_parts: List[str], tree: Dict, level: int, min_importance: float = 0.5) -> None:
         """
-        递归地添加包结构到内容中，只显示重要的部分
+        Recursively add package structure to content, only showing important parts
         
         Args:
-            content_parts: 内容部分列表
-            tree: 树结构
-            level: 缩进级别
-            min_importance: 最小重要性阈值
+            content_parts: List of content parts
+            tree: Tree structure
+            level: Indentation level
+            min_importance: Minimum importance threshold
         """
-        # 使用类属性中已定义的忽略列表，而不是重新定义
+        # Use ignore lists already defined in class attributes, rather than redefining
         
-        # 按名称排序节点，并按重要性得分排序
+        # Sort nodes by name and importance score
         sorted_nodes = []
         for name, node in tree.items():
-            # 跳过要忽略的名称
+            # Skip names to be ignored
             if name in self.ignored_dirs or any(re.match(pattern, name) for pattern in self.ignored_file_patterns):
                 continue
             
             importance = self._calculate_node_importance(node)
             sorted_nodes.append((name, node, importance))
         
-        # 按重要性降序排序
+        # Sort by importance in descending order
         sorted_nodes.sort(key=lambda x: x[2], reverse=True)
         
-        # 处理所有节点
+        # Process all nodes
         for name, node, importance in sorted_nodes:
-            # 如果重要性低于阈值，跳过
+            # Skip if importance is below threshold
             if importance < min_importance:
                 continue
                 
             indent = "  " * level
             if node['type'] == 'package':
-                # 显示包名
+                # Display package name
                 content_parts.append(f"{indent}- 📦 {name}/")
                 
-                # 递归处理子节点，但对较低级别的包应用更高的过滤阈值
-                # 这样可以随着层级深入增加过滤强度
+                # Recursively process child nodes, but apply higher filtering threshold for lower-level packages
+                # This increases filtering strength as we go deeper into levels
                 next_min_importance = min_importance * (1.0 + level * 0.1)
                 if 'children' in node:
                     self._append_package_structure(
                         content_parts, 
                         node['children'], 
                         level + 1,
-                        min(next_min_importance, 5.0)  # 限制最大阈值
+                        min(next_min_importance, 5.0)  # Limit maximum threshold
                     )
             elif node['type'] == 'module':
-                # 显示模块名，如果是Jupyter Notebook，使用特殊图标
+                # Display module name, use special icon if it's a Jupyter Notebook
                 if node.get('is_notebook', False):
                     content_parts.append(f"{indent}- 📔 {name}.ipynb")
                 else:
                     content_parts.append(f"{indent}- 📄 {name}.py")
                 
-                # 添加简短的文档字符串提示
+                # Add brief docstring hint
                 if node.get('docstring'):
                     short_doc = node['docstring'].split('\n')[0][:50]
                     if short_doc:
                         content_parts.append(f" - {short_doc}...")
                 # content_parts.append("\n")
                 
-                # 添加模块中的类和函数
+                # Add classes and functions in the module
                 if node.get('classes'):
                     for cls in node['classes']:
-                        # 对于来自Notebook的类，添加特殊标记
+                        # Add special mark for classes from Notebook
                         if cls.get('from_notebook', False):
                             content_parts.append(f"{indent}  - {cls['name']} (Notebook Class)")
                         else:
@@ -1144,16 +1144,16 @@ class GlobalCodeTreeBuilder:
                 
                 # if node.get('functions'):
                 #     for func in node['functions']:
-                #         content_parts.append(f"{indent}  - {func['name']} (函数)\n")
+                #         content_parts.append(f"{indent}  - {func['name']} (Function)\n")
     
     def to_json(self) -> str:
         """
-        将代码树转换为JSON格式
+        Convert code tree to JSON format
         
         Returns:
-            JSON格式的代码树
+            Code tree in JSON format
         """
-        # 创建一个可序列化的字典
+        # Create a serializable dictionary
         serializable_tree = {
             'modules': self.code_tree['modules'],
             'stats': self.code_tree['stats'],
@@ -1163,39 +1163,39 @@ class GlobalCodeTreeBuilder:
             'imports': dict(self.imports)
         }
         
-        # 添加关键模块信息
+        # Add key modules information
         if 'key_modules' in self.code_tree:
             serializable_tree['key_modules'] = self.code_tree['key_modules']
 
-        # 转换为JSON字符串
+        # Convert to JSON string
         return json.dumps(serializable_tree, ensure_ascii=False, indent=2)
     
     def save_json(self, output_file: str) -> None:
         """
-        将代码树以JSON格式保存到文件
+        Save code tree to file in JSON format
         
         Args:
-            output_file: 输出文件路径
+            output_file: Output file path
         """
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(self.to_json())
-        logger.info(f"代码树已以JSON格式保存到文件: {output_file}")
+        logger.info(f"Code tree saved to file in JSON format: {output_file}")
 
     def _parse_package_import(self, codes: str) -> str:
-        # 解析代码中的导入语句
+        # Parse import statements in code
         code_dependce = ""
         if self.parser and self.python_language:
-            # 使用tree-sitter解析源代码
+            # Use tree-sitter to parse source code
             tree = self.parser.parse(bytes(codes, 'utf8'))
             root_node = tree.root_node
             
-            # 查找所有导入语句
+            # Find all import statements
             import_nodes = []
             for child in root_node.children:
                 if child.type in ['import_statement', 'import_from_statement']:
                     import_nodes.append(child)
             
-            # 提取导入语句的文本
+            # Extract text from import statements
             if import_nodes:
                 imports_text = []
                 for node in import_nodes:
@@ -1203,7 +1203,7 @@ class GlobalCodeTreeBuilder:
                     start_line, start_col = start_point
                     end_line, end_col = end_point
                     
-                    # 获取导入语句的源代码
+                    # Get source code of import statements
                     if start_line == end_line:
                         line = codes.splitlines()[start_line]
                         imports_text.append(line[start_col:end_col])
@@ -1213,16 +1213,16 @@ class GlobalCodeTreeBuilder:
                         lines[-1] = lines[-1][:end_col]
                         imports_text.append('\n'.join(lines))
                 
-                code_dependce = "# 导入依赖\n" + "\n".join(imports_text) + "\n\n"
+                code_dependce = "# Import dependencies\n" + "\n".join(imports_text) + "\n\n"
         return code_dependce
 
     def generate_llm_important_class(self, max_tokens: int = 3000) -> str:
         """
-        生成LLM可用的关键组件源代码
+        Generate LLM-ready key component source code
         """
         def class_code_to_string(important_codes: Dict) -> str:
             important_codes_list = []
-            important_codes_list.append("# 关键组件源代码样例\n")
+            important_codes_list.append("# Key component source code examples\n")
             for class_path, codes in important_codes.items():
                 important_codes_list.append(f"```python\n## {class_path}\n")
                 code_content = self.modules[codes['module']]['content']
@@ -1232,12 +1232,12 @@ class GlobalCodeTreeBuilder:
         
         important_codes = {}
         if self.code_tree['key_components']:
-            # 选取前3个关键组件展示源代码
+            # Select top 3 key components to display source code
             for component in self.code_tree['key_components']:
                 token = tiktoken.encoding_for_model("gpt-4o")
                 if len(token.encode(class_code_to_string(important_codes))) > max_tokens:
                     continue
-                # 检查组件ID是否存在于相应的字典中
+                # Check if component ID exists in corresponding dictionary
                 if component['type'] == 'class' and component['id'] in self.classes:
                     class_info = self.classes[component['id']]
                     class_path = self.modules[class_info['module']]['path']
@@ -1247,37 +1247,37 @@ class GlobalCodeTreeBuilder:
                             'name': class_info['name'],
                             'class_list': []
                         }
-                    # important_codes[class_path].append(f"## {class_info['name']} (类)\n")
-                    # 使用tree-sitter生成代码结构摘要，而不是完整源代码
+                    # important_codes[class_path].append(f"## {class_info['name']} (Class)\n")
+                    # Use tree-sitter to generate code structure summary instead of complete source code
                     important_codes[class_path]['class_list'].append(self._get_ast_simple_summary(class_info['source']))
         
         return class_code_to_string(important_codes)
     
     def generate_llm_browsable_content(self, max_tokens: int = 8000) -> str:
         """
-        生成适合LLM浏览的内容
+        Generate content suitable for LLM browsing
         
         Args:
-            max_tokens: 最大标记数，用于控制内容长度
+            max_tokens: Maximum number of tokens to control content length
             
         Returns:
-            LLM友好的代码库表示
+            LLM-friendly codebase representation
         """
-        logger.info(f"生成LLM可浏览内容，最大标记数: {max_tokens}")
+        logger.info(f"Generating LLM browsable content, max tokens: {max_tokens}")
         
         content_parts = []
         
-        # 1. 仓库概述
-        content_parts.append("# 代码仓库概述\n")
-        content_parts.append(f"仓库路径: {self.repo_path}\n")
-        content_parts.append(f"总模块数: {self.code_tree['stats']['total_modules']}\n")
-        content_parts.append(f"总类数: {self.code_tree['stats']['total_classes']}\n")
-        content_parts.append(f"总函数数: {self.code_tree['stats']['total_functions']}\n")
-        content_parts.append(f"总代码行数: {self.code_tree['stats']['total_lines']}\n")
+        # 1. Repository overview
+        content_parts.append("# Code Repository Overview\n")
+        content_parts.append(f"Repository path: {self.repo_path}\n")
+        content_parts.append(f"Total modules: {self.code_tree['stats']['total_modules']}\n")
+        content_parts.append(f"Total classes: {self.code_tree['stats']['total_classes']}\n")
+        content_parts.append(f"Total functions: {self.code_tree['stats']['total_functions']}\n")
+        content_parts.append(f"Total lines of code: {self.code_tree['stats']['total_lines']}\n")
         
         
-        # 3. 包结构概览 - 使用动态重要性阈值过滤
-        content_parts.append("# 包结构\n")
+        # 3. Package structure overview - use dynamic importance threshold filtering
+        content_parts.append("# Package Structure\n")
         self._append_package_structure(content_parts, self.code_tree['modules'], 0, min_importance=1.0)
         content_parts.append("\n")
         
@@ -1285,40 +1285,40 @@ class GlobalCodeTreeBuilder:
 
     def _get_ast_simple_summary(self, source_code: str, max_lines: int = 20) -> str:
         """
-        使用tree-sitter生成代码的结构化摘要
+        Generate structured code summary using tree-sitter
         
         Args:
-            source_code: 源代码
-            max_lines: 最大显示行数
+            source_code: Source code
+            max_lines: Maximum lines to display
             
         Returns:
-            代码结构摘要
+            Code structure summary
         """
         if not self.parser:
-            # 如果tree-sitter不可用，返回简化版本
+            # If tree-sitter is not available, return simplified version
             lines = source_code.splitlines()
             if len(lines) > max_lines:
-                return "\n".join(lines[:max_lines]) + "\n... (省略剩余 {} 行)".format(len(lines) - max_lines)
+                return "\n".join(lines[:max_lines]) + "\n... (omitted remaining {} lines)".format(len(lines) - max_lines)
             return source_code
             
         try:
             tree = self.parser.parse(bytes(source_code, 'utf8'))
             root_node = tree.root_node
             
-            # 提取主要结构
+            # Extract main structure
             result = []
             stats = {"classes": 0, "functions": 0, "nested_functions": 0, "lambdas": 0, "async_funcs": 0, "decorators": 0}
             
-            # 使用类似于test_tree_sitter.py中的方法提取结构
+            # Use method similar to test_tree_sitter.py to extract structure
             def extract_node_info(node, depth=0, is_nested=False):
                 if node.type == 'class_definition':
-                    # 获取类名
+                    # Get class name
                     name_node = node.child_by_field_name('name')
                     if name_node:
                         class_name = source_code[name_node.start_byte:name_node.end_byte]
                         indent = "  " * depth
                         
-                        # 检查装饰器
+                        # Check decorators
                         decorator_list = []
                         for child in node.children:
                             if child.type == 'decorator':
@@ -1333,7 +1333,7 @@ class GlobalCodeTreeBuilder:
                         result.append(f"{indent}class {class_name}:")
                         stats["classes"] += 1
                         
-                        # 处理类体
+                        # Process class body
                         body_node = node.child_by_field_name('body')
                         if body_node:
                             for i in range(body_node.named_child_count):
@@ -1341,12 +1341,12 @@ class GlobalCodeTreeBuilder:
                                 extract_node_info(child, depth + 1)
                 
                 elif node.type in ['function_definition', 'async_function_definition']:
-                    # 获取函数名
+                    # Get function name
                     name_node = node.child_by_field_name('name')
                     if name_node:
                         func_name = source_code[name_node.start_byte:name_node.end_byte]
                         
-                        # 获取参数
+                        # Get parameters
                         params_text = "()"
                         params_node = node.child_by_field_name('parameters')
                         if params_node:
@@ -1354,7 +1354,7 @@ class GlobalCodeTreeBuilder:
                         
                         indent = "  " * depth
                         
-                        # 检查装饰器
+                        # Check decorators
                         decorator_list = []
                         for child in node.children:
                             if child.type == 'decorator':
@@ -1365,23 +1365,23 @@ class GlobalCodeTreeBuilder:
                             for decorator in decorator_list:
                                 result.append(f"{indent}{decorator}")
                         
-                        # 确定是否是异步函数
+                        # Determine if it's an async function
                         is_async = node.type == 'async_function_definition'
                         if is_async:
                             stats["async_funcs"] += 1
                             
-                        # 生成函数声明行
+                        # Generate function declaration line
                         func_prefix = "async def" if is_async else "def"
                         
-                        # 为嵌套函数添加特殊标记
+                        # Add special mark for nested functions
                         if is_nested:
-                            result.append(f"{indent}{func_prefix} {func_name}{params_text}: # [嵌套函数]")
+                            result.append(f"{indent}{func_prefix} {func_name}{params_text}: # [Nested function]")
                             stats["nested_functions"] += 1
                         else:
                             result.append(f"{indent}{func_prefix} {func_name}{params_text}:")
                             stats["functions"] += 1
                         
-                        # 获取函数体的第一行（可能是文档字符串）
+                        # Get first line of function body (possibly docstring)
                         body_node = node.child_by_field_name('body')
                         if body_node and body_node.named_child_count > 0:
                             first_stmt = body_node.named_child(0)
@@ -1391,20 +1391,20 @@ class GlobalCodeTreeBuilder:
                                 for child in first_stmt.children:
                                     if child.type == "string":
                                         docstring = source_code[child.start_byte:child.end_byte]
-                                        # 简化文档字符串显示
+                                        # Simplify docstring display
                                         doc_lines = docstring.split('\n')
                                         if len(doc_lines) > 1:
                                             clean_doc = doc_lines[0].strip('\"\'')
-                                            result.append(f"{indent}  # 文档: {clean_doc}")
+                                            result.append(f"{indent}  # Doc: {clean_doc}")
                                         else:
                                             clean_doc = docstring.strip('\"\'')
-                                            result.append(f"{indent}  # 文档: {clean_doc}")
+                                            result.append(f"{indent}  # Doc: {clean_doc}")
                                         has_docstring = True
                                         break
                             
-                            # 如果没有文档字符串，尝试推断函数的主要功能
+                            # If no docstring, try to infer main function functionality
                             if not has_docstring:
-                                # 查找函数体中的关键语句
+                                # Find key statements in function body
                                 key_verbs = []
                                 for i in range(min(3, body_node.named_child_count)):
                                     stmt = body_node.named_child(i)
@@ -1414,27 +1414,27 @@ class GlobalCodeTreeBuilder:
                                         key_verbs.append(first_line[:40] + ('...' if len(first_line) > 40 else ''))
                                 
                                 if key_verbs:
-                                    result.append(f"{indent}  # 功能: {key_verbs[0]}")
+                                    result.append(f"{indent}  # Function: {key_verbs[0]}")
                             
-                            # 递归处理函数体中的其他节点，特别是嵌套函数和类
+                            # Recursively process other nodes in function body, especially nested functions and classes
                             if body_node.named_child_count > 0:
                                 nested_items = []
                                 for i in range(body_node.named_child_count):
                                     child = body_node.named_child(i)
-                                    # 处理嵌套的函数和类定义
+                                    # Process nested function and class definitions
                                     if child.type in ['function_definition', 'class_definition', 'async_function_definition']:
                                         nested_items.append(child)
                                 
-                                # 如果有嵌套定义，添加提示
+                                # If there are nested definitions, add hint
                                 if nested_items:
                                     if not has_docstring and not key_verbs:
-                                        result.append(f"{indent}  # 包含 {len(nested_items)} 个嵌套定义")
+                                        result.append(f"{indent}  # Contains {len(nested_items)} nested definitions")
                                     
-                                    # 递归处理嵌套定义
+                                    # Recursively process nested definitions
                                     for nested_item in nested_items:
                                         extract_node_info(nested_item, depth + 1, is_nested=True)
                 
-                # 处理lambda表达式 - tree-sitter可能将其标记为lambda表达式或匿名函数
+                # Process lambda expressions - tree-sitter may mark them as lambda expressions or anonymous functions
                 elif node.type in ['lambda', 'lambda_expression', 'anonymous_function']:
                     indent = "  " * depth
                     lambda_text = source_code[node.start_byte:node.end_byte]
@@ -1443,9 +1443,9 @@ class GlobalCodeTreeBuilder:
                     result.append(f"{indent}lambda: {lambda_text}")
                     stats["lambdas"] += 1
                 
-                # 递归处理其他可能包含函数或类的节点类型
+                # Recursively process other node types that may contain functions or classes
                 elif node.type in ['if_statement', 'for_statement', 'while_statement', 'try_statement', 'with_statement']:
-                    # 检查这些语句的主体是否包含函数或类定义
+                    # Check if the body of these statements contains function or class definitions
                     body_index = -1
                     for i, child in enumerate(node.children):
                         if child.type == 'block':
@@ -1454,54 +1454,54 @@ class GlobalCodeTreeBuilder:
                     
                     if body_index >= 0 and body_index < len(node.children):
                         body_node = node.children[body_index]
-                        # 递归检查主体内的节点
+                        # Recursively check nodes within the body
                         for i in range(body_node.named_child_count):
                             child = body_node.named_child(i)
                             if child.type in ['function_definition', 'class_definition', 'async_function_definition']:
                                 extract_node_info(child, depth + 1, is_nested=True)
             
-            # 处理顶级节点
+            # Process top-level nodes
             for i in range(root_node.named_child_count):
                 node = root_node.named_child(i)
                 extract_node_info(node, 0)
             
-            # 添加摘要信息
+            # Add summary information
             if any(stats.values()):
                 summary = []
                 if stats["classes"] > 0:
-                    summary.append(f"{stats['classes']} 个类")
+                    summary.append(f"{stats['classes']} classes")
                 if stats["functions"] > 0:
-                    summary.append(f"{stats['functions']} 个函数")
+                    summary.append(f"{stats['functions']} functions")
                 if stats["nested_functions"] > 0:
-                    summary.append(f"{stats['nested_functions']} 个嵌套函数")
+                    summary.append(f"{stats['nested_functions']} nested functions")
                 if stats["async_funcs"] > 0:
-                    summary.append(f"{stats['async_funcs']} 个异步函数")
+                    summary.append(f"{stats['async_funcs']} async functions")
                 if stats["lambdas"] > 0:
-                    summary.append(f"{stats['lambdas']} 个lambda表达式")
+                    summary.append(f"{stats['lambdas']} lambda expressions")
                 if stats["decorators"] > 0:
-                    summary.append(f"{stats['decorators']} 个装饰器")
+                    summary.append(f"{stats['decorators']} decorators")
                 
                 if summary:
-                    result.append(f"\n# 总计: {', '.join(summary)}")
+                    result.append(f"\n# Total: {', '.join(summary)}")
             
-            return "\n".join(result) if result else "# 未找到类或函数定义"
+            return "\n".join(result) if result else "# No class or function definitions found"
             
         except Exception as e:
-            logger.warning(f"使用tree-sitter解析代码时出错: {e}")
-            # 回退到简单展示
+            logger.warning(f"Error parsing code with tree-sitter: {e}")
+            # Fallback to simple display
             lines = source_code.splitlines()
             if len(lines) > max_lines:
-                return "\n".join(lines[:max_lines]) + f"\n... (省略剩余 {len(lines) - max_lines} 行)"
+                return "\n".join(lines[:max_lines]) + f"\n... (omitted remaining {len(lines) - max_lines} lines)"
             return source_code
     
     def get_repo_summary_list(self, max_tokens, is_file_summary):
 
-        # 获取仓库核心文件,LLM生成仓库摘要
+        # Get repository core files, LLM generates repository summary
         important_repo_files_keys = [
             'README', 'main.py', '.ipynb', 'app.py', 'inference', 'test',
         ]
         
-        # 先处理一级目录下的README文件
+        # First process README files in the first-level directory
         readme_files = []
         other_important_files = []
         
@@ -1509,20 +1509,20 @@ class GlobalCodeTreeBuilder:
             file_path = file_info['path']
             if len(other_important_files) > 20:
                 break
-            # 判断是否是一级目录下的README文件
+            # Check if it's a README file in the first-level directory
             if '/' not in file_path and 'README' in file_path.upper():
                 readme_files.append({
                     'file_path': file_path,
                     'file_content': file_info['content']
                 })
-            # 其他重要文件
+            # Other important files
             elif any(key.lower() in file_path.lower() for key in important_repo_files_keys):
                 other_important_files.append({
                     'file_path': file_path,
                     'file_content': file_info['content']
                 })
         
-        # 初始化结果列表，先加入README文件（不需要摘要）
+        # Initialize result list, first add README files (no summary needed)
         repo_summary_list = readme_files.copy()
         current_token = get_code_abs_token(json.dumps(repo_summary_list, ensure_ascii=False, indent=2))
         if current_token >= max_tokens:
@@ -1530,19 +1530,19 @@ class GlobalCodeTreeBuilder:
         elif current_token+get_code_abs_token(json.dumps(other_important_files, ensure_ascii=False, indent=2)) <= max_tokens:
             return repo_summary_list+other_important_files
 
-        # 处理其他重要文件
+        # Process other important files
         if is_file_summary:
-            # 对其他文件生成摘要
+            # Generate summary for other files
             other_summary = generate_repository_summary(other_important_files, max_important_files_token=max_tokens-current_token)
-            # 如果返回的是字典则转换为列表格式
+            # If returned is a dictionary, convert to list format
             if isinstance(other_summary, dict):
                 other_summary_list = [{'file_path': k, 'file_content': v} for k, v in other_summary.items()]
             else:
                 other_summary_list = other_summary
-            # 将其他文件的摘要添加到结果中
+            # Add summary of other files to result
             repo_summary_list.extend(other_summary_list)
         else:
-            # 直接添加文件内容，不生成摘要
+            # Directly add file content without generating summary
             for file_info in other_important_files:
                 if get_code_abs_token(json.dumps(file_info, ensure_ascii=False, indent=2))+current_token > max_tokens:
                     break
@@ -1554,17 +1554,17 @@ class GlobalCodeTreeBuilder:
         return repo_summary_list
 
     def generate_llm_important_modules(self, max_tokens: int = 4000, is_file_summary: bool = True) -> str:
-        """获取整个仓库最核心的部分代码"""
+        """Get the most core parts of the entire repository code"""
         out_content_list = []
         repo_summary_list = self.get_repo_summary_list(max_tokens, is_file_summary)
-        out_content_list.append("# 仓库核心文件摘要\n")
+        out_content_list.append("# Repository core file summary\n")
         out_content_list.append(json.dumps(repo_summary_list, ensure_ascii=False))
         # out_content_list.append(json.dumps([{'file_summary': file_info['file_content']} for file_info in repo_summary_list], indent=2, ensure_ascii=False))
         
-        # 基于重要性加权获取关键模块代码， 通过tree-sitter生成代码结构摘要
+        # Get key module code based on importance weighting, generate code structure summary through tree-sitter
         if 'key_modules' in self.code_tree and self.code_tree['key_modules']:
             important_codes_list = {}
-            out_content_list.append("# 关键模块抽象代码树\n")                
+            out_content_list.append("# Key module abstract code tree\n")                
             
             key_modules = self.code_tree['key_modules']
             for idx, module in enumerate(key_modules):
@@ -1600,23 +1600,23 @@ class GlobalCodeTreeBuilder:
                 if module['id'] not in important_codes_list:
                     other_content_list.append(self.modules[module['id']]['path'])
             if other_content_list:
-                out_content_list.append("# 其他关键模块文件名\n")
+                out_content_list.append("# Other key module file names\n")
                 out_content_list.append("```"+"\n".join(other_content_list)+"\n```\n")
 
-        return "```\n"+json.dumps(out_content_list, indent=2, ensure_ascii=False)+"\n```"           
+        return "```\n"+json.dumps(out_content_list, indent=2, ensure_ascii=False)+"\n```"
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
     
     load_dotenv("/mnt/ceph/huacan/Code/Tasks/envs/.env")
     
-    # 或者更详细的方式
+    # Or more detailed way
     builder = GlobalCodeTreeBuilder('git_repos/fish-speech')
     
     builder.parse_repository()
     builder.save_code_tree('res/code_tree.pkl')
     
-    # 保存为JSON格式
+    # Save as JSON format
     builder.save_json('res/code_tree.json')
     
     content = builder.generate_llm_important_modules()

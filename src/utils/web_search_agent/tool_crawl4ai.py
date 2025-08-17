@@ -6,7 +6,7 @@ from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
 
 @dataclass
 class CrawlerOptions:
-    """爬虫配置选项"""
+    """Crawler configuration options"""
     use_js: bool = False
     use_screenshot: bool = False
     use_pdf: bool = False
@@ -15,7 +15,7 @@ class CrawlerOptions:
     semaphore_count: int = 2
 
 class CrawlerMode(Enum):
-    """爬虫模式枚举"""
+    """Crawler mode enumeration"""
     BASIC = "basic"
     FULL = "full"
     CUSTOM = "custom"
@@ -23,10 +23,10 @@ class CrawlerMode(Enum):
 class WebCrawlerManager:
     def __init__(self, headless: bool = True):
         """
-        初始化爬虫管理器
+        Initialize crawler manager
         
         Args:
-            headless (bool): 是否使用无头模式，默认True
+            headless (bool): Whether to use headless mode, default True
         """
         self.browser_config = BrowserConfig(
             headless=headless,
@@ -35,7 +35,7 @@ class WebCrawlerManager:
             user_agent_mode="random",
         )
         
-        # 预定义的配置模式
+        # Predefined configuration modes
         self.config_modes = {
             CrawlerMode.BASIC: CrawlerOptions(),
             CrawlerMode.FULL: CrawlerOptions(
@@ -43,14 +43,14 @@ class WebCrawlerManager:
                 use_screenshot=True,
                 use_pdf=True
             ),
-            CrawlerMode.CUSTOM: None  # 将通过 set_custom_options 设置
+            CrawlerMode.CUSTOM: None  # Will be set through set_custom_options
         }
         
         self.current_mode = CrawlerMode.BASIC
         self.crawler: Optional[AsyncWebCrawler] = None
 
     def _create_crawler_config(self, options: CrawlerOptions) -> CrawlerRunConfig:
-        """根据选项创建爬虫配置"""
+        """Create crawler configuration based on options"""
         config = {
             "cache_mode": "memory",
             "scroll_delay": 0.5,
@@ -78,26 +78,26 @@ class WebCrawlerManager:
         return CrawlerRunConfig(**config)
 
     def set_mode(self, mode: CrawlerMode) -> None:
-        """设置爬虫模式"""
+        """Set crawler mode"""
         self.current_mode = mode
 
     def set_custom_options(self, options: CrawlerOptions) -> None:
-        """设置自定义配置选项"""
+        """Set custom configuration options"""
         self.config_modes[CrawlerMode.CUSTOM] = options
 
     async def __aenter__(self):
-        """异步上下文管理器入口"""
+        """Async context manager entry"""
         self.crawler = AsyncWebCrawler(config=self.browser_config)
         await self.crawler.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """异步上下文管理器出口"""
+        """Async context manager exit"""
         if self.crawler:
             await self.crawler.__aexit__(exc_type, exc_val, exc_tb)
 
     async def crawl_url(self, url: str) -> Dict[str, Any]:
-        """爬取单个URL"""
+        """Crawl single URL"""
         options = self.config_modes[self.current_mode]
         run_cfg = self._create_crawler_config(options)
         
@@ -108,7 +108,7 @@ class WebCrawlerManager:
         return self._process_result(result, url)
 
     async def crawl_urls(self, urls: List[str]) -> List[Dict[str, Any]]:
-        """爬取多个URL"""
+        """Crawl multiple URLs"""
         options = self.config_modes[self.current_mode]
         run_cfg = self._create_crawler_config(options)
         
@@ -124,7 +124,7 @@ class WebCrawlerManager:
 
     @staticmethod
     def _process_result(result, url: str) -> Dict[str, Any]:
-        """处理爬取结果"""
+        """Process crawling results"""
         if not result.success:
             return {"success": False, "url": url, "error": result.error_message}
         
@@ -142,7 +142,7 @@ class WebCrawlerManager:
 
 async def crawl_url(url: str | List[str]) -> Dict[str, Any]:
     async with WebCrawlerManager() as crawler:
-        # 使用基础模式
+        # Use basic mode
         crawler.set_mode(CrawlerMode.BASIC)
         if isinstance(url, list):
             results = await crawler.crawl_urls(url)
@@ -153,7 +153,7 @@ async def crawl_url(url: str | List[str]) -> Dict[str, Any]:
         else:
             return results["markdown"]
     
-# 使用示例
+# Usage example
 async def main():
     
     url = "https://www.sec.gov/Archives/edgar/data/320193/000032019322000108/aapl-20220924.htm"
@@ -163,19 +163,19 @@ async def main():
     exit()
     
     async with WebCrawlerManager() as crawler:
-        # 使用基础模式
+        # Use basic mode
         crawler.set_mode(CrawlerMode.BASIC)
         result = await crawler.crawl_url(url)
         print(result)
         
-        # 使用完整功能模式
+        # Use full functionality mode
         crawler.set_mode(CrawlerMode.FULL)
         urls = [url, url]
         results = await crawler.crawl_urls(urls)
         for result in results:
             print(result)
             
-        # 使用自定义模式
+        # Use custom mode
         custom_options = CrawlerOptions(
             use_screenshot=True,
             exclude_external=False

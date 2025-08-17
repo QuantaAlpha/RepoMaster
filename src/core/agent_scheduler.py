@@ -158,6 +158,8 @@ The JSON format should be like this:
         2. Initialize task environment (create working directory, clone repository, etc.)
         3. Run code agent to analyze and execute tasks
         
+        Important: It's best to process one repository at a time. For tasks involving multiple repositories, call this function sequentially for each one.
+
         Returns:
             Result of agent executing the task, usually containing task completion status and description of output content
         """

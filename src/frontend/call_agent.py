@@ -18,7 +18,6 @@ class AgentCaller:
                 if 'work_dir' in st.session_state else os.path.join(os.getcwd(), f"coding/{random_string(8)}"),
             "use_docker": False,
         }
-        if 1: os.system(f"cp /data/huacan/Code/workspace/RepoMaster/data/DeepResearcher.pdf {self.code_execution_config['work_dir']}")
         
         self.repo_master = RepoMasterAgent(
             llm_config=self.llm_config,

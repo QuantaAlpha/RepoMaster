@@ -1,6 +1,6 @@
 import os
 import time
-import uuid  # 新增：用于生成唯一用户ID
+import uuid
 import random
 import joblib
 import streamlit as st
@@ -30,7 +30,7 @@ def load_config() -> Dict[str, str]:
 def initialize_data_directory():
     os.makedirs(DATA_DIR, exist_ok=True)
 
-# 新增：生成或获取用户ID
+# Added: generate or get user ID
 def get_user_id():
     if st.session_state.get('logged_in'):
         return st.session_state.user_id
@@ -146,28 +146,28 @@ def get_ai_response(client: OpenAI, messages: List[Dict[str, str]], prompt: str)
     
     return full_response
 
-# 新增：模拟搜网函数
+# Added: simulate web search function
 def search_web(query):
-    # 这里只是一个模拟函数，实际应用中需要替换为真实的搜索逻辑
+    # This is just a simulation function, should be replaced with real search logic in actual application
     results = [
-        f"搜索结果 1 for '{query}'",
-        f"搜索结果 2 for '{query}'",
-        f"搜索结果 3 for '{query}'",
+        f"Search result 1 for '{query}'",
+        f"Search result 2 for '{query}'",
+        f"Search result 3 for '{query}'",
     ]
     return random.sample(results, k=min(len(results), 2))
 
 def expand_web_search(prompt):
-    with st.expander("搜网模块", expanded=False):
+    with st.expander("Web Search Module", expanded=False):
         results = search_web(prompt)
         for result in results:
             st.write(result)
 
-# 修改：聊天界面
+# Modified: chat interface
 def chat_interface():
     # Get user_id
     user_id = get_user_id()
 
-    # 设置工作目录和streamlit
+    # Set work directory and streamlit
     AppContext.set_work_dir(work_dir)
     AppContext.set_streamlit(st)    
 
@@ -207,7 +207,7 @@ def chat_interface():
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
 
-        # 在聊天界面顶部添加搜网模块
+        # Add web search module to the top of chat interface
         expand_web_search(prompt)
 
         # Get and display AI response
@@ -219,7 +219,7 @@ def chat_interface():
         # Save updated chat messages
         save_chat_messages(user_id, chat_id, st.session_state.messages)
 
-    # 添加登出按钮
+    # Add logout button
     if st.session_state.logged_in:
         if st.sidebar.button("Logout"):
             st.session_state.logged_in = False
@@ -230,7 +230,7 @@ def chat_interface():
             st.session_state.show_login = True
             st.rerun()
 
-# 修改：主应用逻辑
+# Modified: main application logic
 def main():
     st.set_page_config(page_title="Chat with OpenAI", page_icon="✨")
 

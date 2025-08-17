@@ -153,16 +153,16 @@ class ImportanceAnalyzer:
         return min(importance, 10.0)
     
     def _calculate_package_importance(self, node: Dict) -> float:
-        """计算包的重要性分数"""
-        # 包的重要性基于其包含的模块和子包
+        """Calculate package importance score"""
+        # Package importance is based on the modules and sub-packages it contains
         importance = 0.0
         
-        # 1. 语义重要性分析
+        # 1. Semantic importance analysis
         if 'name' in node:
             semantic_score = self._semantic_importance(node['name'])
             importance += semantic_score * self.weights['semantic']
         
-        # 2. 包含的子节点重要性
+        # 2. Importance of contained child nodes
         if 'children' in node and node['children']:
             child_scores = []
             for child in node['children'].values():
@@ -170,34 +170,34 @@ class ImportanceAnalyzer:
                 child_scores.append(child_score)
             
             if child_scores:
-                # 结合最大值和平均值
+                # Combine maximum and average values
                 max_score = max(child_scores)
                 avg_score = sum(child_scores) / len(child_scores)
-                # 最大值权重更高
+                # Maximum value has higher weight
                 importance += (max_score * 0.7 + avg_score * 0.3) * 1.5
         
-        # 包的特殊性，如果包名是特殊的，给予额外分数
+        # Package specificity, if package name is special, give extra points
         if 'name' in node:
             if node['name'] in ['src', 'core', 'main', 'api']:
                 importance += 2.0
         
-        # 归一化处理
+        # Normalization processing
         return min(importance, 10.0)
     
     def _analyze_imports_relationships(self, node: Dict) -> float:
-        """分析模块间引用关系的重要性"""
+        """Analyze the importance of inter-module reference relationships"""
         score = 0.0
         
         if node['type'] == 'module' and 'id' in node:
             module_id = node['id']
             
             if module_id in self.module_dependency_graph:
-                # 计算入度 - 被多少其他模块导入
+                # Calculate in-degree - how many other modules import this
                 in_degree = self.module_dependency_graph.in_degree(module_id)
-                # 计算出度 - 导入了多少其他模块
+                # Calculate out-degree - how many other modules this imports
                 out_degree = self.module_dependency_graph.out_degree(module_id)
                 
-                # 计算PageRank值 - 反映模块在整个依赖网络中的中心性
+                # Calculate PageRank value - reflects module's centrality in the entire dependency network
                 if len(self.module_dependency_graph.nodes()) > 0:
                     try:
                         pagerank = nx.pagerank(
@@ -205,62 +205,62 @@ class ImportanceAnalyzer:
                             alpha=0.85,
                             personalization={n: 2.0 if n == module_id else 1.0 for n in self.module_dependency_graph.nodes()}
                         )
-                        pagerank_score = pagerank.get(module_id, 0.0) * 10  # 放大PageRank值
+                        pagerank_score = pagerank.get(module_id, 0.0) * 10  # Amplify PageRank value
                     except:
                         pagerank_score = 0.0
                 else:
                     pagerank_score = 0.0
                 
-                # 计算模块的中间中心性 - 反映模块作为"桥梁"的重要性
+                # Calculate module's betweenness centrality - reflects module's importance as a "bridge"
                 betweenness = 0.0
                 if len(self.module_dependency_graph.nodes()) > 1:
                     try:
-                        # 因为计算中间中心性可能很耗时，使用估算方法
+                        # Since computing betweenness centrality can be time-consuming, use estimation method
                         between_dict = nx.betweenness_centrality(
                             self.module_dependency_graph,
-                            k=min(20, len(self.module_dependency_graph.nodes())),  # 采样更少的节点加速计算
+                            k=min(20, len(self.module_dependency_graph.nodes())),  # Sample fewer nodes to speed up computation
                             normalized=True
                         )
                         betweenness = between_dict.get(module_id, 0.0)
                     except:
                         betweenness = 0.0
                 
-                # 计算模块的综合引用重要性分数
-                # 入度权重最高 - 被大量引用的模块更重要
+                # Calculate comprehensive reference importance score for module
+                # In-degree weight is highest - modules referenced by many others are more important
                 in_degree_score = min(in_degree / 5.0, 1.0) * 0.5
-                # 出度适中 - 过多依赖可能不是好事
+                # Out-degree is moderate - too many dependencies may not be good
                 out_degree_score = min(out_degree / 10.0, 1.0) * 0.2
-                # PageRank反映整体网络中的重要性
+                # PageRank reflects importance in overall network
                 pagerank_score = min(pagerank_score, 1.0) * 0.6
-                # 中间中心性反映桥接作用
+                # Betweenness centrality reflects bridging role
                 betweenness_score = min(betweenness * 10, 1.0) * 0.4
                 
-                # 将所有分数结合
+                # Combine all scores
                 score = (in_degree_score + out_degree_score + pagerank_score + betweenness_score) / 1.7
                 
-                # 如果模块是重要的"根模块"(被多个模块引用但几乎不引用其他模块)
+                # If module is an important "root module" (referenced by many modules but references few others)
                 if in_degree > 2 and out_degree <= 1:
                     score += 0.3
                     
-                # 如果模块是关键的"集成模块"(既引用很多模块也被很多模块引用)
+                # If module is a key "integration module" (both references many modules and is referenced by many modules)
                 if in_degree > 2 and out_degree > 2:
                     score += 0.2
         
         return min(score, 1.0)
     
     def _check_key_component(self, node: Dict) -> float:
-        """检查节点是否是关键组件"""
-        # 初始分数为0
+        """Check if node is a key component"""
+        # Initial score is 0
         score = 0.0
         
-        # 检查节点ID是否在关键组件列表中
+        # Check if node ID is in key components list
         if 'id' in node:
             for component in self.code_tree['key_components']:
-                # 完全匹配
+                # Exact match
                 if component.get('id') == node['id']:
                     score = 1.0
                     break
-                # 部分匹配（模块包含关键组件）
+                # Partial match (module contains key component)
                 if 'module' in component and component['module'] == node['id']:
                     score = 0.8
                     break
@@ -268,13 +268,13 @@ class ImportanceAnalyzer:
         return score
     
     def _analyze_usage(self, node: Dict) -> float:
-        """分析节点的使用频率"""
+        """Analyze node usage frequency"""
         score = 0.0
         
-        # 如果是模块，检查被导入的次数
+        # If it's a module, check how many times it's imported
         if node['type'] == 'module' and 'id' in node:
             module_id = node['id']
-            # 计算其他模块导入此模块的次数
+            # Count how many other modules import this module
             import_count = 0
             for imports in self.imports.values():
                 for imp in imports:
@@ -282,10 +282,10 @@ class ImportanceAnalyzer:
                        (imp['type'] == 'importfrom' and imp['module'] == module_id):
                         import_count += 1
             
-            # 归一化使用频率分数
+            # Normalize usage frequency score
             score = min(import_count / 5.0, 1.0)
             
-            # 检查该模块包含的函数和类被调用的次数
+            # Check how many times functions and classes in this module are called
             if 'functions' in node:
                 func_call_count = 0
                 for func_ref in node['functions']:
@@ -294,7 +294,7 @@ class ImportanceAnalyzer:
                         if func_id in self.functions:
                             func_call_count += len(self.functions[func_id].get('called_by', []))
                 
-                # 添加函数调用频率分数
+                # Add function call frequency score
                 score += min(func_call_count / 10.0, 1.0) * 0.5
 
             if 'classes' in node:
@@ -305,162 +305,162 @@ class ImportanceAnalyzer:
                         if class_id in self.classes:
                             class_call_count += len(self.classes[class_id].get('called_by', []))
                 
-                # 添加类调用频率分数
+                # Add class call frequency score
                 score += min(class_call_count / 10.0, 1.0) * 0.5
         
         return score
     
     def _analyze_complexity(self, node: Dict) -> float:
-        """分析节点的代码复杂度"""
+        """Analyze node code complexity"""
         score = 0.0
         
-        # 如果是模块，分析其复杂度
+        # If it's a module, analyze its complexity
         if node['type'] == 'module' and 'id' in node:
             module_id = node['id']
             if module_id in self.modules and 'content' in self.modules[module_id]:
                 content = self.modules[module_id]['content']
                 
-                # 计算分支和循环的数量
+                # Count branches and loops
                 lines = content.splitlines()
                 if_count = sum(1 for line in lines if re.search(r'\bif\b', line))
                 for_count = sum(1 for line in lines if re.search(r'\bfor\b', line))
                 while_count = sum(1 for line in lines if re.search(r'\bwhile\b', line))
                 except_count = sum(1 for line in lines if re.search(r'\bexcept\b', line))
                 
-                # 计算总的分支数
+                # Calculate total branch count
                 branch_count = if_count + for_count + while_count + except_count
                 
-                # 归一化复杂度分数
+                # Normalize complexity score
                 score = min(branch_count / 50.0, 1.0)
                 
-                # 检查函数的嵌套深度
+                # Check function nesting depth
                 def_pattern = re.compile(r'^(\s*)def\s+', re.MULTILINE)
                 matches = def_pattern.findall(content)
                 if matches:
-                    # 计算最大缩进级别
+                    # Calculate maximum indentation level
                     max_indent = max(len(indent) for indent in matches)
-                    indent_level = max_indent / 4  # 假设每级缩进是4个空格
+                    indent_level = max_indent / 4  # Assume each indentation level is 4 spaces
                     
-                    # 添加嵌套深度分数
+                    # Add nesting depth score
                     score += min(indent_level / 5.0, 1.0) * 0.3
         
         return score
     
     def _analyze_semantic_importance(self, node: Dict) -> float:
-        """分析节点的语义重要性"""
+        """Analyze node semantic importance"""
         score = 0.0
         
-        # 从节点名称中提取语义信息
+        # Extract semantic information from node name
         if 'name' in node:
             score += self._semantic_importance(node['name'])
         
-        # 从节点ID中提取语义信息
+        # Extract semantic information from node ID
         if 'id' in node:
             module_parts = node['id'].split('.')
             for part in module_parts:
-                score += self._semantic_importance(part) * 0.5  # 减小权重，避免重复计算
+                score += self._semantic_importance(part) * 0.5  # Reduce weight to avoid double counting
         
-        # 归一化分数
+        # Normalize score
         return min(score, 1.0)
     
     def _semantic_importance(self, name: str) -> float:
-        """基于名称的语义重要性分析"""
+        """Semantic importance analysis based on name"""
         score = 0.0
         name_lower = name.lower()
         
-        # 检查是否包含重要关键词
+        # Check if contains important keywords
         for keyword in self.important_keywords:
             if keyword in name_lower:
                 score += 0.3
                 break
         
-        # 特殊处理入口点
+        # Special handling for entry points
         if name == '__main__' or name == 'main':
             score += 0.7
         
-        # 处理常见的重要文件名
+        # Handle common important file names
         if name in ['__init__', 'app', 'settings', 'config', 'utils', 'constants']:
             score += 0.5
         
         return min(score, 1.0)
     
     def _analyze_documentation(self, node: Dict) -> float:
-        """分析节点的文档完整性"""
+        """Analyze node documentation completeness"""
         score = 0.0
         
-        # 检查是否有文档字符串
+        # Check if has docstring
         if 'docstring' in node and node['docstring']:
             docstring = node['docstring']
             
-            # 基于文档长度的基础分数
+            # Base score based on documentation length
             score = min(len(docstring) / 200.0, 1.0) * 0.7
             
-            # 检查文档质量
-            # 1. 是否包含参数说明
+            # Check documentation quality
+            # 1. Contains parameter description
             if 'Args:' in docstring or 'Parameters:' in docstring:
                 score += 0.15
             
-            # 2. 是否包含返回值说明
+            # 2. Contains return value description
             if 'Returns:' in docstring or 'Return:' in docstring:
                 score += 0.15
             
-            # 3. 是否包含示例
+            # 3. Contains examples
             if 'Example:' in docstring or 'Examples:' in docstring:
                 score += 0.1
         
         return min(score, 1.0)
     
     def _analyze_size(self, node: Dict) -> float:
-        """分析节点的代码大小"""
+        """Analyze node code size"""
         score = 0.0
         
-        # 检查节点是否有行数信息
+        # Check if node has line count information
         if 'lines' in node:
-            # 基于行数计算分数，较大的文件可能更重要，但有上限
+            # Calculate score based on line count, larger files may be more important, but with upper limit
             score = min(node['lines'] / 500.0, 1.0)
         
         return score
     
     def _analyze_git_history(self, node: Dict) -> float:
-        """分析节点的Git历史"""
+        """Analyze node Git history"""
         score = 0.0
         
-        # 如果是模块，获取对应文件的路径
+        # If it's a module, get the corresponding file path
         if node['type'] == 'module' and 'id' in node:
             module_id = node['id']
             if module_id in self.modules and 'path' in self.modules[module_id]:
                 file_path = os.path.join(self.repo_path, self.modules[module_id]['path'])
                 
-                # 获取Git历史信息
+                # Get Git history information
                 score = self.get_file_history_importance(file_path)
         
         return score
     
     def get_file_history_importance(self, file_path: str) -> float:
         """
-        基于文件的Git历史计算重要性
+        Calculate importance based on file's Git history
         
         Args:
-            file_path: 文件路径
+            file_path: File path
             
         Returns:
-            重要性分数 (0.0 - 1.0)
+            Importance score (0.0 - 1.0)
         """
         try:
-            # 检查文件是否存在
+            # Check if file exists
             if not os.path.exists(file_path):
                 return 0.0
             
-            # 检查是否在Git仓库中
+            # Check if in Git repository
             repo_dir = os.path.dirname(file_path)
             if not os.path.exists(os.path.join(repo_dir, '.git')) and \
                not os.path.exists(os.path.join(self.repo_path, '.git')):
-                # 尝试向上查找.git目录
+                # Try to find .git directory upwards
                 current_dir = repo_dir
                 found_git = False
-                for _ in range(5):  # 限制向上查找的次数
+                for _ in range(5):  # Limit upward search count
                     parent_dir = os.path.dirname(current_dir)
-                    if parent_dir == current_dir:  # 已到达根目录
+                    if parent_dir == current_dir:  # Reached root directory
                         break
                     if os.path.exists(os.path.join(parent_dir, '.git')):
                         found_git = True
@@ -468,9 +468,9 @@ class ImportanceAnalyzer:
                     current_dir = parent_dir
                 
                 if not found_git:
-                    return 0.0  # 不在Git仓库中
+                    return 0.0  # Not in Git repository
             
-            # 获取提交次数
+            # Get commit count
             try:
                 rel_path = os.path.relpath(file_path, self.repo_path)
                 cmd = ['git', '-C', self.repo_path, 'log', '--oneline', '--', rel_path]
@@ -480,10 +480,10 @@ class ImportanceAnalyzer:
                     commit_lines = result.stdout.strip().split('\n')
                     commit_count = len([line for line in commit_lines if line])
                     
-                    # 根据提交次数计算分数
+                    # Calculate score based on commit count
                     score = min(commit_count / 20.0, 1.0)
                     
-                    # 获取最后修改时间
+                    # Get last modification time
                     cmd_last_commit = ['git', '-C', self.repo_path, 'log', '-1', '--format=%at', '--', rel_path]
                     result_last = subprocess.run(cmd_last_commit, capture_output=True, text=True, check=False)
                     
@@ -494,10 +494,10 @@ class ImportanceAnalyzer:
                             current_time = int(time.time())
                             days_since_last_commit = (current_time - last_commit_time) / (60 * 60 * 24)
                             
-                            # 最近修改的文件可能更重要
+                            # Recently modified files may be more important
                             recency_score = max(0, 1.0 - (days_since_last_commit / 365))
                             
-                            # 结合提交次数和最近修改时间
+                            # Combine commit count and recent modification time
                             score = (score * 0.7) + (recency_score * 0.3)
                         except:
                             pass

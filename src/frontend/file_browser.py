@@ -610,12 +610,12 @@ class FileBrowserManager:
         try:
             import json
             
-            # 解析JSON
+            # Parse JSON
             data = json.loads(content)
             
             st.markdown("**📋 JSON Data Preview:**")
             
-            # 显示JSON信息
+            # Show JSON information
             col1, col2 = st.columns(2)
             with col1:
                 if isinstance(data, dict):
@@ -626,7 +626,7 @@ class FileBrowserManager:
                     st.metric("📄 Data Type", type(data).__name__)
             
             with col2:
-                # 计算JSON深度
+                # Calculate JSON depth
                 def get_depth(obj, depth=0):
                     if isinstance(obj, dict):
                         return max([get_depth(v, depth+1) for v in obj.values()], default=depth)
@@ -636,13 +636,13 @@ class FileBrowserManager:
                 
                 st.metric("🌳 Nesting Depth", get_depth(data))
             
-            # 显示格式化的JSON
+            # Show formatted JSON
             st.json(data)
             
-            # 如果是字典，显示键列表
+            # If it's a dictionary, show key list
             if isinstance(data, dict) and len(data) > 0:
                 st.markdown("**🔑 Main Keys:**")
-                keys = list(data.keys())[:10]  # 只显示前10个键
+                keys = list(data.keys())[:10]  # Only show first 10 keys
                 for key in keys:
                     value_type = type(data[key]).__name__
                     st.markdown(f"- `{key}`: {value_type}")
@@ -661,16 +661,16 @@ class FileBrowserManager:
         try:
             import yaml
             
-            # 解析YAML
+            # Parse YAML
             data = yaml.safe_load(content)
             
             st.markdown("**⚙️ YAML Configuration Preview:**")
             
-            # 显示YAML信息
+            # Show YAML information
             if isinstance(data, dict):
                 st.metric("🔑 Configuration Items", len(data.keys()))
                 
-                # 显示主要配置项
+                # Show main configuration items
                 st.markdown("**🔧 Main Configuration Items:**")
                 for key, value in list(data.items())[:10]:
                     value_type = type(value).__name__
@@ -682,7 +682,7 @@ class FileBrowserManager:
                 if len(data.keys()) > 10:
                     st.markdown(f"... and {len(data.keys()) - 10} more configuration items")
             
-            # 显示原始YAML内容
+            # Show original YAML content
             st.markdown("**📄 YAML Content:**")
             st.code(content, language='yaml')
             
@@ -697,25 +697,25 @@ class FileBrowserManager:
         lines = content.split('\n')
         total_lines = len(lines)
         
-        # 显示日志统计
+        # Show log statistics
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("📏 Total Lines", total_lines)
         with col2:
-            # 统计错误行
+            # Count error lines
             error_lines = len([line for line in lines if any(keyword in line.lower() for keyword in ['error', 'err', 'exception', 'fail'])])
             st.metric("❌ Error Lines", error_lines)
         with col3:
-            # 统计警告行
+            # Count warning lines
             warning_lines = len([line for line in lines if any(keyword in line.lower() for keyword in ['warn', 'warning'])])
             st.metric("⚠️ Warning Lines", warning_lines)
         
-        # 显示最后几行日志（通常最重要）
+        # Show recent logs (usually most important)
         st.markdown("**📋 Recent Logs (Last 50 lines):**")
         recent_logs = '\n'.join(lines[-50:]) if len(lines) > 50 else content
         st.text_area("Log Content", recent_logs, height=400, key="log_content_area")
         
-        # 如果有错误或警告，单独显示
+        # If there are errors or warnings, show them separately
         if error_lines > 0 or warning_lines > 0:
             st.markdown("**🚨 Error and Warning Messages:**")
             error_warning_lines = [line for line in lines if any(keyword in line.lower() for keyword in ['error', 'err', 'exception', 'fail', 'warn', 'warning'])]
@@ -727,15 +727,15 @@ class FileBrowserManager:
         st.markdown("**📕 PDF File Preview:**")
         
         try:
-            # 显示文件信息
+            # Show file information
             file_size = self.get_file_size(file_path)
             st.info(f"📄 PDF file size: {file_size}")
             
-            # 尝试使用streamlit的内置PDF查看器
+            # Try using streamlit's built-in PDF viewer
             with open(file_path, "rb") as f:
                 base64_pdf = base64.b64encode(f.read()).decode('utf-8')
             
-            # 创建PDF查看器
+            # Create PDF viewer
             pdf_display = f'''
             <iframe src="data:application/pdf;base64,{base64_pdf}" 
                     width="100%" height="600" type="application/pdf">
@@ -754,11 +754,11 @@ class FileBrowserManager:
         st.markdown("**🎬 Video File Preview:**")
         
         try:
-            # 显示文件信息
+            # Show file information
             file_size = self.get_file_size(file_path)
             st.info(f"📄 Video file size: {file_size}")
             
-            # 尝试使用streamlit的内置视频播放器
+            # Try using streamlit's built-in video player
             st.video(file_path)
             
         except Exception as e:
@@ -770,11 +770,11 @@ class FileBrowserManager:
         st.markdown("**🎵 Audio File Preview:**")
         
         try:
-            # 显示文件信息
+            # Show file information
             file_size = self.get_file_size(file_path)
             st.info(f"📄 Audio file size: {file_size}")
             
-            # 尝试使用streamlit的内置音频播放器
+            # Try using streamlit's built-in audio player
             st.audio(file_path)
             
         except Exception as e:
@@ -797,7 +797,7 @@ class FileBrowserManager:
         </div>
         """, unsafe_allow_html=True)
         
-        # 显示当前目录的统计信息
+        # Show current directory statistics
         try:
             if os.path.exists(st.session_state.browser_current_path):
                 files = [f for f in os.listdir(st.session_state.browser_current_path) 
@@ -824,7 +824,7 @@ class FileBrowserManager:
                     </div>
                     """, unsafe_allow_html=True)
                 
-                # 文件类型分布
+                # File type distribution
                 if files:
                     st.markdown("#### 📈 File Type Distribution")
                     file_types = {}
@@ -832,7 +832,7 @@ class FileBrowserManager:
                         ext = Path(file).suffix.lower() or 'No extension'
                         file_types[ext] = file_types.get(ext, 0) + 1
                     
-                    # 显示前5种文件类型
+                    # Show top 5 file types
                     sorted_types = sorted(file_types.items(), key=lambda x: x[1], reverse=True)[:5]
                     for ext, count in sorted_types:
                         icon = self.get_file_icon(f"dummy{ext}")
@@ -846,11 +846,11 @@ def render_file_browser_interface():
     style_manager = UIStyleManager()
     style_manager.apply_main_styles()
     
-    # 渲染顶部导航
+    # Render top navigation
     user_name = st.session_state.get('username', 'Guest')
     UIComponentRenderer.render_top_navigation(user_name=user_name)
     
-    # 返回聊天界面按钮
+    # Back to chat interface button
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🔙 Back to Chat", key="back_to_chat", use_container_width=True, type="primary"):
@@ -859,66 +859,88 @@ def render_file_browser_interface():
     
     st.markdown("---")
     
-    # 获取工作目录
+    # Get work directory
     work_dir = st.session_state.get('work_dir', os.getcwd())
     
-    # 创建并渲染文件浏览器
+    # Create and render file browser
     browser_manager = FileBrowserManager(work_dir)
     browser_manager.render_file_browser()
 
 def render_file_browser_button(key_suffix: str = "", button_text: str = "📁 Browse Work Directory", help_text: str = "View all files in current work directory"):
     """Render file browser button"""
-    # 获取工作目录信息
+    # Get work directory information
     work_dir = st.session_state.get('work_dir', os.getcwd())
     
-    # 获取目录统计和文件类型
+    # Get directory statistics and file types
     file_count = 0
     dir_count = 0
     file_types = []
     
     try:
         if os.path.exists(work_dir):
-            items = os.listdir(work_dir)
-            files = [f for f in items if os.path.isfile(os.path.join(work_dir, f))]
-            dirs = [d for d in items if os.path.isdir(os.path.join(work_dir, d))]
+            # Recursively get statistics for 2 levels of directories
+            file_count = 0
+            dir_count = 0
+            type_icons = {}
             
-            file_count = len(files)
-            dir_count = len(dirs)
+            # Traverse current directory and first-level subdirectories (max 2 levels deep)
+            for root, dirs, files in os.walk(work_dir):
+                # Calculate the depth of current directory relative to work directory
+                level = root.replace(work_dir, '').count(os.sep)
+                
+                # Only process current directory (level 0) and first-level subdirectories (level 1)
+                if level <= 1:
+                    # Count file numbers
+                    file_count += len(files)
+                    
+                    # If it's current directory, count direct subdirectories
+                    if level == 0:
+                        dir_count = len(dirs)
+                    
+                    # Collect file type information (limit file count for performance)
+                    for file in files[:10]:  # Check at most 10 files per directory
+                        ext = Path(file).suffix.lower()
+                        if ext and ext not in type_icons:
+                            file_path = os.path.join(root, file)
+                            type_icons[ext] = FileBrowserManager.get_file_icon(file_path)
+                        if len(type_icons) >= 8:  # Display at most 8 file types
+                            break
+                    
+                    # Can exit early if enough file types have been collected
+                    if len(type_icons) >= 8:
+                        break
+                
+                # If already at level 1 subdirectory, don't traverse deeper
+                if level >= 1:
+                    dirs[:] = []  # Clear dirs list to prevent further recursion
+            
+            # Return directly if no files and directories
             if file_count == 0 and dir_count == 0:
                 return
             
-            # 获取常见文件类型的缩略图
-            type_icons = {}
-            for file in files[:20]:  # 只检查前20个文件以提高性能
-                ext = Path(file).suffix.lower()
-                if ext and ext not in type_icons:
-                    type_icons[ext] = FileBrowserManager.get_file_icon(file)
-                if len(type_icons) >= 6:  # 最多显示6种文件类型
-                    break
-            
-            # 添加文件夹图标
-            if dirs:
+            # Add folder icon
+            if dir_count > 0:
                 type_icons['folder'] = '📁'
             
-            file_types = list(type_icons.items())[:6]
+            file_types = list(type_icons.items())[:8]
     except:
         pass
     
-    # 创建缩略图显示
+    # Create thumbnail display
     thumbnails_display = ""
     for file_type, icon in file_types:
         thumbnails_display += f"{icon} "
     
-    # 如果没有文件类型，显示默认图标
+    # If no file types, show default icons
     if not thumbnails_display:
         thumbnails_display = "📁 📄 🖼️ "
     
-    # 直接调用ui_styles.py中的缩略图展示效果
+    # Directly call thumbnail display effect from ui_styles.py
     from ui_styles import UIComponentRenderer
     
-    # 使用form来创建可点击的自定义按钮
+    # Use form to create clickable custom button
     with st.form(key=f"file_browser_form_{key_suffix}"):
-        # 添加自定义样式
+        # Add custom styles
         st.markdown("""
         <style>
         .file-browser-custom {
@@ -1012,7 +1034,7 @@ def render_file_browser_button(key_suffix: str = "", button_text: str = "📁 Br
         </style>
         """, unsafe_allow_html=True)
         
-        # 渲染自定义按钮内容
+        # Render custom button content
         st.markdown(f"""
         <div class="file-browser-custom">
             <div class="file-browser-bg-decoration"></div>
@@ -1038,15 +1060,15 @@ def render_file_browser_button(key_suffix: str = "", button_text: str = "📁 Br
         
 
     
-        # 展示工作目录中文件的缩略图效果（紧凑一行展示）
+        # Display thumbnail effect of files in work directory (compact single-line display)
         if file_count > 0:
-            # 创建模拟的uploaded_files对象来展示缩略图
+            # Create mock uploaded_files object to display thumbnails
             mock_files = []
             try:
-                for file in files[:8]:  # 最多显示8个文件
+                for file in files[:8]:  # Display at most 8 files
                     file_path = os.path.join(work_dir, file)
                     if os.path.isfile(file_path):
-                        # 创建一个简单的mock对象来模拟uploaded_file
+                        # Create a simple mock object to simulate uploaded_file
                         class MockFile:
                             def __init__(self, filepath):
                                 self.name = os.path.basename(filepath)
@@ -1068,19 +1090,19 @@ def render_file_browser_button(key_suffix: str = "", button_text: str = "📁 Br
                 pass
             
             if mock_files:
-                # 使用紧凑的一行展示，而不是网格布局
+                # Use compact single-line display instead of grid layout
                 st.markdown("#### 📁 Directory File Preview")
                 
-                # 创建一行展示的列布局
+                # Create single-line column layout
                 cols = st.columns(len(mock_files))
                 
                 for i, mock_file in enumerate(mock_files):
                     with cols[i]:
-                        # 获取文件信息
+                        # Get file information
                         filename = mock_file.name
                         file_size = mock_file.size
                         
-                        # 格式化文件大小
+                        # Format file size
                         if file_size < 1024:
                             size_str = f"{file_size} B"
                         elif file_size < 1024 * 1024:
@@ -1088,11 +1110,11 @@ def render_file_browser_button(key_suffix: str = "", button_text: str = "📁 Br
                         else:
                             size_str = f"{file_size / (1024 * 1024):.1f} MB"
                         
-                        # 使用FilePreviewGenerator生成真实的文件内容预览
+                        # Use FilePreviewGenerator to generate real file content preview
                         from ui_styles import FilePreviewGenerator
                         preview_content = FilePreviewGenerator.generate_preview_html(mock_file)
                         
-                        # 渲染紧凑的文件卡片
+                        # Render compact file card
                         card_html = f"""
                         <div class="uploaded-file-card">
                             <div class="file-thumbnail">
@@ -1107,7 +1129,7 @@ def render_file_browser_button(key_suffix: str = "", button_text: str = "📁 Br
                         
                         st.markdown(card_html, unsafe_allow_html=True)
 
-        # 使用form_submit_button来处理点击
+        # Use form_submit_button to handle clicks
         if st.form_submit_button("Click to Browse Files", use_container_width=True, type="primary"):
             st.session_state.show_file_browser = True
             st.rerun()                        

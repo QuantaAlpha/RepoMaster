@@ -14,13 +14,13 @@ from auth_utils import login, register, generate_user_id
 from src.utils.tool_streamlit import AppContext
 from call_agent import AgentCaller
 
-# 导入新的UI管理器
+# Import new UI manager
 from src.frontend.ui_styles import UIStyleManager, UIComponentRenderer, ChatHistoryManager
 
-# 导入文件浏览器模块
+# Import file browser module
 from file_browser import render_file_browser_interface, render_file_browser_button
 
-# 如果ChatHistoryManager不存在，创建一个简单的实现
+# If ChatHistoryManager doesn't exist, create a simple implementation
 try:
     from ui_styles import ChatHistoryManager
 except ImportError:
@@ -32,7 +32,7 @@ except ImportError:
             if not messages:
                 return "New conversation"
             
-            # 获取第一条用户消息作为预览
+            # Get the first user message as preview
             for msg in messages:
                 if msg.get('role') == 'user' and msg.get('content'):
                     content = msg['content'].strip()
@@ -43,13 +43,13 @@ except ImportError:
         def format_timestamp(self, chat_id: str) -> str:
             """Format timestamp"""
             try:
-                # 处理包含下划线的chat_id格式（如：1703123456_789）
+                # Handle chat_id format with underscores (e.g.: 1703123456_789)
                 if '_' in chat_id:
-                    # 将下划线替换回小数点
+                    # Replace underscore back to decimal point
                     timestamp_str = chat_id.replace('_', '.')
                     timestamp = float(timestamp_str)
                 else:
-                    # 直接转换为浮点数（兼容旧格式）
+                    # Convert directly to float (compatible with old format)
                     timestamp = float(chat_id)
                 
                 dt = datetime.datetime.fromtimestamp(timestamp)
@@ -66,14 +66,14 @@ AI_AVATAR_ICON = '✨'
 USER_AVATAR_ICON = '👤'
 MODEL_NAME = "gpt-3.5-turbo"
 
-# 短ID生成函数
+# Short ID generation function
 def generate_short_id(length: int = 8) -> str:
-    """生成短的随机ID，默认8位字符"""
+    """Generate short random ID, default 8 characters"""
     chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
     return ''.join(random.choice(chars) for _ in range(length))
 
 def generate_chat_id() -> str:
-    """生成聊天ID，格式：时间戳后4位+随机4位"""
+    """Generate chat ID, format: timestamp with underscore replacing decimal point"""
     return f'{time.time()}'.replace('.','_')
 
 
@@ -89,12 +89,12 @@ def initialize_data_directory():
     os.makedirs(DATA_DIR, exist_ok=True)
 
 def get_user_id():
-    """获取用户ID"""
+    """Get user ID"""
     if st.session_state.get('logged_in'):
         return st.session_state.user_id
     else:
         if 'guest_user_id' not in st.session_state:
-            st.session_state.guest_user_id = generate_short_id(6)  # 6位短ID
+            st.session_state.guest_user_id = generate_short_id(6)  # 6-character short ID
         return st.session_state.guest_user_id
 
 def load_past_chats(user_id: str) -> Dict[str, str]:
@@ -116,14 +116,14 @@ def save_chat_messages(user_id: str, chat_id: str, messages: List[Dict[str, str]
     joblib.dump(messages, f'{DATA_DIR}{user_id}_{chat_id}_messages')
 
 def load_display_messages(user_id: str, chat_id: str) -> List[Dict]:
-    """加载显示消息历史"""
+    """Load display message history"""
     try:
         return joblib.load(f'{DATA_DIR}{user_id}_{chat_id}_display_messages')
     except FileNotFoundError:
         return []
 
 def save_display_messages(user_id: str, chat_id: str, display_messages: List[Dict]):
-    """保存显示消息历史"""
+    """Save display message history"""
     joblib.dump(display_messages, f'{DATA_DIR}{user_id}_{chat_id}_display_messages')
 
 def save_uploaded_files(uploaded_files, work_dir: str) -> List[str]:
@@ -138,16 +138,16 @@ def save_uploaded_files(uploaded_files, work_dir: str) -> List[str]:
     file_paths = []
     work_dir_path = Path(work_dir)
     
-    # 确保工作目录存在
+    # Ensure work directory exists
     work_dir_path.mkdir(parents=True, exist_ok=True)
     
     for uploaded_file in uploaded_files:
         if uploaded_file is not None:
-            # 生成安全的文件名
+            # Generate safe filename
             safe_filename = get_safe_filename(uploaded_file.name)
             file_path = work_dir_path / safe_filename
             
-            # 保存文件
+            # Save file
             with open(file_path, "wb") as f:
                 f.write(uploaded_file.getvalue())
             
@@ -160,10 +160,10 @@ def get_safe_filename(filename: str) -> str:
     import re
     import datetime
     
-    # 移除危险字符
+    # Remove dangerous characters
     safe_name = re.sub(r'[^\w\-_\.]', '_', filename)
     
-    # 如果文件名太长，截断它
+    # If filename is too long, truncate it
     if len(safe_name) > 100:
         name_parts = safe_name.rsplit('.', 1)
         if len(name_parts) == 2:
@@ -172,7 +172,7 @@ def get_safe_filename(filename: str) -> str:
         else:
             safe_name = safe_name[:100]
     
-    # 添加时间戳避免重名
+    # Add timestamp to avoid naming conflicts
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     name_parts = safe_name.rsplit('.', 1)
     if len(name_parts) == 2:
@@ -194,36 +194,36 @@ class EnhancedSidebarManager:
     def render_sidebar(self) -> str:
         """Render enhanced sidebar"""
         with st.sidebar:
-            # 动态获取最新的past_chats
+            # Dynamic get latest past_chats
             past_chats = load_past_chats(self.user_id)
             
-            # 应用侧边栏样式
+            # Apply sidebar styles
             self.style_manager.apply_sidebar_styles()
             
-            # 侧边栏标题
+            # Sidebar title
             st.markdown("""
             <div style="text-align: center; margin-bottom: 2rem;">
                 <h2 style="color: var(--primary-color); margin: 0;">💬 Chat Management</h2>
             </div>
             """, unsafe_allow_html=True)
             
-            # 新建对话按钮
+            # New chat button
             if st.button("➕ New Chat", key="new_chat_button", help="Start a new conversation", use_container_width=True):
                 return self._create_new_chat(past_chats)
             
             st.markdown("---")
             
-            # 聊天历史标题
+            # Chat history title
             st.markdown('<div class="section-title">📚 Chat History</div>', unsafe_allow_html=True)
             
-            # 初始化chat_id
+            # Initialize chat_id
             if "chat_id" not in st.session_state:
-                st.session_state.chat_id = generate_chat_id()  # 使用短ID
+                st.session_state.chat_id = generate_chat_id()  # Use short ID
             
-            # 渲染聊天历史
+            # Render chat history
             self._render_chat_history(past_chats)
             
-            # 底部操作区域
+            # Bottom action area
             st.markdown("---")
             self._render_bottom_actions()
             
@@ -231,16 +231,16 @@ class EnhancedSidebarManager:
     
     def _create_new_chat(self, past_chats: Dict[str, str]) -> str:
         """Create new conversation"""
-        new_chat_id = generate_chat_id()  # 使用短ID
+        new_chat_id = generate_chat_id()  # Use short ID
         st.session_state.chat_id = new_chat_id
         st.session_state.chat_title = f'Chat-{datetime.datetime.now().strftime("%m/%d %H:%M")}'
         st.session_state.messages = []
-        st.session_state.display_messages = []  # 初始化display_messages
+        st.session_state.display_messages = []  # Initialize display_messages
         
-        # 更新工作目录，确保新聊天有独立的工作目录
+        # Update work directory, ensure new chat has independent work directory
         update_work_dir(self.user_id, new_chat_id)
         
-        # 清空文件上传相关的状态
+        # Clear file upload related states
         if "local_files" in st.session_state:
             st.session_state.local_files = []
         
@@ -248,7 +248,7 @@ class EnhancedSidebarManager:
             st.session_state.file_uploader_key = 0
         st.session_state.file_uploader_key += 1
         
-        # 保存到历史记录
+        # Save to history
         past_chats[new_chat_id] = st.session_state.chat_title
         save_past_chats(self.user_id, past_chats)
         
@@ -266,7 +266,7 @@ class EnhancedSidebarManager:
             """, unsafe_allow_html=True)
             return
         
-        # 按时间排序显示聊天历史
+        # Sort chats by time for display
         sorted_chats = sorted(past_chats.items(), key=lambda x: float(x[0]), reverse=True)
         
         for chat_id, chat_title in sorted_chats:
@@ -275,11 +275,11 @@ class EnhancedSidebarManager:
             # print("display_messages", display_messages)
             if not display_messages:
                 continue
-            # 移除这个条件检查，即使没有消息也显示聊天项
+            # Remove this condition check, display chat item even without messages
             # if not messages:
             #     continue
                 
-            # 获取预览信息
+            # Get preview information
             if messages:
                 preview_text = self.history_manager.get_message_preview(messages)
                 message_count = len(messages)
@@ -290,11 +290,11 @@ class EnhancedSidebarManager:
             timestamp = self.history_manager.format_timestamp(chat_id)
             is_active = chat_id == st.session_state.get('chat_id')
             
-            # 创建聊天项容器，使用列布局来放置聊天按钮和删除按钮
+            # Create chat item container, use column layout for chat button and delete button
             col1, col2 = st.columns([5, 1])
             
             with col1:
-                # 创建聊天按钮
+                # Create chat button
                 button_key = f"chat_button_{chat_id}"
                 if message_count > 0:
                     button_label = f"💬 {preview_text[:25]}..."
@@ -311,18 +311,18 @@ class EnhancedSidebarManager:
                     st.session_state.chat_title = chat_title
                     st.session_state.messages = messages
                     
-                    # 加载display_messages
+                    # Load display_messages
                     display_messages = load_display_messages(self.user_id, chat_id)
                     st.session_state.display_messages = display_messages
                     
-                    # 切换对话时更新工作目录，确保每个聊天会话有独立的工作目录
+                    # When switching conversations, update work directory to ensure each chat session has independent work directory
                     update_work_dir(self.user_id, chat_id)
                     
-                    # 切换对话时也清空文件上传相关的状态
+                    # Clear file upload related states when switching conversations
                     if "local_files" in st.session_state:
                         st.session_state.local_files = []
                     
-                    # 重置文件上传器的key
+                    # Reset file uploader key
                     if "file_uploader_key" not in st.session_state:
                         st.session_state.file_uploader_key = 0
                     st.session_state.file_uploader_key += 1
@@ -330,10 +330,10 @@ class EnhancedSidebarManager:
                     st.rerun()
             
             with col2:
-                # 创建删除按钮 - 使用小图标和自定义样式
+                # Create delete button - use small icon and custom styles
                 delete_key = f"delete_button_{chat_id}"
                 
-                # 添加自定义CSS类到删除按钮
+                # Add custom CSS class to delete button
                 st.markdown("""
                 <style>
                 div[data-testid="column"]:nth-child(2) button[kind="secondary"] {
@@ -373,7 +373,7 @@ class EnhancedSidebarManager:
                 ):
                     self._delete_chat(chat_id, past_chats)
             
-            # 显示元信息
+            # Display metadata
             st.markdown(f"""
             <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem; text-align: center;">
                 📝 {message_count} messages • ⏰ {timestamp}
@@ -386,12 +386,12 @@ class EnhancedSidebarManager:
         from pathlib import Path
         
         try:
-            # 从past_chats中移除
+            # Remove from past_chats
             if chat_id in past_chats:
                 del past_chats[chat_id]
                 save_past_chats(self.user_id, past_chats)
             
-            # 删除相关文件
+            # Delete related files
             data_dir = Path(DATA_DIR)
             files_to_delete = [
                 data_dir / f"{self.user_id}_{chat_id}_messages",
@@ -402,26 +402,26 @@ class EnhancedSidebarManager:
                 if file_path.exists():
                     file_path.unlink()
             
-            # 删除工作目录（如果存在）
+            # Delete work directory (if exists)
             pwd = os.getcwd()
             work_dir = Path(f"{pwd}/coding/{self.user_id}/{chat_id}")
             if work_dir.exists():
                 import shutil
                 shutil.rmtree(work_dir, ignore_errors=True)
             
-            # 如果删除的是当前聊天，切换到新聊天
+            # If deleting current chat, switch to new chat
             if chat_id == st.session_state.get('chat_id'):
-                # 创建新聊天
+                # Create new chat
                 new_chat_id = generate_chat_id()
                 st.session_state.chat_id = new_chat_id
                 st.session_state.chat_title = f'Chat-{datetime.datetime.now().strftime("%m/%d %H:%M")}'
                 st.session_state.messages = []
                 st.session_state.display_messages = []
                 
-                # 更新工作目录
+                # Update work directory
                 update_work_dir(self.user_id, new_chat_id)
                 
-                # 清空文件上传相关的状态
+                # Clear file upload related states
                 if "local_files" in st.session_state:
                     st.session_state.local_files = []
                 
@@ -429,11 +429,11 @@ class EnhancedSidebarManager:
                     st.session_state.file_uploader_key = 0
                 st.session_state.file_uploader_key += 1
                 
-                # 保存新聊天到历史记录
+                # Save new chat to history
                 past_chats[new_chat_id] = st.session_state.chat_title
                 save_past_chats(self.user_id, past_chats)
             
-            # 显示成功消息
+            # Display success message
             st.success("Chat history deleted successfully", icon="✅")
             st.rerun()
             
@@ -442,7 +442,7 @@ class EnhancedSidebarManager:
     
     def _render_bottom_actions(self):
         """Render bottom action area"""
-        # 用户状态显示
+        # User status display
         if st.session_state.get('logged_in'):
             user_name = st.session_state.get('username', 'User')
             st.markdown(f"""
@@ -488,24 +488,24 @@ class EnhancedMessageRenderer:
             self._display_welcome_message()
             return
         
-        # 如果有display_messages，优先使用它来重现历史对话
+        # If there are display_messages, use them first to replay historical conversations
         if display_messages:
             self._replay_display_messages(display_messages)
         else:
-            # 否则使用原有的消息渲染逻辑
+            # Otherwise use original message rendering logic
             for i, message in enumerate(messages):
                 self._render_single_message(message, i)
 
-        # 添加文件浏览按钮 - 在AI响应后显示
+        # Add file browse button - display after AI response
         st.markdown("---")
         render_file_browser_button("after_response", "📁 Browse Work Directory Files", "View files and content generated by Agent")                
     
     def _replay_display_messages(self, display_messages: List[Dict]):
         """Replay historical display messages"""
-        # 导入EnhancedMessageProcessor
+        # Import EnhancedMessageProcessor
         from src.services.agents.agent_client import EnhancedMessageProcessor
         
-        # 直接调用EnhancedMessageProcessor的replay方法
+        # Directly call EnhancedMessageProcessor's replay method
         EnhancedMessageProcessor.replay_display_messages(st, display_messages)
     
     def _display_welcome_message(self):
@@ -533,19 +533,19 @@ class EnhancedMessageRenderer:
         """, unsafe_allow_html=True)
     
     def _render_single_message(self, message: Dict[str, str], index: int):
-        """渲染单条消息 - 简化版本，主要用于基本消息显示"""
+        """Render single message - simplified version, mainly for basic message display"""
         role = message.get('role', 'user')
         content = message.get('content', '')
         
-        # 确定头像和样式
+        # Determine avatar and style
         if role == 'user':
             avatar = USER_AVATAR_ICON
         else:
             avatar = AI_AVATAR_ICON
         
-        # 使用Streamlit的chat_message组件
+        # Use Streamlit's chat_message component
         with st.chat_message(role, avatar=avatar):
-            # 添加消息头部
+            # Add message header
             timestamp = datetime.datetime.now().strftime("%H:%M")
             st.markdown(f"""
             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.875rem; font-weight: 600;">
@@ -558,119 +558,119 @@ class EnhancedMessageRenderer:
             </div>
             """, unsafe_allow_html=True)
             
-            # 显示消息内容
+            # Display message content
             if content:
                 st.markdown(content)
 
 def chat_interface():
     """Enhanced chat interface"""
-    # 应用主要样式
+    # Apply main styles
     style_manager = UIStyleManager()
     style_manager.apply_main_styles()
     
-    # 渲染顶部导航
+    # Render top navigation
     user_name = st.session_state.get('username', 'Guest')
     UIComponentRenderer.render_top_navigation(title="Code RepoMaster", user_name=user_name)
     
-    # 获取用户ID
+    # Get user ID
     user_id = get_user_id()
     
-    # 初始化配置和数据
+    # Initialize config and data
     config = load_config()
     initialize_data_directory()
     past_chats = load_past_chats(user_id)
     
-    # 设置增强版侧边栏
+    # Set up enhanced sidebar
     sidebar_manager = EnhancedSidebarManager(user_id)
     chat_id = sidebar_manager.render_sidebar()
     
-    # 确保有chat_id
+    # Ensure chat_id exists
     if not chat_id:
-        chat_id = generate_chat_id()  # 使用短ID
+        chat_id = generate_chat_id()  # Use short ID
         st.session_state.chat_id = chat_id
         st.session_state.chat_title = f'Chat-{datetime.datetime.now().strftime("%m/%d %H:%M")}'
         st.session_state.messages = []
-        st.session_state.display_messages = []  # 初始化display_messages
+        st.session_state.display_messages = []  # Initialize display_messages
         past_chats[chat_id] = st.session_state.chat_title
         save_past_chats(user_id, past_chats)
     
-    # 确保当前聊天在past_chats中
+    # Ensure current chat is in past_chats
     if chat_id not in past_chats:
         past_chats[chat_id] = st.session_state.get('chat_title', f'Chat-{datetime.datetime.now().strftime("%m/%d %H:%M")}')
         save_past_chats(user_id, past_chats)
     
-    # 设置工作目录（在确定chat_id之后）
+    # Set work directory (after determining chat_id)
     work_dir = update_work_dir(user_id, chat_id)
     AppContext.set_streamlit(st)
     
-    # 初始化消息
+    # Initialize messages
     if 'messages' not in st.session_state:
         st.session_state.messages = load_chat_messages(user_id, chat_id)
     
-    # 初始化display_messages
+    # Initialize display_messages
     if 'display_messages' not in st.session_state:
         st.session_state.display_messages = load_display_messages(user_id, chat_id)
     
-    # 显示聊天历史
+    # Display chat history
     message_renderer = EnhancedMessageRenderer()
     message_renderer.display_chat_history(
         st.session_state.messages, 
         st.session_state.display_messages
     )
     
-    # 初始化 local_files 状态，确保包含当前工作目录中的所有文件
-    # 这样可以避免在新对话轮次中重复显示已存在的文件
+    # Initialize local_files state, ensure it includes all files in current work directory
+    # This avoids repeatedly displaying existing files in new conversation rounds
     if "local_files" not in st.session_state:
         from src.services.agents.agent_client import EnhancedMessageProcessor
         st.session_state["local_files"] = EnhancedMessageProcessor.get_latest_files(work_dir)
     
-    # 文件上传区域 - 放在输入框上方，使用新的简化设计
-    st.markdown("---")  # 分隔线
+    # File upload area - placed above input box, using new simplified design
+    st.markdown("---")  # Separator line
     component_renderer = UIComponentRenderer()
     uploaded_files = component_renderer.render_file_upload_area()
     
-    # 显示已上传文件的网格
+    # Display uploaded files grid
     if uploaded_files:
         component_renderer.render_uploaded_files_grid(uploaded_files)
     
-    # 处理上传的文件 - 在agent_caller初始化之前
+    # Handle uploaded files - before agent_caller initialization
     file_paths = []
     if uploaded_files:
         file_paths = save_uploaded_files(uploaded_files, st.session_state.work_dir)
         
-        # 将上传的文件添加到local_files中，防止agent重复展示
+        # Add uploaded files to local_files to prevent agent from repeatedly displaying them
         if "local_files" not in st.session_state:
             st.session_state["local_files"] = []
         
-        # 添加新上传的文件到local_files列表
+        # Add newly uploaded files to local_files list
         for file_path in file_paths:
             if file_path not in st.session_state["local_files"]:
                 st.session_state["local_files"].append(file_path)
     
-    # 设置代理调用器
+    # Set up agent caller
     agent_caller = AgentCaller()
     
-    # 处理用户输入
+    # Handle user input
     if prompt := st.chat_input('💬 Please input your question...', key="chat_input"):
-        # 在开始处理之前，先同步 local_files 状态，确保包含当前工作目录中的所有文件
-        # 这样可以避免在新的对话轮次中重复显示已存在的文件
+        # Before starting processing, first sync local_files state to ensure it includes all files in current work directory
+        # This avoids repeatedly displaying existing files in new conversation rounds
         from src.services.agents.agent_client import EnhancedMessageProcessor
         current_files = EnhancedMessageProcessor.get_latest_files(st.session_state.work_dir)
         if "local_files" not in st.session_state:
             st.session_state["local_files"] = current_files
         else:
-            # 确保包含所有当前存在的文件
+            # Ensure all currently existing files are included
             st.session_state["local_files"] = list(set(st.session_state["local_files"] + current_files))
         
-        # 清除之前的输出
+        # Clear previous output
         st.empty()
         AppContext.get_instance().st.empty()
         
-        # 使用简化的接口保存用户消息
+        # Use simplified interface to save user message
         from src.services.agents.agent_client import EnhancedMessageProcessor
         
         if 0:
-            # 保存到基础消息
+            # Save to basic messages
             EnhancedMessageProcessor.add_message_to_session(
                 st=st,
                 role="user",
@@ -678,7 +678,7 @@ def chat_interface():
                 check_duplicate=False
             )
             
-            # 保存到显示消息
+            # Save to display messages
             EnhancedMessageProcessor.add_display_message_to_session(
                 st=st,
                 message_content=prompt,
@@ -688,7 +688,7 @@ def chat_interface():
                 check_duplicate=False
             )
         
-        # 显示用户消息
+        # Display user message
         with st.chat_message('user', avatar=USER_AVATAR_ICON):
             timestamp_display = datetime.datetime.now().strftime("%H:%M:%S")
             st.markdown(f"""
@@ -699,22 +699,22 @@ def chat_interface():
             """, unsafe_allow_html=True)
             st.markdown(prompt)
         
-        # 获取AI响应，传递文件路径
+        # Get AI response, pass file paths
         ai_response = agent_caller.create_chat_completion(prompt, user_id, chat_id, file_paths) 
         
-        # 保存更新的聊天消息
+        # Save updated chat messages
         save_chat_messages(user_id, chat_id, st.session_state.messages)
         
-        # 保存display_messages
+        # Save display_messages
         if hasattr(st.session_state, 'display_messages'):
             save_display_messages(user_id, chat_id, st.session_state.display_messages)
         
-        # 立即更新past_chats，确保聊天历史能显示
+        # Immediately update past_chats to ensure chat history can be displayed
         if chat_id not in past_chats:
             past_chats[chat_id] = st.session_state.get('chat_title', f'Chat-{datetime.datetime.now().strftime("%m/%d %H:%M")}')
             save_past_chats(user_id, past_chats)
         
-        # 强制重新渲染页面以更新侧边栏
+        # Force re-render page to update sidebar
         st.rerun()
 
 def enhanced_login_interface():
@@ -734,13 +734,13 @@ def enhanced_login_interface():
     </div>
     """, unsafe_allow_html=True)
     
-    # 调用原有的登录注册逻辑
+    # Call original login/register logic
     if st.session_state.show_register:
         register()
     else:
         login()
     
-    # 返回主界面按钮
+    # Back to main interface button
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🏠 Back to Main", use_container_width=True):
@@ -769,7 +769,7 @@ def main():
         initial_sidebar_state="expanded"
     )
     
-    # 初始化session state
+    # Initialize session state
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
     if 'show_register' not in st.session_state:
@@ -779,7 +779,7 @@ def main():
     if 'show_file_browser' not in st.session_state:
         st.session_state.show_file_browser = False
     
-    # 路由逻辑
+    # Routing logic
     if st.session_state.show_login:
         enhanced_login_interface()
     elif st.session_state.show_file_browser:

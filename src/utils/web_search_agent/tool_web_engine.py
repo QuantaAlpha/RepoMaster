@@ -22,9 +22,9 @@ class WebBrowser:
         self.search_engine = SerperSearchEngine()
         self.max_browser_length = max_browser_length
 
-    async def searching(self, query: Annotated[str, "要搜索的查询内容"]) -> str:
+    async def searching(self, query: Annotated[str, "Query content to search for"]) -> str:
         """
-        使用搜索引擎查询信息并返回结果
+        Use search engine to query information and return results
         """
         try:
             return await self.search_engine.engine_search(query, engine='google', search_num=10, web_parse=False)
@@ -32,9 +32,9 @@ class WebBrowser:
             print(f"Error searching: {str(e)}")
             return f"Error searching: {str(e)}"
 
-    async def browsing(self, query: Annotated[str, "用于内容筛选的查询字符串"], url: Annotated[str, "要浏览的网页URL"]) -> str:
+    async def browsing(self, query: Annotated[str, "Query string for content filtering"], url: Annotated[str, "URL of the webpage to browse"]) -> str:
         """
-        浏览特定URL的详细内容并提取相关信息
+        Browse specific URL's detailed content and extract relevant information
         """
         try:
             content = await self.browsing_url(url)
@@ -59,26 +59,26 @@ class WebBrowser:
     
     async def parallel_browsing(
         self, 
-        query: Annotated[str, "用于内容筛选的查询字符串"],
-        urls: Annotated[List[str], "要并行浏览的网页URL列表"],
-        max_parallel: Annotated[int, "最大并行处理数量"] = 3
+        query: Annotated[str, "Query string for content filtering"],
+        urls: Annotated[List[str], "List of webpage URLs to browse in parallel"],
+        max_parallel: Annotated[int, "Maximum number of parallel processing"] = 3
     ) -> str:
         """
-        并行浏览多个URL的详细内容并提取相关信息
-        return: 包含每个URL内容的字典列表
+        Browse multiple URLs' detailed content in parallel and extract relevant information
+        return: Dictionary list containing content of each URL
         """
         results = []
         
         try:
-            # 将URL列表分成多个批次，每批最多max_parallel个
+            # Split URL list into multiple batches, each batch contains at most max_parallel URLs
             for i in range(0, len(urls), max_parallel):
                 batch = urls[i:i + max_parallel]
                 tasks = [self.browsing(query, url) for url in batch]
                 
-                # 并行执行当前批次的所有任务
+                # Execute all tasks in current batch in parallel
                 batch_results = await asyncio.gather(*tasks)
                 
-                # 将JSON字符串解析为字典对象
+                # Parse JSON strings to dictionary objects
                 parsed_results = [json.loads(result) for result in batch_results]
                 results.extend(parsed_results)
             
@@ -87,9 +87,9 @@ class WebBrowser:
             print(f"Error parallel browsing: {str(e)}")
             return f"Error parallel browsing: {str(e)}"
 
-    async def test_browsing(self, query: Annotated[str, "用于内容筛选的查询字符串"], url: Annotated[str, "要浏览的网页URL"]):
+    async def test_browsing(self, query: Annotated[str, "Query string for content filtering"], url: Annotated[str, "Webpage URL to browse"]):
         """
-        浏览特定URL的详细内容并提取相关信息
+        Browse specific URL's detailed content and extract relevant information
         """
         content = await self.browsing_url(url)
         
@@ -259,23 +259,23 @@ class SerperSearchEngine:
         # Remove Markdown links
         content = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', content)
         
-        # 移除HTML标签
+        # Remove HTML tags
         content = re.sub(r'<[^>]+>', '', content)
 
-        # 移除图片标记（保留alt文本）
+        # Remove image markers (keep alt text)
         content = re.sub(r'!\[([^\]]*)\]\([^\)]+\)', r'\1', content)
 
-        # 移除HTML注释
+        # Remove HTML comments
         content = re.sub(r'<!--.*?-->', '', content, flags=re.DOTALL)        
         
-        # 移除导航类列表
+        # Remove navigation lists
         content = re.sub(r'^\s*[-*]\s+(Home|About|Contact|Menu|Search|Privacy Policy|Terms of Service)\s*$', '', content, flags=re.MULTILINE | re.IGNORECASE)
         
-        # 移除常见页脚信息
+        # Remove common footer information
         content = re.sub(r'Copyright © \d{4}.*', '', content, flags=re.IGNORECASE)
         content = re.sub(r'All rights reserved\.?', '', content, flags=re.IGNORECASE)
         
-        # 移除社交媒体相关文本
+        # Remove social media related text
         content = re.sub(r'(Follow|Like|Share|Subscribe).*(Facebook|Twitter|Instagram|LinkedIn|YouTube).*', '', content, flags=re.IGNORECASE)
         
         # Remove empty lines and extra whitespace
