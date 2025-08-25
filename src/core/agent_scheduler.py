@@ -16,38 +16,69 @@ from src.services.agents.deepsearch_2agents import AutogenDeepSearchAgent
 from src.core.git_task import TaskManager, AgentRunner
 
 
-scheduler_system_message = dedent("""Role: Task Scheduler
+scheduler_system_message = dedent("""Role: Enhanced Task Scheduler
 
 Primary Responsibility:
-The Task Scheduler's main duty is to analyze user input, create a task plan based on available tools, and then select and call suitable task tools from the given set to fulfill the user's requirements. This agent is responsible for task scheduling; it first attempts to find a relevant code repository and then uses it to solve the task. If a repository-based solution is not feasible, it will resort to other tools or methods.
+The Enhanced Task Scheduler's main duty is to analyze user input, create a structured task plan based on available tools, and then select and call appropriate tools from the given set to fulfill user requirements. The Enhanced Task Scheduler can work in four distinct modes to fulfill user requirements:
+1. **Web Search Mode**: Search the internet for real-time information, current events, or general knowledge.
+2. **Repository Mode**: Search and use GitHub repositories or local repositories to solve tasks through hierarchical repository analysis and autonomous exploration. This is the primary approach for complex coding tasks that require repository-level solutions.
+3. **General Code Assistant Mode**: Provide general programming assistance without specific repositories.
 
-Role Description:
-As a Task Scheduler, your process involves these key steps:
-1.  Task Analysis and Planning:
+Mode Selection Strategy:
+- **Prioritize Web Search**: Before selecting a primary mode, first determine if the user's query can be directly answered or solved using the `web_search` tool. This is ideal for questions requiring real-time data, definitions, or general knowledge.
+- **Repository Mode**: Use `run_repository_agent` for tasks involving code repositories. This unified tool automatically detects whether the repository is a GitHub URL or local path. Triggered when:
+  * User mentions local file paths, specific local directories, or phrases like "analyze this local repo"
+  * User wants to find existing solutions, mentions GitHub, or needs specialized tools/libraries
+  * User provides specific repository URLs or paths
+- **General Code Assistant Mode**: Used for general programming questions, requests for code examples, debugging help, or when no specific repository is mentioned.
+
+Working Process:
+1.  **Task Analysis and Initial Assessment**:
     *   Upon receiving user input, thoroughly analyze the requirements.
-    *   Create a structured plan. This plan must prioritize a two-step approach for tasks potentially solvable by code:
+    *   **Step 1 - Web Search Assessment**: Determine if the task requires real-time data, latest information, current events, or external knowledge that would benefit from web search. If yes, execute web search first.
+    *   **Step 2 - Plan Creation**: Create a structured plan. For tasks potentially solvable by Repository Mode, this plan must prioritize a two-step approach:
         1.  Search for relevant GitHub repositories using available tools.
-        2.  If a suitable repository is identified, plan to use tools to execute the task using that repository.
-    *   If a repository-based solution is not appropriate for the task, or as a fallback, the plan should outline the use of other available tools (e.g., general search, financial data tools).
+        2.  If a suitable repository is identified, plan to use the unified repository tool to execute the task using that repository.
 
-2.  Tool Selection and Execution:
+2.  **Tool Selection and Execution Based on Mode**:
     *   Execute the plan by selecting one appropriate tool at a time.
-    *   Repository-First Approach:
-        *   If the plan dictates a repository search: Execute the repository search tool.
-        *   If a suitable repository is found: Execute the tool for running tasks with the identified repository.
-    *   Sequential Execution: Subsequent tools are selected based on the outcomes of previously executed tools, the current state of the plan, and the capabilities of the available tools.
-    *   Result Evaluation and Repository Switching:
-        *   After executing a task with a repository, critically evaluate if the result actually satisfies the user's requirements.
-        *   Consider these evaluation factors: (1) Whether code was successfully executed (2) Whether the output directly addresses the task (3) Whether the result contains relevant information or data requested.
-        *   If the current repository failed to produce a satisfactory result, select the next best repository from your search results and execute the task again using that repository.
-        *   Continue this process until you find a repository that successfully completes the task or exhaust all viable repository options.
+    *   **Repository Mode (GitHub/Local)**: Use the `run_repository_agent` tool with the repository URL or local path. The tool automatically detects whether it's a GitHub repository or local repository.
+    *   **General Code Assistant Mode**: Use the `run_general_code_assistant` tool for programming guidance and solutions.
+    *   **Web Search**: Use the `web_search` tool for any queries that require real-time information, external documentation, or general knowledge. This tool can be used on its own for non-coding questions or as a part of solving a larger coding task.
+    *   **Repository Mode (Repository-First Approach)**:
+        1.  **Repository Search**: First, use the `github_repo_search` tool to find a list of the most relevant GitHub repositories for the task.
+        2.  **Sequential Execution**: Select the most promising repository from the search results and execute the task using the `run_repository_agent` tool.
+        3.  **Result Evaluation and Switching**:
+            *   After execution, critically evaluate if the result satisfies the user's requirements. Consider: (1) Was code successfully executed? (2) Does the output directly address the task? (3) Does the result contain the requested information?
+            *   If the current repository failed to produce a satisfactory result, select the *next best* repository from the search results and try again with `run_repository_agent`.
+            *   Continue this process of executing and evaluating until a repository successfully completes the task, or all viable repository options have been exhausted.
+
+3.  **Sequential Execution and Fallback**:
+    *   Subsequent tools are selected based on: (1) The outcomes of previously executed tools (2) The current state of the plan (3) The capabilities of the available tools.
+    *   Execute the selected tool(s) according to the plan.
+    *   If one approach (e.g., Repository mode) doesn't yield a solution, consider trying an alternative mode if appropriate (e.g., switching to General Code Assistant Mode).
+    *   Be persistent in finding a solution. If one repository doesn't work, try another.
 
 Important Notes:
-1. Always consider the specific set of tools provided when creating your task plan and selecting tools for execution.
-2. If a tool is successfully called, answer the user's question based on the tool's return results and your overall task plan.
-3. If no tool from the given set can satisfy a step in your plan or the user's input question, generate answers based directly on your understanding.
-4. When you determine that the task has been completed successfully, only reply "TERMINATE" without continuing the conversation.
-5. Be persistent in finding a solution - if one repository doesn't work, try another until the task is properly completed.""")
+1.  Always validate that local paths exist before using the repository mode with local paths.
+2.  In general code assistant mode, aim to create practical, executable examples.
+3.  If a tool is successfully called, answer based on the tool's results and your overall task plan.
+4.  If no available tool can solve the task, generate an answer based on your own knowledge.
+5.  When the task is completed successfully, reply ONLY with "TERMINATE".
+
+Turn-taking and De-duplication Policy:
+- Before sending any message, compare it with the previous two messages. If your response would substantially repeat previously stated content (facts, sentences, or structure), do not restate it. If the task has already been fully answered, reply with exactly "TERMINATE" instead.
+""")
+
+user_proxy_system_message = dedent("""Role: Execution Proxy (User Proxy)
+
+Primary Rules:
+- Do not provide user-facing answers.
+- Never paraphrase or repeat content already provided by scheduler_agent.
+- Summarize tool outputs succinctly for the scheduler_agent only when needed; avoid restating conclusions.
+- If your candidate message would substantially repeat the last two messages, send exactly "TERMINATE" instead.
+- After scheduler_agent has delivered the final complete answer, respond with exactly "TERMINATE" and stop.
+""")
 
 class RepoMasterAgent:
     """
@@ -85,6 +116,7 @@ class RepoMasterAgent:
 
         self.user_proxy = ExtendedUserProxyAgent(
             name="user_proxy",
+            system_message=user_proxy_system_message,
             llm_config=self.llm_config,
             is_termination_msg=lambda x: x.get("content", "") and x.get("content", "").endswith("TERMINATE"),
             human_input_mode="NEVER",
@@ -143,45 +175,90 @@ The JSON format should be like this:
 """
         return await self.repo_searcher.deep_search(query)
     
-    def run_repo_agent(
+    def run_repository_agent(
         self, 
-        task_description: Annotated[str, "User's task description to be solved, maintain the completeness of task description, do not omit any information"],
-        github_url: Annotated[str, "GitHub repository URL (format: https://github.com/repo_name/repo_name)"],
-        input_data: Annotated[Optional[str], "A JSON string representing local input data. Must be provided when user task explicitly mentions or implies the need to use local files as input. Format: '[{\"path\": \"local input data path\", \"description\": \"input data description\"}]'. If task doesn't require local input data, can pass empty list '[]'."]
+        task_description: Annotated[str, "Task description that the user needs to solve, maintain the completeness of the task description without omitting any information"],
+        repository: Annotated[str, "Repository path or URL. Can be a GitHub repository URL (format: https://github.com/repo_name/repo_name) or local repository absolute path (e.g.: /path/to/my/project)"],
+        input_data: Annotated[Optional[str], "JSON string representing local input data. Must be provided when the user task explicitly mentions or implies the need to use local files as input. Format: '[{\"path\": \"local input data path\", \"description\": \"input data description\"}]'. If the task does not require local input data, an empty list '[]' can be passed."] = None,
+        repo_type: Annotated[Optional[str], "Repository type, optional values: 'github' or 'local'. If not specified, it will be automatically detected"] = None
     ):
         """
-        Execute user tasks based on specified GitHub repository.
+        Unified interface for executing user tasks based on specified repository (GitHub or local).
         
-        This method clones the specified GitHub repository, then based on the provided task description and input data,
-        calls task manager and agent runner to complete the task execution process. The entire process includes:
-        1. Validate and process input data
-        2. Initialize task environment (create working directory, clone repository, etc.)
-        3. Run code agent to analyze and execute tasks
+        This method automatically detects or handles GitHub repositories or local repositories based on specified type,
+        then calls the task manager and agent runner to complete the task execution process based on the provided
+        task description and input data. The entire process includes:
+        1. Automatically detect repository type or use specified type
+        2. Validate repository path or URL validity
+        3. Validate and process input data
+        4. Initialize task environment (create working directory, clone or copy repository, etc.)
+        5. Run code agent to analyze and execute tasks
         
-        Important: It's best to process one repository at a time. For tasks involving multiple repositories, call this function sequentially for each one.
-
+        Args:
+            task_description: Detailed description of the task to be completed
+            repository: Repository path or URL, supports GitHub URL or local absolute path
+            input_data: Optional JSON string representing input data files
+            repo_type: Optional repository type, automatically detected if not specified
+            
         Returns:
-            Result of agent executing the task, usually containing task completion status and description of output content
+            Result of agent executing the task, usually containing task completion status and output content description
         """
+        # Automatically detect repository type
+        if repo_type is None:
+            if repository.startswith(('http://', 'https://')) and 'github.com' in repository:
+                repo_type = 'github'
+            elif os.path.exists(repository):
+                repo_type = 'local'
+            else:
+                # Try to determine if it's a GitHub URL format
+                if repository.startswith(('http://', 'https://')) or repository.count('/') >= 1:
+                    repo_type = 'github'
+                else:
+                    raise ValueError(f"Unable to determine repository type. Please provide a valid GitHub URL or local path: {repository}")
+        
+        # Validate repository
+        if repo_type == 'local':
+            if not os.path.exists(repository):
+                raise ValueError(f"Local repository path does not exist: {repository}")
+        elif repo_type == 'github':
+            # Basic GitHub URL format validation
+            if not (repository.startswith(('http://', 'https://')) or 
+                   ('github.com' in repository or repository.count('/') >= 1)):
+                raise ValueError(f"Invalid GitHub repository URL format: {repository}")
+        else:
+            raise ValueError(f"Unsupported repository type: {repo_type}. Supported types: 'github', 'local'")
+        
+        # Validate and process input data
         if input_data:
             try:
                 input_data = json.loads(input_data)
             except:
                 raise ValueError("input_data format error, please check input data format")
             
-            assert isinstance(input_data, list), "input_data must be list type"
+            assert isinstance(input_data, list), "input_data must be of list type"
             for data in input_data:
-                assert isinstance(data, dict), "Elements in input_data must be dict type"
+                assert isinstance(data, dict), "Elements in input_data must be of dict type"
                 assert 'path' in data, "Each data item must contain 'path' field"
                 assert 'description' in data, "Each data item must contain 'description' field"
                 assert os.path.exists(data['path']), f"Path does not exist: {data['path']}"
+        else:
+            input_data = []
+
+        # Build configuration based on repository type
+        if repo_type == 'github':
+            repo_config = {
+                "type": "github",
+                "url": repository,
+            }
+        else:  # local
+            repo_config = {
+                "type": "local", 
+                "path": repository,
+            }
 
         args = argparse.Namespace(
             config_data={
-                "repo": {
-                    "type": "github",
-                    "url": github_url,
-                },
+                "repo": repo_config,
                 "task_description": task_description,
                 "input_data": input_data,
                 "root_path": self.work_dir,
@@ -190,19 +267,85 @@ The JSON format should be like this:
         )
         
         task_info = TaskManager.initialize_tasks(args)
-
         result = AgentRunner.run_agent(task_info, retry_times=1, work_dir=self.work_dir)        
 
         return result
 
+    def run_general_code_assistant(
+        self,
+        task_description: Annotated[str, "Programming task or question that needs general coding assistance"],
+        work_directory: Annotated[Optional[str], "Specific working directory for code execution. If not provided, uses default work directory"] = None
+    ):
+        """
+        Provide general programming assistance without requiring a specific repository.
+        
+        This method creates a clean workspace and uses the code exploration agent to help with:
+        - General programming questions and guidance
+        - Writing and executing code snippets
+        - Debugging and troubleshooting
+        - Creating examples and demonstrations
+        - Algorithm implementations
+        - Code explanations and tutorials
+        
+        Args:
+            task_description: Detailed description of the programming task or question
+            work_directory: Optional specific working directory for code execution
+            
+        Returns:
+            Result containing programming guidance, code examples, and execution results
+        """
+        import asyncio
+        from src.core.agent_code_explore import CodeExplorer
+        
+        # Determine working directory
+        work_dir = work_directory or self.work_dir
+        
+        # Create a general workspace for the assistant
+        general_workspace = os.path.join(work_dir, "general_workspace")
+        os.makedirs(general_workspace, exist_ok=True)
+        
+        # Create CodeExplorer instance for general programming assistance
+        explorer = CodeExplorer(
+            local_repo_path=general_workspace,
+            work_dir=work_dir,
+            task_type="general",
+            use_venv=True,
+            is_cleanup_venv=False,
+        )
+        
+        # Enhance the task description for general programming assistance
+        enhanced_task = f"""
+You are a general programming assistant. Please help with the following task:
+
+{task_description}
+
+As a programming assistant, you can:
+- Write and execute code to solve problems
+- Provide programming guidance and explanations  
+- Create practical examples and demonstrations
+- Debug and troubleshoot issues
+- Implement algorithms and data structures
+- Explain programming concepts
+- Create utility scripts and tools
+
+Working directory: {work_dir}
+General workspace: {general_workspace}
+
+Please provide comprehensive help including code examples, explanations, and practical solutions.
+"""
+        
+        result = asyncio.run(explorer.a_code_analysis(enhanced_task, max_turns=20))
+        return result
+
     def register_tools(self):
         """
-        Register the toolkit required by the agent.
+        Register the enhanced toolkit required by the agent.
         """
         register_toolkits(
             [
                 self.web_search,
-                self.run_repo_agent,
+                self.run_repository_agent,           # Unified repository processing mode
+                self.run_general_code_assistant,     # General code assistant mode
                 self.github_repo_search,
             ],
             self.scheduler,
@@ -211,19 +354,32 @@ The JSON format should be like this:
 
     def solve_task_with_repo(self, task: Annotated[str, "Detailed task description that user needs to solve"]) -> str:
         """
-        Search GitHub repositories and use them to solve user tasks.
+        Enhanced RepoMaster that can work with GitHub repositories, local repositories, or provide general programming assistance.
         
-        This method is the main entry point of RepoMaster, which coordinates the entire solution process:
-        1. Search for relevant GitHub repositories
-        2. Analyze repository content
-        3. Generate solutions
-        4. Execute solutions
+        This method is the main entry point of Enhanced RepoMaster, which automatically determines the best approach:
+        
+        **Three Working Modes:**
+        1. **Web Search Mode**: Search the internet for real-time information, current events, or general knowledge
+        2. **Repository Mode**: Search and use GitHub repositories or local repositories for specialized tasks with hierarchical analysis
+        3. **General Code Assistant Mode**: Provide programming assistance without specific repositories
+        
+        **Auto-Mode Detection:**
+        - Detects real-time information needs → Web Search Mode
+        - Detects repository paths/URLs (GitHub or local) → Repository Mode
+        - Detects general programming questions → General Code Assistant Mode  
+        - Default behavior → Repository Mode
+        
+        **Process:**
+        1. Analyze task requirements and detect appropriate mode
+        2. Execute using the most suitable approach with advanced repository analysis
+        3. Generate comprehensive solutions through hierarchical understanding
+        4. Provide execution results and guidance with context optimization
         
         Args:
             task: Detailed task description that user needs to solve
             
         Returns:
-            Complete solution report including found repositories, analyzed methods and execution results
+            Complete solution report including analysis methods, execution results, and recommendations
         """
         # Set initial message
         initial_message = task
@@ -296,10 +452,9 @@ def test_run_repo_agent():
 
     arguments = {'task_description': 'Extract all text content from the first page of a PDF file and save it to a txt file. The input PDF file path is: GitTaskBench/queries/PDFPlumber_01/input/PDFPlumber_01_input.pdf', 'github_url': 'https://github.com/spatie/pdf-to-text'}    
     
-    result = repo_master.run_repo_agent(
+    result = repo_master.run_repository_agent(
         task_description=arguments['task_description'],
-        github_url=arguments['github_url'],
-        # input_data=json.dumps(input_data)
+        repository=arguments['github_url'],
         input_data=None
     )
     print(result)

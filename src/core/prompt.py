@@ -160,7 +160,7 @@ def train_model(model, train_loader, criterion, optimizer, scheduler=None, num_e
 </training_pipline>
 """
 
-USER_EXPLORER_PROMPT = dedent("""I need you to analyze the provided code repository and use your powerful programming skills to complete the user's task:
+USER_EXPLORER_PROMPT = dedent("""I need you to analyze the provided code repository and use your powerful capabilities to complete the user's task.:
 
 **Task Description**:
 <task>
@@ -262,8 +262,12 @@ If the result indicates there is an error, fix the error and output the code aga
     *   If errors occur, analyze the cause, **fix the code** and regenerate **complete** scripts for retry.
     *   If the problem cannot be resolved after multiple attempts or the task cannot be completed, analyze the cause and consider alternative solutions.
 6.  **Tool Priority**: 
-    *   **Prioritize using tools**: If existing tools can meet the requirements, **must prioritize calling tools** instead of generating code blocks to perform the same or similar operations (for example, don't use `cat` command code blocks to read files, but use the `read_file` tool).
-    *   **Must use absolute paths when calling tools**: For example `<function_name>(file_path='/root/workspace/RepoMaster/file.txt')` instead of `<function_name>(file_path='file.txt')`.
+    *   **Prioritize using tools**: If existing tools can meet the requirements, **must prioritize calling tools** instead of generating code blocks to perform the same or similar operations (for example, don't use `cat` command code blocks to read files, but use the `view_file_content` tool).
+    *   **Must use absolute paths when calling tools**: For example `view_file_content(file_path='/root/workspace/RepoMaster/file.txt')` instead of `view_file_content(file_path='file.txt')`.
+    *   **File Edit Tool Best Practices**: 
+        - Before editing files, first understand the file's code conventions and style
+        - Use the `edit` tool for precise string replacements, ensuring exact indentation matching
+        - Always verify that old_string matches exactly, including whitespace
     *   **If checkpoint model files are needed, check if they exist first. If they exist, use them directly; otherwise, download checkpoint files first, then use (automatic download required)
 7.  **Task Validation**:
     *   After successful code execution, you need to verify whether the task has been completed. It's best to write a validation script to verify task completion.

@@ -219,7 +219,7 @@ Results must be saved in the {output_dir_path} directory. If results are saved i
         
         print(task_desc)
         
-        return f"\n\nPlease help me complete the following task based on the searched repository:\n\n{task_desc}\n\n"
+        return f"\n\nPlease help me complete the following task:\n\n{task_desc}\n\n"
     
     @staticmethod
     def load_config(config_path):

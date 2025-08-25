@@ -74,3 +74,6 @@ tasks/ml_bench/
 
 tasks/
 .claude/
+.streamlit/
+test.py
+oai_config.py
