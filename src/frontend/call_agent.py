@@ -2,7 +2,7 @@ import json
 import streamlit as st
 import configs.config
 import os
-from src.services.agents.deepsearch_2agents import AutogenDeepSearchAgent
+from src.services.agents.deep_search_agent import AutogenDeepSearchAgent
 from src.services.agents.agent_client import EnhancedMessageProcessor
 from src.utils.tool_optimizer_dialog import optimize_dialogue, optimize_execution
 from src.utils.tool_streamlit import random_string

@@ -77,3 +77,4 @@ tasks/
 .streamlit/
 test.py
 oai_config.py
+coding/

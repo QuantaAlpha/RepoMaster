@@ -244,7 +244,7 @@ Please analyze the provided webpage browsing results based on the above principl
         """
         # Lazy import to avoid circular import
         if self.deep_search_agent is None:
-            from src.services.agents.deepsearch_2agents import AutogenDeepSearchAgent
+            from src.services.agents.deep_search_agent import AutogenDeepSearchAgent
             self.deep_search_agent = AutogenDeepSearchAgent(
                 llm_config=self.llm_config,
                 code_execution_config=self.code_execution_config

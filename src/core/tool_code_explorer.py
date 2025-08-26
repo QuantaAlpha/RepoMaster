@@ -1495,7 +1495,7 @@ class CodeExplorerTools:
                 print("Example 6: View file content")
                 print("-" * 50)
                 first_module = next(iter(self.modules))
-                # first_module = "services.agents.deepsearch_2agents"
+                # first_module = "services.agents.deep_search_agent"
                 first_module = "README.md"
                 first_module = "/workspace/lyrapdf/README.md"
                 first_module = "/workspace/lyrapdf/txt_ext.py"

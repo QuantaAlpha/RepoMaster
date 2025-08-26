@@ -16,7 +16,7 @@ from src.core.prompt import USER_EXPLORER_PROMPT, SYSTEM_EXPLORER_PROMPT, TRAIN_
 from src.core.tool_code_explorer import CodeExplorerTools
 from src.services.autogen_upgrade.base_agent import ExtendedUserProxyAgent, ExtendedAssistantAgent, check_code_block
 from src.core.base_code_explorer import BaseCodeExplorer
-from src.services.agents.deepsearch_2agents import AutogenDeepSearchAgent
+from src.services.agents.deep_search_agent import AutogenDeepSearchAgent
 from src.core.agent_docker_executor import EnhancedDockerCommandLineCodeExecutor
 from src.utils.tools_cc import FileEditTool
 from configs.oai_config import get_llm_config

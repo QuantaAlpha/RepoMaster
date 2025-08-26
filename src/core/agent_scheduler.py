@@ -11,7 +11,7 @@ from autogen.cache import Cache
 from src.services.autogen_upgrade.base_agent import ExtendedUserProxyAgent, ExtendedAssistantAgent, check_code_block
 from src.utils.toolkits import register_toolkits
 
-from src.services.agents.deepsearch_2agents import AutogenDeepSearchAgent
+from src.services.agents.deep_search_agent import AutogenDeepSearchAgent
 
 from src.core.git_task import TaskManager, AgentRunner
 
