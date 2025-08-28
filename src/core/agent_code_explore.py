@@ -12,7 +12,7 @@ from autogen import Agent, AssistantAgent, UserProxyAgent, ConversableAgent
 from autogen.coding import DockerCommandLineCodeExecutor, LocalCommandLineCodeExecutor
 from autogen.code_utils import create_virtual_env
 from src.core.code_utils import filter_pip_output, get_code_abs_token
-from src.core.prompt import USER_EXPLORER_PROMPT, SYSTEM_EXPLORER_PROMPT, TRAIN_PROMPT
+from src.core.prompt import USER_EXPLORER_PROMPT, CODE_ASSISTANT_PROMPT, SYSTEM_EXPLORER_PROMPT, TRAIN_PROMPT
 from src.core.tool_code_explorer import CodeExplorerTools
 from src.services.autogen_upgrade.base_agent import ExtendedUserProxyAgent, ExtendedAssistantAgent, check_code_block
 from src.core.base_code_explorer import BaseCodeExplorer
@@ -35,10 +35,10 @@ class CodeExplorer(BaseCodeExplorer):
         self.task_type = task_type
         
         self.local_repo_path = local_repo_path
-        self.repo_name = local_repo_path.split('/')[-1]
+        self.repo_name = local_repo_path.split('/')[-1] if local_repo_path else 'general_workspace'
 
         self.docker_path_prefix = "/workspace" if remote_repo_path else ''
-        self.remote_repo_path = remote_repo_path if remote_repo_path else self.local_repo_path
+        self.remote_repo_path = remote_repo_path if remote_repo_path else (self.local_repo_path if local_repo_path else work_dir)
         
         # Set timeout to 2 hours
         self.code_execution_config['timeout'] = 2 * 60 * 60
@@ -76,14 +76,17 @@ class CodeExplorer(BaseCodeExplorer):
     def _setup_tool_library(self):
         """Setup tool library"""
         time_start = time.time()
-        self.code_library = CodeExplorerTools(
-            self.local_repo_path,
-            work_dir=self.work_dir,
-            docker_work_dir=self.docker_path_prefix
-        )
+        if self.local_repo_path:
+            self.code_library = CodeExplorerTools(
+                self.local_repo_path,
+                work_dir=self.work_dir,
+                docker_work_dir=self.docker_path_prefix
+            )
+        else:
+            self.code_library = None
         time_end = time.time()
         print(f"setup_tool_library time: {time_end - time_start} seconds")
-        if self.args.get("repo_init", True):
+        if self.local_repo_path and self.args.get("repo_init", True):
             time_start = time.time()
             self.code_importance = self.code_library.builder.generate_llm_important_modules(max_tokens=8000)
             time_end = time.time()
@@ -200,7 +203,7 @@ class CodeExplorer(BaseCodeExplorer):
         )
         
         # Register tool functions
-        if self.args.get("function_call", True):
+        if self.args.get("function_call", True) and self.code_library:
             self._register_tools()
 
     async def issue_solution_search(self, issue_description: Annotated[str, "Description of specific programming issues or errors encountered by the user"]) -> str:
@@ -266,10 +269,14 @@ If no relevant solutions are found, please indicate that.
         self.task = task
         self.current_tool_call_count = 0
         
-        # Set initial message
-        initial_message = USER_EXPLORER_PROMPT.format(
-            task=task, work_dir=self.work_dir, 
-            remote_repo_path=self.remote_repo_path, code_importance=self.code_importance)
+        # Set initial message based on task type
+        if self.task_type == "general":
+            initial_message = CODE_ASSISTANT_PROMPT.format(
+                task=task, work_dir=self.work_dir)
+        else:
+            initial_message = USER_EXPLORER_PROMPT.format(
+                task=task, work_dir=self.work_dir, 
+                remote_repo_path=self.remote_repo_path, code_importance=self.code_importance)
         
         # initial_message += f"""## Repository directory structure: {self.local_repo_path}\n\n{self.code_library.list_repository_structure(self.local_repo_path)}"""
         

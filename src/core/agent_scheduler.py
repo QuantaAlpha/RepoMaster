@@ -240,7 +240,6 @@ The JSON format should be like this:
                 assert isinstance(data, dict), "Elements in input_data must be of dict type"
                 assert 'path' in data, "Each data item must contain 'path' field"
                 assert 'description' in data, "Each data item must contain 'description' field"
-                assert os.path.exists(data['path']), f"Path does not exist: {data['path']}"
         else:
             input_data = []
 
@@ -300,13 +299,9 @@ The JSON format should be like this:
         # Determine working directory
         work_dir = work_directory or self.work_dir
         
-        # Create a general workspace for the assistant
-        general_workspace = os.path.join(work_dir, "general_workspace")
-        os.makedirs(general_workspace, exist_ok=True)
-        
         # Create CodeExplorer instance for general programming assistance
         explorer = CodeExplorer(
-            local_repo_path=general_workspace,
+            local_repo_path=None,
             work_dir=work_dir,
             task_type="general",
             use_venv=True,
@@ -329,7 +324,6 @@ As a programming assistant, you can:
 - Create utility scripts and tools
 
 Working directory: {work_dir}
-General workspace: {general_workspace}
 
 Please provide comprehensive help including code examples, explanations, and practical solutions.
 """

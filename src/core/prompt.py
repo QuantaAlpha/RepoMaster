@@ -184,6 +184,20 @@ USER_EXPLORER_PROMPT = dedent("""I need you to analyze the provided code reposit
 """)
 
 
+CODE_ASSISTANT_PROMPT = dedent("""I need you to analyze the provided code repository and use your powerful capabilities to complete the user's task.:
+
+**Task Description**:
+<task>
+{task}
+</task>
+
+**Working Directory (code execution directory)**:
+<work_dir>
+{work_dir}
+</work_dir>
+""")
+
+
 
 SYSTEM_EXPLORER_PROMPT = dedent("""You are a top-tier code expert, focused on quickly understanding and analyzing code repositories, and generating and executing corresponding code to efficiently complete specific tasks.
 

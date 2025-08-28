@@ -17,8 +17,7 @@ from typing import List, Dict, Any, Optional, Annotated
 import tiktoken
 
 class WebBrowser:
-    def __init__(self, max_browser_length=-1):
-        self.retriever = EmbeddingMatcher(chunk_size=500, chunk_overlap=50, topk=10)
+    def __init__(self, max_browser_length=20000):
         self.search_engine = SerperSearchEngine()
         self.max_browser_length = max_browser_length
 
@@ -39,20 +38,11 @@ class WebBrowser:
         try:
             content = await self.browsing_url(url)
             output_content = []
-            if len(tiktoken.encoding_for_model("gpt-4o").encode(content))>50000 and len(query)>0:
-                output_content = self.retriever.match_docs(user_input=query, docs=content)
-            elif len(content)>self.max_browser_length and len(query)==0 and self.max_browser_length>0:
+            if len(content)>self.max_browser_length:
                 return json.dumps({'Input Query': query, 'Search URL': url, 'Search Result': content[:self.max_browser_length]}, ensure_ascii=False)
             else:
                 return json.dumps({'Input Query': query, 'Search URL': url, 'Search Result': content}, ensure_ascii=False)
             
-            output_dict = {
-                'Input Query': query,
-                'Search URL': url,
-                'Search Result': '\n'.join([f"## chunk {i+1}:\n{chunk}" for i, chunk in enumerate(output_content)])
-            }
-
-            return json.dumps(output_dict, ensure_ascii=False)
         except Exception as e:
             print(f"Error browsing URL {url}: {str(e)}")
             return json.dumps({'Input Query': query, 'Search URL': url, 'Search Result': 'Error browsing URL'}, ensure_ascii=False)
@@ -132,9 +122,9 @@ class SerperSearchEngine:
         """
         Initialize the SerperSearchEngine with the API key.
         """
-        self.Serper_API_KEY = os.environ['Serper_API_KEY']
+        self.SERPER_API_KEY = os.environ['SERPER_API_KEY']
         self.google_serper_url = "https://google.serper.dev/search"
-        self.retriever = WebRetriever(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+        # self.retriever = WebRetriever(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
 
     def google_search(
             self, 
@@ -148,7 +138,7 @@ class SerperSearchEngine:
             A list of search results, each containing title, snippet, and link.
         """
         headers = {
-            'X-API-KEY': os.environ['Serper_API_KEY'],
+            'X-API-KEY': os.environ['SERPER_API_KEY'],
             'Content-Type': 'application/json'
         }
         
@@ -323,7 +313,6 @@ class SerperSearchEngine:
         if web_parse:
             results = await self._enrich_results_async(results)
             print(f"results: {results}", flush=True)
-            results = self.retriever.retrieve_relevant_chunks(results, query, k=search_num)
         return json.dumps(results, ensure_ascii=False)
 
     async def search(self, query: Annotated[str, "The search query"], engine: Annotated[str, "The search engine to use"] = 'google') -> List[Dict[str, str]]:

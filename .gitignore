@@ -26,6 +26,9 @@ yarn-error.log*
 .env.*
 *.pem
 
+configs/.env
+configs/oai_config.py
+
 # Cache
 _del/
 coding/

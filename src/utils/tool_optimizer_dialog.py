@@ -109,7 +109,7 @@ def optimize_execution(original_dialogue, max_retries=5):
 
 # Example usage
 if __name__ == "__main__":
-    from configs.config import load_envs_func
+    from configs.oai_config import load_envs_func
     
     load_envs_func()
     
