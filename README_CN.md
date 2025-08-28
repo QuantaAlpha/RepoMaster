@@ -1,19 +1,15 @@
 <div align="center">
 
-<img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" />
+  <img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="600"/>
 
-</div>
+  <h1>RepoMaster: 基于GitHub仓库的自主任务解决框架</h1>
 
-<h1>RepoMaster: 基于GitHub仓库的自主任务解决框架</h1>
-
-<div align="center">
-
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![arXiv](https://img.shields.io/badge/arXiv-2505.21577-red.svg)](https://arxiv.org/abs/2505.21577)
-[![Code](https://img.shields.io/badge/Code-Coming%20Soon-orange.svg)](https://github.com/wanghuacan/RepoMaster)
-
-[English](README.md) | [中文](README_CN.md)
+  <p>
+    <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" />
+    <img src="https://img.shields.io/badge/License-MIT-green.svg" />
+    <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
+    <img src="https://img.shields.io/badge/Code-Coming%20Soon-orange.svg" />
+  </p>
 
 </div>
 
