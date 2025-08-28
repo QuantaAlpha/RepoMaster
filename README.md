@@ -1,5 +1,5 @@
 <div align="center">
-
+  <img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="600"/>
   <p>
     <img src="docs/assets/images/RepoMaster.logo.png" alt="RepoMaster Logo" width="80" style="vertical-align: middle; margin-right: 12px;" />
     <span style="font-size: 2em; font-weight: bold; vertical-align: middle;">RepoMaster</span>
