@@ -347,7 +347,10 @@ def run_unified_mode(config_manager: ModeConfigManager):
                 print("="*50)
                 print(result)
                 print("="*50)
+                
             except Exception as e:
+                import traceback
+                print(traceback.format_exc())
                 print(f"\n❌ Task execution error: {str(e)}")
                 print("   💡 Please try to describe your task requirements in more detail")
             
@@ -357,23 +360,16 @@ def run_unified_mode(config_manager: ModeConfigManager):
 def check_api_configuration() -> bool:
     """Check API configuration status"""
     try:
-        try:
-            from configs.oai_config import validate_and_get_fallback_config
-        except ImportError:
-            print("⚠️  oai_config not found, skip configuration check")
-            return True
-        
-        status = validate_and_get_fallback_config()
-        
-        # Will be displayed later with beautiful formatting
+        from configs.oai_config import validate_and_get_fallback_config
+        config_name, api_config = validate_and_get_fallback_config()
         return True
             
     except ImportError:
-        print("⚠️  Skip configuration check")
+        print("⚠️  oai_config not found, skip configuration check")
         return False
     except Exception as e:
         print(f"⚠️  Configuration check error: {e}")
-        return False  # Do not block startup when error occurs
+        return False
 
 def show_available_modes():
     """Display available running modes"""
@@ -446,8 +442,8 @@ def main():
                 # Get config info for display
                 try:
                     from configs.oai_config import validate_and_get_fallback_config
-                    config_info = validate_and_get_fallback_config()
-                    print_api_config_status(args.api_type, True, config_info)
+                    config_name, api_config = validate_and_get_fallback_config()
+                    print_api_config_status(config_name, True, api_config)
                 except Exception:
                     print_api_config_status(args.api_type, True, None)
             else:
