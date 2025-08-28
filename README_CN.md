@@ -4,7 +4,7 @@
 
 </div>
 
-# RepoMaster: 基于GitHub仓库的自主任务解决框架
+<h1>RepoMaster: 基于GitHub仓库的自主任务解决框架</h1>
 
 <div align="center">
 
