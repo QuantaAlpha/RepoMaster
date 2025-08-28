@@ -60,7 +60,7 @@
 
 <div align="center">
 
-<img src="example/demo_ultra_hq.gif" alt="RepoMaster演示" width="800"/>
+https://github.com/user-attachments/assets/a21b2f2e-a31c-4afd-953d-d143beef781a
 
 *RepoMaster自主执行图像风格迁移任务的完整过程*
 
