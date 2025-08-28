@@ -1,6 +1,6 @@
 import json
 import streamlit as st
-import configs.config
+from configs.oai_config import get_llm_config
 import os
 from src.services.agents.deep_search_agent import AutogenDeepSearchAgent
 from src.services.agents.agent_client import EnhancedMessageProcessor
@@ -12,7 +12,7 @@ from src.core.agent_scheduler import RepoMasterAgent
 
 class AgentCaller:
     def __init__(self):
-        self.llm_config = configs.config.get_llm_config()
+        self.llm_config = get_llm_config()
         self.code_execution_config = {
             "work_dir": st.session_state.work_dir
                 if 'work_dir' in st.session_state else os.path.join(os.getcwd(), f"coding/{random_string(8)}"),

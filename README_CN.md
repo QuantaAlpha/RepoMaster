@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/static/img/RepoMaster.logo.png" alt="RepoMaster Logo" width="200"/>
+<img src="docs/assets/images/RepoMaster.logo.png" alt="RepoMaster Logo" width="200"/>
 
 </div>
 
@@ -11,7 +11,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![arXiv](https://img.shields.io/badge/arXiv-2505.21577-red.svg)](https://arxiv.org/abs/2505.21577)
-[![Code](https://img.shields.io/badge/Code-Coming%20Soon-orange.svg)](https://github.com/wanghuacan/RepoMaster)
+[![Code](https://img.shields.io/badge/Code-Coming%20Soon-orange.svg)](https://github.com/QuantaAlpha/RepoMaster)
 
 [English](README.md) | [中文](README_CN.md)
 
@@ -42,9 +42,9 @@
 <td align="center"><b>迁移结果</b></td>
 </tr>
 <tr>
-<td><img src="example/origin.jpg" width="200px" /></td>
-<td><img src="example/style.jpg" width="200px" /></td>
-<td><img src="example/transfer.jpg" width="200px" /></td>
+<td><img src="docs/assets/images/origin.jpg" width="200px" /></td>
+<td><img src="docs/assets/images/style.jpg" width="200px" /></td>
+<td><img src="docs/assets/images/transfer.jpg" width="200px" /></td>
 </tr>
 </table>
 
@@ -60,7 +60,7 @@
 
 <div align="center">
 
-<img src="example/demo_ultra_hq.gif" alt="RepoMaster演示" width="800"/>
+<img src="docs/assets/images/demo_ultra_hq.gif" alt="RepoMaster演示" width="800"/>
 
 *RepoMaster自主执行图像风格迁移任务的完整过程*
 
@@ -197,8 +197,8 @@ repo_master = RepoMasterAgent(
 # 定义一个复杂的AI任务
 task = """
 我需要将一张内容图片转换成特定艺术风格。
-内容图片路径: 'example/origin.jpg'
-风格参考图片路径: 'example/style.jpg'
+内容图片路径: 'docs/assets/images/origin.jpg'
+风格参考图片路径: 'docs/assets/images/style.jpg'
 请将最终生成的风格化图片保存为 'workspace/merged_styled_image.png'
 """
 
@@ -504,8 +504,8 @@ pre-commit install
 ## 📞 联系我们
 
 - 📧 Email: [wanghuacan17@mails.ucas.ac.cn]
-- 🐛 Issues: [GitHub Issues](https://github.com/wanghuacan/RepoMaster/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/wanghuacan/RepoMaster/discussions)
+- 🐛 Issues: [GitHub Issues](https://github.com/QuantaAlpha/RepoMaster/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/QuantaAlpha/RepoMaster/discussions)
 
 ---
 

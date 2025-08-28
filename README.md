@@ -29,10 +29,10 @@ RepoMaster can be run in two primary modes. Choose the one that fits your needs:
 Launch the interactive web interface for multi-user access and visual interaction:
 
 ```bash
-python launcher.py --mode frontend --streamlit-port 8588
+python launcher.py --mode frontend --streamlit-port 8501
 ```
 
-**Access**: Open your browser and go to `http://localhost:8588`
+**Access**: Open your browser and go to `http://localhost:8501`
 
 ### 🤖 Backend Mode (Unified AI Assistant) ⭐ Recommended
 Run the unified AI assistant that combines all RepoMaster capabilities:
@@ -266,9 +266,9 @@ python launcher.py --mode frontend
 
 **Custom Port**:
 ```bash
-python launcher.py --mode frontend --streamlit-port 8588
+python launcher.py --mode frontend --streamlit-port 8501
 ```
-**Access**: Open your browser and go to `http://localhost:8588`
+**Access**: Open your browser and go to `http://localhost:8501`
 
 
 **Features**:

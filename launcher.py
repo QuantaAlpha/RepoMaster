@@ -29,7 +29,7 @@ from configs.mode_config import ModeConfigManager, create_argument_parser, print
 from src.frontend.terminal_show import (
     print_repomaster_cli, print_startup_banner, print_environment_status, 
     print_api_config_status, print_launch_config, print_service_starting,
-    print_unified_mode_welcome, print_mode_welcome
+    print_unified_mode_welcome, print_mode_welcome, print_progressive_startup_panel, print_repomaster_title
 )
 
 def setup_logging(log_level: str):
@@ -81,8 +81,6 @@ def run_frontend_mode(config_manager: ModeConfigManager):
     """Run frontend mode"""
     config = config_manager.config
     
-    print_service_starting("Frontend Web Interface", "Streamlit-based web interface for interactive usage")
-    
     cmd = [
         sys.executable, "-m", "streamlit", "run",
         "src/frontend/app_autogen_enhanced.py",
@@ -91,8 +89,8 @@ def run_frontend_mode(config_manager: ModeConfigManager):
         "--server.fileWatcherType", config.file_watcher_type
     ]
     
-    print(f"   Access URL: http://{config.streamlit_host}:{config.streamlit_port}")
-    print(f"   Execute command: {' '.join(cmd)}")
+    print(f"\n🌐 Access URL: http://{config.streamlit_host}:{config.streamlit_port}")
+    print(f"⚡ Execute command: {' '.join(cmd)}")
     
     try:
         subprocess.run(cmd, check=True)
@@ -105,18 +103,6 @@ def run_frontend_mode(config_manager: ModeConfigManager):
 def run_backend_mode(config_manager: ModeConfigManager):
     """Run backend mode"""
     config = config_manager.config
-    
-    # Display service starting message
-    mode_descriptions = {
-        'unified': 'Integrated AI assistant with all RepoMaster features',
-        'deepsearch': 'Advanced search engine for deep information retrieval',
-        'general_assistant': 'General purpose programming and coding assistant',
-        'repository_agent': 'Specialized agent for GitHub and local repository tasks'
-    }
-    
-    service_name = f"{config.backend_mode.title()} Mode"
-    description = mode_descriptions.get(config.backend_mode, f"{config.backend_mode} backend service")
-    print_service_starting(service_name, description)
     
     if config.backend_mode == "deepsearch":
         run_deepsearch_mode(config_manager)
@@ -132,8 +118,9 @@ def run_backend_mode(config_manager: ModeConfigManager):
 def run_deepsearch_mode(config_manager: ModeConfigManager):
     """Run deep search mode"""
     
-    # Import deep search agent
+    # Import deep search agent and conversation manager
     from src.services.agents.deep_search_agent import AutogenDeepSearchAgent
+    from src.core.conversation_manager import ConversationManager, get_user_id_for_cli
     
     # Get configuration
     llm_config = config_manager.get_llm_config(config_manager.config.api_type)
@@ -145,34 +132,47 @@ def run_deepsearch_mode(config_manager: ModeConfigManager):
         code_execution_config=execution_config
     )
     
+    # Create conversation manager
+    user_id = get_user_id_for_cli()
+    conversation = ConversationManager(user_id, "deepsearch")
+    
     # Display beautiful welcome message
     features = [
-        "🔍 Advanced search algorithms based on task descriptions",
-        "🔄 Multi-round query optimization",
-        "📊 Automated repository relevance analysis",
+        "🔍 Advanced search & query optimization",
         "🌐 Real-time web information retrieval"
     ]
     
     instructions = [
-        "• Enter your search question or research topic",
-        "• System will perform comprehensive information gathering",
-        "• Enter 'quit', 'exit' or 'q' to exit"
+        "• Enter search question or research topic",
+        "• Enter 'quit' to exit, 'history'/'clear' to view/clear chat history"
     ]
     
     print_mode_welcome("Deep Search Engine Ready!", execution_config['work_dir'], features, instructions)
     
     try:
         while True:
-            print_repomaster_cli()
             query = input("\n🤔 Please enter search question: ").strip()
             if query.lower() in ['quit', 'exit', 'q']:
                 break
             
+            if query.lower() in ['history', 'h']:
+                conversation.show_history()
+                continue
+                
+            if query.lower() in ['clear', 'c']:
+                conversation.clear_conversation()
+                continue
+            
             if not query:
                 continue
             
+            # Get optimized prompt with conversation context
+            optimized_query = conversation.get_optimized_prompt(query)
+            conversation.add_message("user", query)
+            
             print("🔍 Searching...")
-            result = asyncio.run(agent.deep_search(query))
+            result = asyncio.run(agent.deep_search(optimized_query))
+            conversation.add_message("assistant", result)
             print(f"\n📋 Search results:\n{result}\n")
             
     except KeyboardInterrupt:
@@ -181,8 +181,9 @@ def run_deepsearch_mode(config_manager: ModeConfigManager):
 def run_general_assistant_mode(config_manager: ModeConfigManager):
     """Run general programming assistant mode"""
     
-    # Import RepoMaster agent
+    # Import RepoMaster agent and conversation manager
     from src.core.agent_scheduler import RepoMasterAgent
+    from src.core.conversation_manager import ConversationManager, get_user_id_for_cli
     
     # Get configuration
     llm_config = config_manager.get_llm_config(config_manager.config.api_type)
@@ -194,38 +195,53 @@ def run_general_assistant_mode(config_manager: ModeConfigManager):
         code_execution_config=execution_config
     )
     
+    # Create conversation manager
+    user_id = get_user_id_for_cli()
+    conversation = ConversationManager(user_id, "general_assistant")
+    
     # Display beautiful welcome message
     features = [
         "💻 General purpose programming assistance",
         "🔧 Code writing, debugging and optimization",
-        "📚 Algorithm implementation and explanation",
-        "🛠️ Development tools and best practices guidance"
+        "📚 Algorithm implementation & debugging help"
     ]
     
     instructions = [
-        "• Describe your programming task or question",
-        "• Ask for code examples, debugging help, or explanations",
-        "• Enter 'quit', 'exit' or 'q' to exit"
+        "• Describe programming task or ask questions",
+        "• Enter 'quit' to exit, 'history'/'clear' to view/clear chat history"
     ]
     
     print_mode_welcome("Programming Assistant Ready!", execution_config['work_dir'], features, instructions)
     
     try:
         while True:
-            print_repomaster_cli()
             task = input("\n💻 Please describe your programming task: ").strip()
             if task.lower() in ['quit', 'exit', 'q']:
                 break
             
+            if task.lower() in ['history', 'h']:
+                conversation.show_history()
+                continue
+                
+            if task.lower() in ['clear', 'c']:
+                conversation.clear_conversation()
+                continue
+            
             if not task:
                 continue
+            
+            # Get optimized prompt with conversation context
+            optimized_task = conversation.get_optimized_prompt(task)
+            conversation.add_message("user", task)
             
             print("🔧 Processing...")
             # Call run_general_code_assistant
             result = agent.run_general_code_assistant(
-                task_description=task,
+                task_description=optimized_task,
                 work_directory=execution_config.get("work_dir")
             )
+            conversation.add_message("assistant", result)
+            print_repomaster_title()
             print(f"\n📋 Task result:\n{result}\n")
             
     except KeyboardInterrupt:
@@ -234,8 +250,9 @@ def run_general_assistant_mode(config_manager: ModeConfigManager):
 def run_repository_agent_mode(config_manager: ModeConfigManager):
     """Run repository task mode"""
     
-    # Import RepoMaster agent
+    # Import RepoMaster agent and conversation manager
     from src.core.agent_scheduler import RepoMasterAgent
+    from src.core.conversation_manager import ConversationManager, get_user_id_for_cli
     
     # Get configuration
     llm_config = config_manager.get_llm_config(config_manager.config.api_type)
@@ -247,32 +264,36 @@ def run_repository_agent_mode(config_manager: ModeConfigManager):
         code_execution_config=execution_config
     )
     
+    # Create conversation manager
+    user_id = get_user_id_for_cli()
+    conversation = ConversationManager(user_id, "repository_agent")
+    
     # Display beautiful welcome message
     features = [
-        "📁 GitHub and local repository analysis",
-        "🔍 Hierarchical repository structure modeling",
-        "🏗️ Core component identification and mapping",
-        "🔧 Autonomous code exploration and execution",
-        "📊 Intelligent context initialization and selection"
+        "📁 Repository analysis & structure modeling",
+        "🔧 Autonomous code exploration and execution"
     ]
     
     instructions = [
-        "• Provide task description and repository path/URL",
-        "• GitHub: https://github.com/user/repo",
-        "• Local: /path/to/repo",
-        "• Optional: input data files for processing",
-        "• Enter 'quit', 'exit' or 'q' to exit"
+        "• Provide task description and repository (GitHub URL or local path)",
+        "• Optional: add input data files | Enter 'quit' to exit, 'history' to view chat history, 'clear' to clear history"
     ]
     
     print_mode_welcome("Repository Agent Ready!", execution_config['work_dir'], features, instructions)
     
     try:
         while True:
-            print_repomaster_cli()
-            print("\n" + "="*50)
-            task_description = input("📝 Please describe your task: ").strip()
+            task_description = input("\n📝 Please describe your task: ").strip()
             if task_description.lower() in ['quit', 'exit', 'q']:
                 break
+            
+            if task_description.lower() in ['history', 'h']:
+                conversation.show_history()
+                continue
+                
+            if task_description.lower() in ['clear', 'c']:
+                conversation.clear_conversation()
+                continue
             
             if not task_description:
                 continue
@@ -293,14 +314,20 @@ def run_repository_agent_mode(config_manager: ModeConfigManager):
                 else:
                     print("⚠️  Input path invalid, will ignore input data")
             
+            # Get optimized prompt with conversation context
+            optimized_task = conversation.get_optimized_prompt(task_description)
+            conversation.add_message("user", f"Task: {task_description}\nRepository: {repository}")
+            
             print("🔧 Processing repository task...")
             
             # Call run_repository_agent
             result = agent.run_repository_agent(
-                task_description=task_description,
+                task_description=optimized_task,
                 repository=repository,
                 input_data=input_data
             )
+            conversation.add_message("assistant", result)
+            print_repomaster_title()
             print(f"\n📋 Task result:\n{result}\n")
             
     except KeyboardInterrupt:
@@ -309,8 +336,9 @@ def run_repository_agent_mode(config_manager: ModeConfigManager):
 def run_unified_mode(config_manager: ModeConfigManager):
     """Run unified general mode"""
     
-    # Import RepoMaster agent
+    # Import RepoMaster agent and conversation manager
     from src.core.agent_scheduler import RepoMasterAgent
+    from src.core.conversation_manager import ConversationManager, get_user_id_for_cli
     
     # Get configuration
     llm_config = config_manager.get_llm_config(config_manager.config.api_type)
@@ -322,31 +350,45 @@ def run_unified_mode(config_manager: ModeConfigManager):
         code_execution_config=execution_config
     )
     
-    # Display beautiful welcome message
+    # Create conversation manager
+    user_id = get_user_id_for_cli()
+    conversation = ConversationManager(user_id, "unified")
+    
+    # Display beautiful welcome message (unified mode specific)
     print_unified_mode_welcome(execution_config['work_dir'])
     
     try:
         while True:
-            print_repomaster_cli()
             print("\n" + "-"*50)
             task = input("🤖 Please describe your task: ").strip()
             if task.lower() in ['quit', 'exit', 'q']:
                 break
             
+            if task.lower() in ['history', 'h']:
+                conversation.show_history()
+                continue
+                
+            if task.lower() in ['clear', 'c']:
+                conversation.clear_conversation()
+                continue
+            
             if not task:
                 continue
+            
+            # Get optimized prompt with conversation context
+            optimized_task = conversation.get_optimized_prompt(task)
+            conversation.add_message("user", task)
             
             print("🔧 Intelligent task analysis...")
             print("   📊 Selecting optimal processing method...")
             
             # Use solve_task_with_repo method, it will automatically select the optimal mode
             try:
-                result = agent.solve_task_with_repo(task)
-                print("\n" + "="*50)
-                print("📋 Task execution result:")
-                print("="*50)
+                result = agent.solve_task_with_repo(optimized_task)
+                conversation.add_message("assistant", result)
+                print_repomaster_title()
+                print("\n📋 Task execution result:")
                 print(result)
-                print("="*50)
             except Exception as e:
                 print(f"\n❌ Task execution error: {str(e)}")
                 print("   💡 Please try to describe your task requirements in more detail")
@@ -413,18 +455,27 @@ def show_available_modes():
 
 def main():
     """Main function"""
-    # Print startup banner
-    print_startup_banner()
+    # Print RepoMaster CLI logo first
+    # print_repomaster_cli()
     
     # Setup environment
     env_loaded = setup_environment()
     
-    # Display environment status
-    if env_loaded:
-        env_file_path = str(Path(__file__).parent / "configs" / ".env")
-        print_environment_status(env_file_path, True)
-    else:
-        print_environment_status(None, False)
+    # Prepare environment status
+    env_status = {
+        'success': env_loaded,
+        'file': str(Path(__file__).parent / "configs" / ".env") if env_loaded else None
+    }
+    
+    if not env_loaded:
+        # Show error and exit
+        dummy_config = type('Config', (), {
+            'mode': 'error',
+            'work_dir': Path(__file__).parent,
+            'log_level': 'INFO'
+        })()
+        api_status = {'success': False}
+        print_progressive_startup_panel(env_status, api_status, dummy_config)
         sys.exit(1)
     
     # Check if help or mode information is requested
@@ -440,6 +491,7 @@ def main():
         setup_logging(args.log_level)
         
         # Configuration check (unless user explicitly skips)
+        api_status = {'success': False}
         if not getattr(args, 'skip_config_check', False):
             api_config_success = check_api_configuration()
             if api_config_success:
@@ -447,20 +499,34 @@ def main():
                 try:
                     from configs.oai_config import validate_and_get_fallback_config
                     config_info = validate_and_get_fallback_config()
-                    print_api_config_status(args.api_type, True, config_info)
+                    if config_info:
+                        config_name, config_details = config_info
+                        model = config_details.get('config_list', [{}])[0].get('model', 'N/A')
+                        api_status = {
+                            'success': True,
+                            'provider': args.api_type.title(),
+                            'model': model
+                        }
                 except Exception:
-                    print_api_config_status(args.api_type, True, None)
+                    api_status = {'success': True, 'provider': args.api_type.title()}
             else:
-                print_api_config_status(None, False, None)
+                api_status = {'success': False}
+                # Show error panel and exit
+                dummy_config = type('Config', (), {
+                    'mode': 'error',
+                    'work_dir': Path(__file__).parent,
+                    'log_level': args.log_level
+                })()
+                print_progressive_startup_panel(env_status, api_status, dummy_config)
                 sys.exit(1)
         else:
-            print("⚠️  Skip API configuration check (user choice)")
+            api_status = {'success': True, 'provider': 'Skipped (user choice)'}
         
         # Create configuration manager
         config_manager = ModeConfigManager.from_args(args)
         
-        # Print configuration information (using beautiful format)
-        print_launch_config(config_manager.config)
+        # Print optimized startup sequence  
+        print_progressive_startup_panel(env_status, api_status, config_manager.config)
         
         # Start corresponding service based on mode
         if args.mode == 'frontend':

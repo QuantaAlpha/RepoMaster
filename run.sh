@@ -1,27 +1,27 @@
 #!/bin/bash
 
-# RepoMaster 统一启动脚本
+# RepoMaster Unified Launch Script
 # 
-# 使用方法:
-#   ./run.sh                          # 默认启动前端模式
-#   ./run.sh frontend                 # 启动前端模式
-#   ./run.sh backend unified          # 启动统一后台模式 (推荐)
-#   ./run.sh backend deepsearch       # 启动深度搜索模式
-#   ./run.sh backend general_assistant # 启动通用编程助手模式
-#   ./run.sh backend repository_agent # 启动仓库任务模式
-#   ./run.sh daemon                   # 后台启动前端服务
-#   ./run.sh status                   # 查看服务状态
-#   ./run.sh stop                     # 停止所有服务
-#   ./run.sh restart                  # 重启服务
-#   ./run.sh help                     # 显示帮助信息
+# Usage:
+#   ./run.sh                          # Default startup frontend mode
+#   ./run.sh frontend                 # Start frontend mode
+#   ./run.sh backend unified          # Start unified backend mode (recommended)
+#   ./run.sh backend deepsearch       # Start deep search mode
+#   ./run.sh backend general_assistant # Start general programming assistant mode
+#   ./run.sh backend repository_agent # Start repository task mode
+#   ./run.sh daemon                   # Start frontend service in background
+#   ./run.sh status                   # Check service status
+#   ./run.sh stop                     # Stop all services
+#   ./run.sh restart                  # Restart services
+#   ./run.sh help                     # Show help information
 
-# 设置环境变量
+# Set environment variables
 export PYTHONPATH=$(pwd):$PYTHONPATH
 
-# 创建日志目录
+# Create log directory
 mkdir -p logs
 
-# 颜色定义
+# Color definitions
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -30,121 +30,121 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# 帮助函数
+# Help function
 show_help() {
-    echo -e "${CYAN}🚀 RepoMaster 启动脚本${NC}"
+    echo -e "${CYAN}🚀 RepoMaster Launch Script${NC}"
     echo ""
-    echo -e "${YELLOW}使用方法:${NC}"
-    echo "  ./run.sh [模式] [后台模式]"
+    echo -e "${YELLOW}Usage:${NC}"
+    echo "  ./run.sh [mode] [backend mode]"
     echo ""
-    echo -e "${YELLOW}可用模式:${NC}"
-    echo -e "  ${GREEN}frontend${NC}                 - 启动Streamlit前端界面 (默认)"
-    echo -e "  ${GREEN}backend unified${NC}          - 统一后台模式 ⭐ 推荐"
-    echo -e "  ${GREEN}backend deepsearch${NC}       - 深度搜索模式"
-    echo -e "  ${GREEN}backend general_assistant${NC} - 通用编程助手模式"
-    echo -e "  ${GREEN}backend repository_agent${NC} - 仓库任务处理模式"
+    echo -e "${YELLOW}Available modes:${NC}"
+    echo -e "  ${GREEN}frontend${NC}                 - Start Streamlit frontend interface (default)"
+    echo -e "  ${GREEN}backend unified${NC}          - Unified backend mode ⭐ Recommended"
+    echo -e "  ${GREEN}backend deepsearch${NC}       - Deep search mode"
+    echo -e "  ${GREEN}backend general_assistant${NC} - General programming assistant mode"
+    echo -e "  ${GREEN}backend repository_agent${NC} - Repository task processing mode"
     echo ""
-    echo -e "${YELLOW}服务管理:${NC}"
-    echo -e "  ${GREEN}daemon${NC}                   - 后台启动前端服务"
-    echo -e "  ${GREEN}status${NC}                   - 查看服务状态"
-    echo -e "  ${GREEN}stop${NC}                     - 停止所有服务"
-    echo -e "  ${GREEN}restart${NC}                  - 重启服务"
+    echo -e "${YELLOW}Service management:${NC}"
+    echo -e "  ${GREEN}daemon${NC}                   - Start frontend service in background"
+    echo -e "  ${GREEN}status${NC}                   - Check service status"
+    echo -e "  ${GREEN}stop${NC}                     - Stop all services"
+    echo -e "  ${GREEN}restart${NC}                  - Restart services"
     echo ""
-    echo -e "${YELLOW}示例:${NC}"
-    echo "  ./run.sh                          # 启动前端界面"
-    echo "  ./run.sh backend unified          # 启动统一后台模式"
-    echo "  ./run.sh daemon                   # 后台启动前端"
+    echo -e "${YELLOW}Examples:${NC}"
+    echo "  ./run.sh                          # Start frontend interface"
+    echo "  ./run.sh backend unified          # Start unified backend mode"
+    echo "  ./run.sh daemon                   # Start frontend in background"
     echo ""
-    echo -e "${YELLOW}高级用法:${NC}"
-    echo "  python launcher.py --help        # 查看所有参数选项"
+    echo -e "${YELLOW}Advanced usage:${NC}"
+    echo "  python launcher.py --help        # View all parameter options"
 }
 
-# 检查进程状态
+# Check process status
 check_status() {
-    echo -e "${CYAN}📊 服务状态检查${NC}"
+    echo -e "${CYAN}📊 Service Status Check${NC}"
     echo ""
     
-    # 检查Streamlit进程
+    # Check Streamlit process
     if pgrep -f "streamlit run" > /dev/null; then
-        echo -e "${GREEN}✅ Streamlit前端服务正在运行${NC}"
+        echo -e "${GREEN}✅ Streamlit frontend service is running${NC}"
         echo "   PID: $(pgrep -f 'streamlit run')"
-        echo "   端口: 8501"
-        echo "   访问: http://localhost:8501"
+        echo "   Port: 8501"
+        echo "   Access: http://localhost:8501"
     else
-        echo -e "${RED}❌ Streamlit前端服务未运行${NC}"
+        echo -e "${RED}❌ Streamlit frontend service is not running${NC}"
     fi
     
-    # 检查Python后台进程
+    # Check Python backend process
     if pgrep -f "launcher.py.*backend" > /dev/null; then
-        echo -e "${GREEN}✅ 后台服务正在运行${NC}"
+        echo -e "${GREEN}✅ Backend service is running${NC}"
         echo "   PID: $(pgrep -f 'launcher.py.*backend')"
     else
-        echo -e "${RED}❌ 后台服务未运行${NC}"
+        echo -e "${RED}❌ Backend service is not running${NC}"
     fi
     
     echo ""
 }
 
-# 停止所有服务
+# Stop all services
 stop_services() {
-    echo -e "${YELLOW}🛑 停止所有RepoMaster服务...${NC}"
+    echo -e "${YELLOW}🛑 Stopping all RepoMaster services...${NC}"
     
-    # 停止Streamlit
+    # Stop Streamlit
     if pgrep -f "streamlit run" > /dev/null; then
         pkill -f "streamlit run"
-        echo -e "${GREEN}✅ 已停止Streamlit服务${NC}"
+        echo -e "${GREEN}✅ Stopped Streamlit service${NC}"
     fi
     
-    # 停止后台Python进程
+    # Stop backend Python process
     if pgrep -f "launcher.py.*backend" > /dev/null; then
         pkill -f "launcher.py.*backend"
-        echo -e "${GREEN}✅ 已停止后台服务${NC}"
+        echo -e "${GREEN}✅ Stopped backend service${NC}"
     fi
     
-    echo -e "${GREEN}🏁 所有服务已停止${NC}"
+    echo -e "${GREEN}🏁 All services have been stopped${NC}"
 }
 
-# 重启服务
+# Restart services
 restart_services() {
-    echo -e "${YELLOW}🔄 重启RepoMaster服务...${NC}"
+    echo -e "${YELLOW}🔄 Restarting RepoMaster services...${NC}"
     stop_services
     sleep 2
-    echo -e "${CYAN}启动前端服务...${NC}"
+    echo -e "${CYAN}Starting frontend service...${NC}"
     start_frontend_daemon
 }
 
-# 启动前端服务 (daemon模式)
+# Start frontend service (daemon mode)
 start_frontend_daemon() {
-    echo -e "${CYAN}🌐 启动Streamlit前端服务 (后台模式)...${NC}"
+    echo -e "${CYAN}🌐 Starting Streamlit frontend service (background mode)...${NC}"
     
-    # 检查是否已经运行
+    # Check if already running
     if pgrep -f "streamlit run" > /dev/null; then
-        echo -e "${YELLOW}⚠️  Streamlit服务已在运行${NC}"
+        echo -e "${YELLOW}⚠️  Streamlit service is already running${NC}"
         return
     fi
     
     nohup python launcher.py --mode frontend > logs/streamlit.log 2>&1 &
     
-    # 等待服务启动
+    # Wait for service to start
     sleep 3
     
     if pgrep -f "streamlit run" > /dev/null; then
-        echo -e "${GREEN}✅ Streamlit服务启动成功${NC}"
-        echo -e "${GREEN}   访问地址: http://localhost:8501${NC}"
-        echo -e "${GREEN}   日志文件: logs/streamlit.log${NC}"
+        echo -e "${GREEN}✅ Streamlit service started successfully${NC}"
+        echo -e "${GREEN}   Access URL: http://localhost:8501${NC}"
+        echo -e "${GREEN}   Log file: logs/streamlit.log${NC}"
     else
-        echo -e "${RED}❌ Streamlit服务启动失败${NC}"
-        echo -e "${YELLOW}   请查看日志: logs/streamlit.log${NC}"
+        echo -e "${RED}❌ Streamlit service failed to start${NC}"
+        echo -e "${YELLOW}   Please check log: logs/streamlit.log${NC}"
     fi
 }
 
-# 启动前端服务 (交互模式)
+# Start frontend service (interactive mode)
 start_frontend() {
-    echo -e "${CYAN}🌐 启动Streamlit前端界面...${NC}"
+    echo -e "${CYAN}🌐 Starting Streamlit frontend interface...${NC}"
     python launcher.py --mode frontend
 }
 
-# 启动后台服务
+# Start backend service
 start_backend() {
     local backend_mode=$1
     
@@ -152,11 +152,11 @@ start_backend() {
         backend_mode="unified"
     fi
     
-    echo -e "${CYAN}🔧 启动后台服务 - ${backend_mode}模式...${NC}"
+    echo -e "${CYAN}🔧 Starting backend service - ${backend_mode} mode...${NC}"
     python launcher.py --mode backend --backend-mode "$backend_mode"
 }
 
-# 主逻辑
+# Main logic
 case "$1" in
     "help"|"-h"|"--help")
         show_help
@@ -173,14 +173,14 @@ case "$1" in
     "daemon")
         start_frontend_daemon
         ;;
-    "frontend"|"")
+    "frontend")
         start_frontend
         ;;
-    "backend")
+    "backend"|"")
         start_backend "$2"
         ;;
     *)
-        echo -e "${RED}❌ 未知模式: $1${NC}"
+        echo -e "${RED}❌ Unknown mode: $1${NC}"
         echo ""
         show_help
         exit 1
