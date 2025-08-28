@@ -1,5 +1,6 @@
 <div align="center">
 
+<<<<<<< HEAD
 <img src="docs/assets/images/RepoMaster.logo.png" alt="RepoMaster Logo" width="200"/>
 
 </div>
@@ -14,11 +15,23 @@
 [![Code](https://img.shields.io/badge/Code-Coming%20Soon-orange.svg)](https://github.com/QuantaAlpha/RepoMaster)
 
 [English](README.md) | [中文](README_CN.md)
+=======
+  <img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="600"/>
+  
+  <p style="margin: 10px 0;">
+    <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" />
+    <img src="https://img.shields.io/badge/License-MIT-green.svg" />
+    <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
+  </p>
+
+# RepoMaster: 基于GitHub仓库的自主任务解决框架
+  
+  <p style="font-size: 15px; color: gray; margin-top: 4px;">
+    🌐 <a href="README.md">English</a> | <a href="README_CN.md">中文</a>
+  </p>
+>>>>>>> origin/main
 
 </div>
-
-> **📢 重要通知**: 完整的源代码将在论文发表后开源，目前提供的是项目演示和部分代码示例。
-
 ## 🎯 快速演示
 
 想象一下，您只需用自然语言描述一个任务，RepoMaster就能自动为您完成后续的一切：从找到最合适的GitHub仓库，到理解其复杂的代码结构，再到最终执行并完成任务！无论是简单的数据提取还是复杂的AI模型应用，RepoMaster都能胜任。
@@ -60,7 +73,11 @@
 
 <div align="center">
 
+<<<<<<< HEAD
 <img src="docs/assets/images/demo_ultra_hq.gif" alt="RepoMaster演示" width="800"/>
+=======
+https://github.com/user-attachments/assets/a21b2f2e-a31c-4afd-953d-d143beef781a
+>>>>>>> origin/main
 
 *RepoMaster自主执行图像风格迁移任务的完整过程*
 
@@ -463,7 +480,7 @@ result = repo_master.solve_task_with_repo(task)
 ### 开发环境设置
 
 ```bash
-git clone https://github.com/your-org/RepoMaster.git
+git clone https://github.com/QuantaAlpha/RepoMaster.git
 cd RepoMaster
 pip install -e ".[dev]"
 pre-commit install

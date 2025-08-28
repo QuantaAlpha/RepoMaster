@@ -1,19 +1,20 @@
 <div align="center">
 
-<img src="docs/assets/images/RepoMaster.logo.png" alt="RepoMaster Logo" width="200"/>
+  <img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="600"/>
+  
+  <p style="margin: 10px 0;">
+    <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" />
+    <img src="https://img.shields.io/badge/License-MIT-green.svg" />
+    <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
+  </p>
 
 # RepoMaster: Autonomous Exploration and Understanding of GitHub Repositories for Complex Task Solving
-
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![arXiv](https://img.shields.io/badge/arXiv-2505.21577-red.svg)](https://arxiv.org/abs/2505.21577)
-[![Code](https://img.shields.io/badge/Code-Coming%20Soon-orange.svg)](https://github.com/QuantaAlpha/RepoMaster)
-
-[English](README.md) | [中文](README_CN.md)
+  
+  <p style="font-size: 15px; color: gray; margin-top: 4px;">
+    🌐 <a href="README.md">English</a> | <a href="README_CN.md">中文</a>
+  </p>
 
 </div>
-
-> **📢 Important Notice**: The complete source code will be open-sourced after paper publication. Currently, we provide project demonstrations and partial code examples.
 
 ## 🚀 Overview
 
@@ -93,7 +94,7 @@ Imagine describing a task in natural language, and RepoMaster automatically hand
 
 <div align="center">
 
-<img src="docs/assets/images/demo_ultra_hq.gif" alt="RepoMaster Demo" width="800"/>
+https://github.com/user-attachments/assets/a21b2f2e-a31c-4afd-953d-d143beef781a
 
 *Complete process of RepoMaster autonomously executing neural style transfer task*
 
@@ -177,7 +178,7 @@ python --version  # Should be 3.11+
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/RepoMaster.git
+git clone https://github.com/QuantaAlpha/RepoMaster.git
 cd RepoMaster
 
 # Install requirements

@@ -414,14 +414,14 @@ Please provide comprehensive help including code examples, explanations, and pra
         return final_answer
 
 def load_env():
-    import configs.config
+    from configs.oai_config import get_llm_config
     from dotenv import load_dotenv
     import uuid
     
-    llm_config = configs.config.get_llm_config()
+    llm_config = get_llm_config()
     load_dotenv("configs/.env")
     work_dir = os.path.join(os.getcwd(), "coding", str(uuid.uuid4()))
-    code_execution_config={"work_dir": work_dir, "use_docker": False}
+    code_execution_config = {"work_dir": work_dir, "use_docker": False}
     
     return llm_config, code_execution_config
 
