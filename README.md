@@ -15,6 +15,7 @@
   </p>
 
 </div>
+
 ## 🚀 Overview
 
 RepoMaster is a revolutionary autonomous agent framework specifically designed to explore, understand, and utilize GitHub repositories for solving complex real-world tasks. Unlike traditional approaches that generate code from scratch, RepoMaster treats open-source repositories on GitHub as composable tool modules, automatically leveraging these resources through intelligent search, hierarchical analysis, and autonomous exploration.
@@ -174,8 +175,9 @@ Special thanks to:
 
 ## 🌐 About QuantaAlpha
 
-QuantaAlpha was founded in **April 2025** by a team of professors, postdocs, PhDs, and master’s students from **Tsinghua University, Peking University, CAS, CMU, HKUST**, and more.  
-Our mission is to explore the **“quantum”** of intelligence and pioneer the **“alpha”** frontier of agent research — from **CodeAgents** to **self-evolving intelligence**, and further to **financial and cross-domain specialized agents**, we are committed to redefining the boundaries of AI. 🌟
+- QuantaAlpha was founded in **April 2025** by a team of professors, postdocs, PhDs, and master’s students from **Tsinghua University, Peking University, CAS, CMU, HKUST**, and more.  
+
+🌟 Our mission is to explore the **“quantum”** of intelligence and pioneer the **“alpha”** frontier of agent research — from **CodeAgents** to **self-evolving intelligence**, and further to **financial and cross-domain specialized agents**, we are committed to redefining the boundaries of AI. 
 
 ✨ In **2025**, we will continue to produce high-quality research in the following directions:  
 - **CodeAgent**: End-to-end autonomous execution of real-world tasks  
