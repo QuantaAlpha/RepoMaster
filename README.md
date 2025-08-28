@@ -1,17 +1,24 @@
 <div align="center">
 
-  <img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="600"/>
+  <table>
+    <tr>
+      <td align="center" valign="middle">
+        <img src="docs/assets/images/RepoMaster.logo.png" alt="RepoMaster Owl Logo" width="100"/>
+      </td>
+      <td align="center" valign="middle">
+        <h1 style="margin-bottom: 0;">RepoMaster</h1>
+        <h3 style="margin-top: 0;">Autonomous Exploration and Understanding of GitHub Repositories</h3>
+      </td>
+    </tr>
+  </table>
 
-  <h1 style="margin-bottom: 0.4em;">RepoMaster</h1>
-  <h3 style="margin-top: 0;">Autonomous Exploration and Understanding of GitHub Repositories for Complex Task Solving</h3>
-
-  <p style="margin: 12px 0;">
+  <p>
     <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" />
     <img src="https://img.shields.io/badge/License-MIT-green.svg" />
     <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
   </p>
 
-  <p style="margin-top: 4px;">
+  <p>
     🌐 <a href="README.md">English</a> | <a href="README_CN.md">中文</a>
   </p>
 
