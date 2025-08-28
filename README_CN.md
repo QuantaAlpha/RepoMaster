@@ -38,9 +38,9 @@
 <td align="center"><b>迁移结果</b></td>
 </tr>
 <tr>
-<td><img src="example/origin.jpg" width="200px" /></td>
-<td><img src="example/style.jpg" width="200px" /></td>
-<td><img src="example/transfer.jpg" width="200px" /></td>
+<td><img src="docs/assets/images/origin.jpg" width="200px" /></td>
+<td><img src="docs/assets/images/style.jpg" width="200px" /></td>
+<td><img src="docs/assets/images/transfer.jpg" width="200px" /></td>
 </tr>
 </table>
 
@@ -193,8 +193,8 @@ repo_master = RepoMasterAgent(
 # 定义一个复杂的AI任务
 task = """
 我需要将一张内容图片转换成特定艺术风格。
-内容图片路径: 'example/origin.jpg'
-风格参考图片路径: 'example/style.jpg'
+内容图片路径: 'docs/assets/images/origin.jpg'
+风格参考图片路径: 'docs/assets/images/style.jpg'
 请将最终生成的风格化图片保存为 'workspace/merged_styled_image.png'
 """
 
@@ -500,8 +500,8 @@ pre-commit install
 ## 📞 联系我们
 
 - 📧 Email: [wanghuacan17@mails.ucas.ac.cn]
-- 🐛 Issues: [GitHub Issues](https://github.com/wanghuacan/RepoMaster/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/wanghuacan/RepoMaster/discussions)
+- 🐛 Issues: [GitHub Issues](https://github.com/QuantaAlpha/RepoMaster/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/QuantaAlpha/RepoMaster/discussions)
 
 ---
 

@@ -159,7 +159,7 @@ def validate_and_get_fallback_config(api_type: str = None, service_type: str = '
                 f"Please set up at least one valid API key in environment variables."
             )
     else:
-        print(f"✅ Using API configuration '{config_source}' with valid API key.")
+        # print(f"✅  '{config_source}' with valid API key.")
         return config_source, api_config
 
 
