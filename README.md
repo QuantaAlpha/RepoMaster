@@ -9,7 +9,6 @@
     <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" />
     <img src="https://img.shields.io/badge/License-MIT-green.svg" />
     <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
-    <img src="https://img.shields.io/badge/Code-Coming%20Soon-orange.svg" />
   </p>
 
   <p>
@@ -19,8 +18,6 @@
 </div>
 
 ---
-
-> **📢 Important Notice**: The complete source code will be open-sourced after paper publication. Currently, we provide project demonstrations and partial code examples.
 
 ## 🚀 Overview
 
