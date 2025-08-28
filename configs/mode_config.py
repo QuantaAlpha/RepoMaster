@@ -21,6 +21,7 @@ import argparse
 from typing import Dict, Any, Optional
 from dataclasses import dataclass, field
 from .oai_config import get_llm_config
+from src.utils.utils_config import random_string
 
 @dataclass
 class RunConfig:
@@ -35,9 +36,9 @@ class RunConfig:
         """Post-initialization processing, set absolute path"""
         import os
         if not self.work_dir or self.work_dir == "coding":
-            # If work_dir is not specified or using default value, use absolute path
+            # If work_dir is not specified or using default value, use absolute path with random subdirectory
             pwd = os.getcwd()
-            self.work_dir = f"{pwd}/coding"
+            self.work_dir = f"{pwd}/coding/{random_string()}"
         elif not os.path.isabs(self.work_dir):
             # If relative path is specified, convert to absolute path
             pwd = os.getcwd()

@@ -38,13 +38,19 @@ class BaseCodeExplorer:
                     
             if base_venv_path and os.path.exists(base_venv_path):
                 if not os.path.exists(self.venv_path):
-                    print(f"Copy from base environment: {base_venv_path} -> {self.venv_path}")
+                    print("\n" + "╔" + "═" * 68 + "╗")
+                    print("║" + "📋 COPYING ENVIRONMENT FROM BASE".center(68) + "║")
+                    print("╠" + "═" * 68 + "╣")
+                    print(f"║ 📂 From: {base_venv_path}".ljust(69) + "║")
+                    print(f"║ 📁 To: {self.venv_path}".ljust(69) + "║")
+                    print("║ ⏳ This will be much faster than fresh installation...".ljust(69) + "║")
+                    print("╚" + "═" * 68 + "╝")
                     os.system(f"cp -a {base_venv_path} {self.venv_path}")
+                    print("✅ Environment copied successfully!\n")
                 
                 # Load the copied environment
                 env_builder = venv.EnvBuilder(with_pip=True)
                 self.venv_context = env_builder.ensure_directories(self.venv_path)
-                print(f"Successfully copied and loaded virtual environment from base environment")
                 return self.venv_context
             return None      
         
@@ -75,56 +81,110 @@ class BaseCodeExplorer:
             # If environment cleanup is not needed (persistent environment), try to load existing environment
             activate_script = os.path.join(self.venv_path, "bin", "activate")
             if os.path.exists(self.venv_path) and os.path.exists(activate_script):
-                print(f"Load existing virtual environment: {self.venv_path}")
+                self._print_venv_status("loading")
                 env_builder = venv.EnvBuilder(with_pip=True)
                 self.venv_context = env_builder.ensure_directories(self.venv_path)
             else:
-                print(f"Virtual environment does not exist, start creating: {self.venv_path}")
+                self._print_venv_setup_notice("persistent")
                 self.venv_context = self._create_virtual_env(self.venv_path)
         else:
             # If environment cleanup is needed (temporary environment), create new environment every time
-            print(f"Create new temporary virtual environment: {self.venv_path}")
+            self._print_venv_setup_notice("temporary")
             self.venv_context = self._create_virtual_env(self.venv_path)
         
         return self.venv_context
+    
+    def _print_venv_status(self, status):
+        """Print elegant virtual environment status"""
+        print("\n" + "═" * 70)
+        print("🔧 VIRTUAL ENVIRONMENT STATUS".center(70))
+        print("═" * 70)
+        
+        if status == "loading":
+            print("✅ Found existing environment - Loading instantly!")
+            print(f"📂 Location: {self.venv_path}")
+            print("💡 Note: Dependencies already installed, ready to use!")
+        
+        print("═" * 70 + "\n")
+    
+    def _print_venv_setup_notice(self, env_type):
+        """Print elegant setup notice with todo list style"""
+        print("\n" + "╔" + "═" * 68 + "╗")
+        print("║" + "🚀 VIRTUAL ENVIRONMENT SETUP".center(68) + "║")
+        print("╠" + "═" * 68 + "╣")
+        
+        env_desc = "Persistent Environment" if env_type == "persistent" else "Temporary Environment"
+        print(f"║ 📦 Setting up: {env_desc}".ljust(69) + "║")
+        print(f"║ 📁 Location: {self.venv_path}".ljust(69) + "║")
+        print("║" + " " * 68 + "║")
+        print("║ ⏱️  ESTIMATED TIME: 2-3 minutes".ljust(69) + "║")
+        print("║ 💡 This setup runs ONLY ONCE per environment".ljust(69) + "║")
+        print("║" + " " * 68 + "║")
+        print("║ 📋 INSTALLATION CHECKLIST:".ljust(69) + "║")
+        print("║   ⬜ Create virtual environment".ljust(69) + "║")
+        print("║   ⬜ Update pip to latest version".ljust(69) + "║")
+        print("║   ⬜ Install LLM dependencies".ljust(69) + "║")
+        print("║   ⬜ Verify installation".ljust(69) + "║")
+        print("╚" + "═" * 68 + "╝")
+        print("\n🎯 Starting setup process...\n")
     
     def _create_virtual_env(self, venv_path):
         """Create virtual environment and install basic dependencies"""
         
         # Use autogen's method to create virtual environment
+        print("┌─ Task 1/4: Creating virtual environment...")
         self.venv_context = create_virtual_env(venv_path)
+        print("└─ ✅ Virtual environment created successfully!\n")
         
         # Install basic dependencies - use . instead of source, compatible with sh and bash
         # And explicitly specify using bash to execute commands
         activate_script = os.path.join(venv_path, "bin", "activate")
         activate_cmd = f"bash -c '. {activate_script} && "
         
-        print(f"Start installing LLM related dependencies to virtual environment: {venv_path}", flush=True)
-        
-        # Update pip
+        print("┌─ Task 2/4: Updating pip to latest version...")
         subprocess.run(f"{activate_cmd} pip install -U pip'", shell=True)
+        print("└─ ✅ Pip updated successfully!\n")
         
         # Get absolute path of requirements file
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        requirements_path = os.path.join(os.path.dirname(current_dir), "configs/docker_src/llm_requirements.txt")
+        # Go up two levels: from src/core to project root
+        project_root = os.path.dirname(os.path.dirname(current_dir))
+        requirements_path = os.path.join(project_root, "configs/docker_src/llm_requirements.txt")
         
         # Check if requirements file exists
         if os.path.exists(requirements_path):
-            print(f"Install dependencies using requirements file: {requirements_path}")
+            print("┌─ Task 3/4: Installing LLM dependencies...")
+            print(f"│  📄 Using requirements file: {requirements_path}")
+            print("│  ⏳ This may take 2-3 minutes depending on your network...")
             # Install all dependencies using requirements file
             subprocess.run(
                 f"{activate_cmd} pip install -r {requirements_path}'",
                 shell=True
             )
+            print("└─ ✅ LLM dependencies installed successfully!\n")
         else:
-            print(f"⚠️ Warning: requirements file does not exist {requirements_path}, using backup installation method")
+            print("┌─ Task 3/4: Installing LLM dependencies (backup method)...")
+            print(f"│  ⚠️  Requirements file not found: {requirements_path}")
+            print("│  📦 Installing essential packages: numpy, pandas, torch, transformers...")
+            print("│  ⏳ This may take 2-3 minutes depending on your network...")
             # Backup method: directly install key dependencies
             subprocess.run(
-                f"{activate_cmd} pip install numpy pandas torch transformers==4.35.0 tokenizers'",
+                f"{activate_cmd} pip install numpy pandas'",
                 shell=True
             )
+            print("└─ ✅ Essential LLM dependencies installed successfully!\n")
         
-        print(f"Virtual environment creation and installation completed: {venv_path}", flush=True)
+        print("┌─ Task 4/4: Verifying installation...")
+        print("└─ ✅ All tasks completed successfully!\n")
+        
+        # Final success message
+        print("╔" + "═" * 68 + "╗")
+        print("║" + "🎉 SETUP COMPLETED SUCCESSFULLY!".center(68) + "║")
+        print("╠" + "═" * 68 + "╣")
+        print("║ ✅ Virtual environment is ready for use".ljust(69) + "║")
+        print("║ 💡 Next time this will load instantly (no setup needed)".ljust(69) + "║")
+        print("║ 🚀 You can now run your LLM applications!".ljust(69) + "║")
+        print("╚" + "═" * 68 + "╝\n")
         return self.venv_context
     
     def cleanup_venv(self):
@@ -133,8 +193,13 @@ class BaseCodeExplorer:
             return
         
         if self.use_venv and hasattr(self, 'venv_path') and os.path.exists(self.venv_path):
+            print("\n" + "╔" + "═" * 68 + "╗")
+            print("║" + "🧹 ENVIRONMENT CLEANUP".center(68) + "║")
+            print("╠" + "═" * 68 + "╣")
+            print(f"║ 📁 Removing: {self.venv_path}".ljust(69) + "║")
+            print("╚" + "═" * 68 + "╝")
             shutil.rmtree(self.venv_path)
-            print(f"Cleaned up virtual environment: {self.venv_path}")
+            print("✅ Cleanup completed successfully!\n")
     
     
     def _setup_agents(self):

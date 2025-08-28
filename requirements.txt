@@ -39,4 +39,9 @@ plotly
 tqdm
 
 joblib
+grep_ast
+networkx
+humanize
+genson
+aiohttp~=3.8.0
 openai~=1.68.0

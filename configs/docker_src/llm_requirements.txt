@@ -7,19 +7,17 @@ einops
 av
 librosa
 
-torch
-torchvision
-torchaudio
+# torch
+# torchvision
+# torchaudio
 
-# Transformers and NLP libraries
-transformers>=4.45.0,<=4.51.3,!=4.46.*,!=4.47.*,!=4.48.0
-tokenizers>=0.19.0,<=0.21.1
-datasets>=2.16.0,<=3.5.0
-accelerate>=0.34.0,<=1.6.0
-sentencepiece>=0.1.99
-peft>=0.14.0,<=0.15.1
-trl>=0.8.6,<=0.9.6
-tiktoken
+# # Transformers and NLP libraries
+# transformers>=4.45.0,<=4.51.3,!=4.46.*,!=4.47.*,!=4.48.0
+# tokenizers>=0.19.0,<=0.21.1
+# datasets>=2.16.0,<=3.5.0
+# accelerate>=0.34.0,<=1.6.0
+# sentencepiece>=0.1.99
+# tiktoken
 
 # LLM toolkit libraries
 huggingface_hub>=0.16.0
