@@ -463,7 +463,7 @@ result = repo_master.solve_task_with_repo(task)
 ### 开发环境设置
 
 ```bash
-git clone https://github.com/your-org/RepoMaster.git
+git clone https://github.com/QuantaAlpha/RepoMaster.git
 cd RepoMaster
 pip install -e ".[dev]"
 pre-commit install
