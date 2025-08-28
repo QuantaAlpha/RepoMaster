@@ -2,18 +2,20 @@
 
   <img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="600"/>
 
-  <h1>RepoMaster: 基于GitHub仓库的自主任务解决框架</h1>
+  <h1>RepoMaster</h1>
+  <h3>基于GitHub仓库的自主任务解决框架</h3>
 
   <p>
     <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" />
     <img src="https://img.shields.io/badge/License-MIT-green.svg" />
     <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
-    <img src="https://img.shields.io/badge/Code-Coming%20Soon-orange.svg" />
+  </p>
+
+  <p>
+    🌐 <a href="README.md">English</a> | <a href="README_CN.md">中文</a>
   </p>
 
 </div>
-
-> **📢 重要通知**: 完整的源代码将在论文发表后开源，目前提供的是项目演示和部分代码示例。
 
 ## 🎯 快速演示
 
