@@ -8,10 +8,7 @@
     <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" />
     <img src="https://img.shields.io/badge/License-MIT-green.svg" />
     <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
-  </p>
-
-  <p style="margin-top: 4px;">
-    🌐 <a href="README.md">English</a> | <a href="README_CN.md">中文</a>
+    • 🌐 <a href="README.md">English</a> | <a href="README_CN.md">中文</a>
   </p>
 
 </div>
