@@ -20,57 +20,7 @@
 
 RepoMaster 是一个革命性的自主代理框架，专门设计用于探索、理解和利用 GitHub 仓库来解决复杂的现实世界任务。与传统的从零开始生成代码的方法不同，RepoMaster 将 GitHub 上的开源仓库视为可组合的工具模块，通过智能搜索、层次化分析和自主探索来自动化地利用这些资源。
 
-## 🚀 框架
-
-### 🎨 RepoMaster 框架概览
-
-<img src="docs/assets/images/overview.png" alt="RepoMaster 框架" style="width: 600px; padding: 20px; background-color: #ffffff; display: block; margin: 0 auto;" />
-
-### 🎯 核心理念
-
-- **仓库作为工具**：将开源仓库视为Agent解决复杂任务的工具包
-- **人类化探索**：模拟人类程序员探索未知代码库的方式
-- **智能压缩**：在有限的LLM上下文窗口内高效管理海量代码信息
-- **自主执行**：端到端地完成从任务理解到代码执行的全流程
-
-## 🎯 快速演示
-
-想象一下，您只需用自然语言描述一个任务，RepoMaster就能自动为您完成后续的一切：从找到最合适的GitHub仓库，到理解其复杂的代码结构，再到最终执行并完成任务！无论是简单的数据提取还是复杂的AI模型应用，RepoMaster都能胜任。
-
-**示例任务**：
-- **简单任务**："帮我从这个网页上抓取所有的产品名称和价格。"
-- **复杂任务**："将这张人物照片转换成梵高油画风格。"
-
-### 🎨 神经风格迁移演示
-
-<table>
-<tr>
-<td align="center"><b>原始图像</b></td>
-<td align="center"><b>风格参考</b></td>
-<td align="center"><b>迁移结果</b></td>
-</tr>
-<tr>
-<td><img src="docs/assets/images/origin.jpg" width="200px" /></td>
-<td><img src="docs/assets/images/style.jpg" width="200px" /></td>
-<td><img src="docs/assets/images/transfer.jpg" width="200px" /></td>
-</tr>
-</table>
-
-**自动化工作流程**：
-1. 🔍 **智能搜索**：在GitHub上搜索风格迁移相关仓库
-2. 🏗️ **结构分析**：分析代码结构和处理流程
-3. 🔧 **自主执行**：配置环境并处理图像
-4. ✅ **任务完成**：生成结果，无需人工干预
-
-### 🎬 完整执行演示 | [📺 YouTube演示](https://www.youtube.com/watch?v=Kva2wVhBkDU)
-
-<div align="center">
-
-https://github.com/user-attachments/assets/a21b2f2e-a31c-4afd-953d-d143beef781a
-
-*RepoMaster自主执行神经风格迁移任务的完整过程*
-
-</div>
+<img src="docs/assets/images/performance_01.jpg" alt="RepoMaster 效果图" style="width: 600px; padding: 20px; background-color: #ffffff; display: block; margin: 0 auto;" />
 
 ---
 
@@ -137,6 +87,47 @@ bash run.sh backend unified  # 后端统一模式
 ```
 
 **详细配置和高级选项，请参阅我们的[用户指南](docs/user-guide.md)。**
+
+
+## 🎯 快速演示
+
+想象一下，您只需用自然语言描述一个任务，RepoMaster就能自动为您完成后续的一切：从找到最合适的GitHub仓库，到理解其复杂的代码结构，再到最终执行并完成任务！无论是简单的数据提取还是复杂的AI模型应用，RepoMaster都能胜任。
+
+**示例任务**：
+- **简单任务**："帮我从这个网页上抓取所有的产品名称和价格。"
+- **复杂任务**："将这张人物照片转换成梵高油画风格。"
+
+### 🎨 神经风格迁移演示
+
+<table>
+<tr>
+<td align="center"><b>原始图像</b></td>
+<td align="center"><b>风格参考</b></td>
+<td align="center"><b>迁移结果</b></td>
+</tr>
+<tr>
+<td><img src="docs/assets/images/origin.jpg" width="200px" /></td>
+<td><img src="docs/assets/images/style.jpg" width="200px" /></td>
+<td><img src="docs/assets/images/transfer.jpg" width="200px" /></td>
+</tr>
+</table>
+
+**自动化工作流程**：
+1. 🔍 **智能搜索**：在GitHub上搜索风格迁移相关仓库
+2. 🏗️ **结构分析**：分析代码结构和处理流程
+3. 🔧 **自主执行**：配置环境并处理图像
+4. ✅ **任务完成**：生成结果，无需人工干预
+
+### 🎬 完整执行演示 | [📺 YouTube演示](https://www.youtube.com/watch?v=Kva2wVhBkDU)
+
+<div align="center">
+
+https://github.com/user-attachments/assets/a21b2f2e-a31c-4afd-953d-d143beef781a
+
+*RepoMaster自主执行神经风格迁移任务的完整过程*
+
+</div>
+
 
 ---
 

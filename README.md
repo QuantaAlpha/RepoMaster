@@ -15,62 +15,11 @@
   </p>
 
 </div>
-
 ## 🚀 Overview
 
 RepoMaster is a revolutionary autonomous agent framework specifically designed to explore, understand, and utilize GitHub repositories for solving complex real-world tasks. Unlike traditional approaches that generate code from scratch, RepoMaster treats open-source repositories on GitHub as composable tool modules, automatically leveraging these resources through intelligent search, hierarchical analysis, and autonomous exploration.
 
-## 🚀 Framework
-
-### 🎨 RepoMaster Framework Overview
-
-<img src="docs/assets/images/overview.png" alt="RepoMaster Framework" style="width: 600px; padding: 20px; background-color: #ffffff; display: block; margin: 0 auto;" />
-
-### 🎯 Core Philosophy
-
-- **Repositories as Tools**: Treat open-source repositories as pre-built toolkits
-- **Human-like Exploration**: Mimic how programmers explore unfamiliar codebases
-- **Smart Compression**: Efficiently manage code information within LLM context
-- **Autonomous Execution**: End-to-end completion from understanding to execution
-
-## 🎯 Quick Demo
-
-Imagine describing a task in natural language, and RepoMaster automatically handles the rest: from finding the most suitable GitHub repository and understanding its complex code structure, to finally executing and completing the task! RepoMaster can handle everything from simple data extraction to complex AI model applications.
-
-**Example Tasks**:
-- **Simple**: "Help me scrape all product names and prices from this webpage."
-- **Complex**: "Transform this portrait photo into the style of a Van Gogh oil painting."
-
-### 🎨 Neural Style Transfer Demo
-
-<table>
-<tr>
-<td align="center"><b>Original Image</b></td>
-<td align="center"><b>Style Reference</b></td>
-<td align="center"><b>Transfer Result</b></td>
-</tr>
-<tr>
-<td><img src="docs/assets/images/origin.jpg" width="200px" /></td>
-<td><img src="docs/assets/images/style.jpg" width="200px" /></td>
-<td><img src="docs/assets/images/transfer.jpg" width="200px" /></td>
-</tr>
-</table>
-
-**Automated Workflow**:
-1. 🔍 **Smart Search**: Find style transfer repositories on GitHub
-2. 🏗️ **Structure Analysis**: Analyze code structure and pipelines
-3. 🔧 **Autonomous Execution**: Configure environment and process images
-4. ✅ **Task Completion**: Generate results without human intervention
-
-### 🎬 Complete Execution Demo | [📺 YouTube Demo](https://www.youtube.com/watch?v=Kva2wVhBkDU)
-
-<div align="center">
-
-https://github.com/user-attachments/assets/a21b2f2e-a31c-4afd-953d-d143beef781a
-
-*Complete process of RepoMaster autonomously executing neural style transfer task*
-
-</div>
+<img src="docs/assets/images/performance_01.jpg" alt="RepoMaster 效果图" style="width: 600px; padding: 20px; background-color: #ffffff; display: block; margin: 0 auto;" />
 
 ---
 
@@ -140,41 +89,46 @@ bash run.sh backend unified  # Backend unified mode
 
 ---
 
-## 💻 Usage
+## 🎯 Quick Demo
 
-### Frontend Mode
-- 🌐 Interactive web chat interface
-- 📁 File upload and management
-- 👥 Multi-user session support
-- 📊 Visual task progress tracking
+Imagine describing a task in natural language, and RepoMaster automatically handles the rest: from finding the most suitable GitHub repository and understanding its complex code structure, to finally executing and completing the task! RepoMaster can handle everything from simple data extraction to complex AI model applications.
 
-### Backend Mode
-**Unified Assistant** (Recommended):
-```bash
-python launcher.py --mode backend --backend-mode unified
-```
+**Example Tasks**:
+- **Simple**: "Help me scrape all product names and prices from this webpage."
+- **Complex**: "Transform this portrait photo into the style of a Van Gogh oil painting."
 
-**Specialized Modes**:
-```bash
-# Deep Search & Web Research
-python launcher.py --mode backend --backend-mode deepsearch
+### 🎨 Neural Style Transfer Demo
 
-# General Programming Assistant  
-python launcher.py --mode backend --backend-mode general_assistant
+<table>
+<tr>
+<td align="center"><b>Original Image</b></td>
+<td align="center"><b>Style Reference</b></td>
+<td align="center"><b>Transfer Result</b></td>
+</tr>
+<tr>
+<td><img src="docs/assets/images/origin.jpg" width="200px" /></td>
+<td><img src="docs/assets/images/style.jpg" width="200px" /></td>
+<td><img src="docs/assets/images/transfer.jpg" width="200px" /></td>
+</tr>
+</table>
 
-# Repository-Specific Tasks
-python launcher.py --mode backend --backend-mode repository_agent
-```
+**Automated Workflow**:
+1. 🔍 **Smart Search**: Find style transfer repositories on GitHub
+2. 🏗️ **Structure Analysis**: Analyze code structure and pipelines
+3. 🔧 **Autonomous Execution**: Configure environment and process images
+4. ✅ **Task Completion**: Generate results without human intervention
 
-### Programming Interface
-```python
-from core.agent_scheduler import RepoMasterAgent
+### 🎬 Complete Execution Demo | [📺 YouTube Demo](https://www.youtube.com/watch?v=Kva2wVhBkDU)
 
-task = "Transform this portrait into Van Gogh style using content.jpg and style.jpg"
-result = repo_master.solve_task_with_repo(task)
-```
+<div align="center">
 
-**For advanced usage, configuration options, and troubleshooting, see our [Full Documentation](docs/).**
+https://github.com/user-attachments/assets/a21b2f2e-a31c-4afd-953d-d143beef781a
+
+*Complete process of RepoMaster autonomously executing neural style transfer task*
+
+</div>
+
+**For advanced usage, configuration options, and troubleshooting, see our [User Guide](docs/user-guide.md).**
 
 ---
 
