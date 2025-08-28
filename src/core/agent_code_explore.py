@@ -29,7 +29,7 @@ class CodeExplorer(BaseCodeExplorer):
         super().__init__(work_dir, use_venv, task_id, is_cleanup_venv)
         
         self.llm_config = get_llm_config(service_type='code_explore') if llm_config is None else llm_config
-        print(f"llm_config: {self.llm_config}")
+
         self.code_execution_config = {"work_dir": work_dir, "use_docker": False} if code_execution_config is None else code_execution_config
         
         self.task_type = task_type

@@ -1,4 +1,47 @@
+# data handling
+pandas~=2.2.2
+
+# packaging
+typing_extensions
+requests~=2.32.3
+tiktoken~=0.7.0
+
+# streamlit related
+streamlit
+streamlit_extras
+
+# environment and web
+python-dotenv~=1.0.1
+beautifulsoup4~=4.12.3
+pillow
+
+autogen-agentchat~=0.6.1
+autogen-core~=0.6.1
+pyautogen~=0.7.6
+
+# search engines
+serpapi~=0.1.5
+search-engine-parser
+
+# langchain
+langchain
+langchain-community
+
+# pdf processing
+PyMuPDF
+pdf2image
+gradio
+
+# visualization
+plotly
+
+# progress bars
+tqdm
+
+joblib
 grep_ast
+networkx
 humanize
 genson
-nvidia_smi
+aiohttp~=3.8.0
+openai~=1.68.0

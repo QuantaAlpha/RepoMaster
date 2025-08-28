@@ -17,6 +17,7 @@
 
 </div>
 
+
 ## 🚀 概述
 
 RepoMaster 是一个革命性的自主代理框架，专门设计用于探索、理解和利用 GitHub 仓库来解决复杂的现实世界任务。与传统的从零开始生成代码的方法不同，RepoMaster 将 GitHub 上的开源仓库视为可组合的工具模块，通过智能搜索、层次化分析和自主探索来自动化地利用这些资源。
@@ -39,6 +40,7 @@ python --version  # 需要Python 3.11+
 git clone https://github.com/QuantaAlpha/RepoMaster.git
 cd RepoMaster
 pip install -r requirements.txt
+
 ```
 
 **配置API密钥**：
@@ -180,6 +182,7 @@ pre-commit install
 - DeepResearch：深度推理与信息检索增强  
 - Agentic Reasoning / Agentic RL：智能体推理与强化学习  
 - 自进化与协同学习：多智能体的自我进化与协作  
+
 
 📢 欢迎对我们方向感兴趣的同学加入！  
 
