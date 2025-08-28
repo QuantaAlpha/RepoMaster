@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/static/img/RepoMaster.logo.png" alt="RepoMaster Logo" width="200"/>
+<img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="200"/>
 
 </div>
 

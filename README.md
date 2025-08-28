@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/images/RepoMaster.logo.png" alt="RepoMaster Logo" width="200"/>
+<img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="200"/>
 
 # RepoMaster: Autonomous Exploration and Understanding of GitHub Repositories for Complex Task Solving
 
