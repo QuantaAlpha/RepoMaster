@@ -194,7 +194,7 @@ pre-commit install
 ```bibtex
 @article{wang2025repomaster,
   title={RepoMaster: Autonomous Exploration and Understanding of GitHub Repositories for Complex Task Solving},
-  author={Wang, Huacan and Ni, Ziyi and Zhang, Shuo and Lu, Shuo and Hu, Sen and He, Ziyang and Chen, Jiaye and Lin, Yifu and Chen, Ronghao and Li, Xin and Jiang, Daxin and Du, Yuntao and Lyu, Pin},
+  author={Huacan Wang and Ziyi Ni and Shuo Zhang and Lu, Shuo and Sen Hu and  Ziyang He and Chen Hu and Jiaye Lin and Yifu Guo and Ronghao Chen and Xin Li and Daxin Jiang and Yuntao Du and Pin Lyu},
   journal={arXiv preprint arXiv:2505.21577},
   year={2025},
   doi={10.48550/arXiv.2505.21577},
