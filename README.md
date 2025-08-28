@@ -1,15 +1,15 @@
 <div align="center">
 
   <img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="600"/>
-  
+
+# RepoMaster: Autonomous Exploration and Understanding of GitHub Repositories for Complex Task Solving
+
   <p style="margin: 10px 0;">
     <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" />
     <img src="https://img.shields.io/badge/License-MIT-green.svg" />
     <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
   </p>
 
-# RepoMaster: Autonomous Exploration and Understanding of GitHub Repositories for Complex Task Solving
-  
   <p style="font-size: 15px; color: gray; margin-top: 4px;">
     🌐 <a href="README.md">English</a> | <a href="README_CN.md">中文</a>
   </p>
@@ -85,7 +85,8 @@ bash run.sh frontend      # Frontend mode
 bash run.sh backend unified  # Backend unified mode
 ```
 
-**For detailed configuration and advanced options, see our [User Guide](docs/user-guide.md).**
+> 📘 **For detailed configuration and advanced options, please refer to our [User Guide](docs/user-guide.md).**
+
 
 ---
 
@@ -170,6 +171,41 @@ Special thanks to:
 - [MLE-Bench](https://github.com/openai/mle-bench) - ML engineering benchmarks
 
 ---
+
+## 🌐 About QuantaAlpha
+
+QuantaAlpha was founded in **April 2025** by a team of professors, postdocs, PhDs, and master’s students from **Tsinghua University, Peking University, CAS, CMU, HKUST**, and more.  
+Our mission is to explore the **“quantum”** of intelligence and pioneer the **“alpha”** frontier of agent research — from **CodeAgents** to **self-evolving intelligence**, and further to **financial and cross-domain specialized agents**, we are committed to redefining the boundaries of AI. 🌟
+
+✨ In **2025**, we will continue to produce high-quality research in the following directions:  
+- **CodeAgent**: End-to-end autonomous execution of real-world tasks  
+- **DeepResearch**: Deep reasoning and retrieval-augmented intelligence  
+- **Agentic Reasoning / Agentic RL**: Agent-based reasoning and reinforcement learning  
+- **Self-evolution and collaborative learning**: Evolution and coordination of multi-agent systems  
+
+📢 We welcome students and researchers interested in these directions to join us!  
+
+🔗 Team Homepage: [QuantaAlpha](https://quantaalpha.github.io/)
+
+---
+
+## 📖 Citation
+
+If you find RepoMaster useful in your research, please cite our work:
+
+```bibtex
+@article{wang2025repomaster,
+  title={RepoMaster: Autonomous Exploration and Understanding of GitHub Repositories for Complex Task Solving},
+  author={Wang, Huacan and Ni, Ziyi and Zhang, Shuo and Lu, Shuo and Hu, Sen and He, Ziyang and Chen, Jiaye and Lin, Yifu and Chen, Ronghao and Li, Xin and Jiang, Daxin and Du, Yuntao and Lyu, Pin},
+  journal={arXiv preprint arXiv:2505.21577},
+  year={2025},
+  doi={10.48550/arXiv.2505.21577},
+  url={https://arxiv.org/abs/2505.21577}
+}
+```
+
+---
+
 
 <div align="center">
 

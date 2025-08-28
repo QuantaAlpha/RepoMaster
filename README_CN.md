@@ -2,14 +2,15 @@
 
   <img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="600"/>
   
+
+# RepoMaster: 基于GitHub仓库的自主任务解决框架
+
   <p style="margin: 10px 0;">
     <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" />
     <img src="https://img.shields.io/badge/License-MIT-green.svg" />
     <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
   </p>
 
-# RepoMaster: 基于GitHub仓库的自主任务解决框架
-  
   <p style="font-size: 15px; color: gray; margin-top: 4px;">
     🌐 <a href="README.md">English</a> | <a href="README_CN.md">中文</a>
   </p>
@@ -86,8 +87,7 @@ bash run.sh frontend      # 前端模式
 bash run.sh backend unified  # 后端统一模式
 ```
 
-**详细配置和高级选项，请参阅我们的[用户指南](docs/user-guide.md)。**
-
+> 📘 **详细配置和高级选项，请参阅我们的[用户指南](docs/user-guide.md).**
 
 ## 🎯 快速演示
 
@@ -166,6 +166,40 @@ pre-commit install
 - [OpenHands](https://github.com/All-Hands-AI/OpenHands) - 软件工程代理
 - [SWE-Agent](https://github.com/princeton-nlp/SWE-agent) - GitHub问题解决代理
 - [MLE-Bench](https://github.com/openai/mle-bench) - 机器学习工程基准
+
+---
+
+## 🌐 关于 QuantaAlpha
+
+QuantaAlpha 成立于 **2025 年 4 月**，由来自 **清华、北大、中科院、CMU、港科大** 等高校的教授、博士后、博士与硕士组成。  
+我们的使命是探索智能的 **“量子”**，引领智能体研究的 **“阿尔法”** 前沿 —— 从 **CodeAgent** 到 **自进化智能**，再到 **金融与跨领域专用智能体**，致力于重塑人工智能的边界。 🌟
+
+✨ 在 **2025 年**，我们将在以下方向持续产出高质量研究成果：  
+- CodeAgent：真实世界任务的端到端自主执行  
+- DeepResearch：深度推理与信息检索增强  
+- Agentic Reasoning / Agentic RL：智能体推理与强化学习  
+- 自进化与协同学习：多智能体的自我进化与协作  
+
+📢 欢迎对我们方向感兴趣的同学加入！  
+
+🔗 团队主页：[QuantaAlpha](https://quantaalpha.github.io/)
+
+---
+
+## 📖 Citation
+
+如果你觉得RepoMaster对你的研究有帮助，请引用我们的工作：
+
+```bibtex
+@article{wang2025repomaster,
+  title={RepoMaster: Autonomous Exploration and Understanding of GitHub Repositories for Complex Task Solving},
+  author={Wang, Huacan and Ni, Ziyi and Zhang, Shuo and Lu, Shuo and Hu, Sen and He, Ziyang and Chen, Jiaye and Lin, Yifu and Chen, Ronghao and Li, Xin and Jiang, Daxin and Du, Yuntao and Lyu, Pin},
+  journal={arXiv preprint arXiv:2505.21577},
+  year={2025},
+  doi={10.48550/arXiv.2505.21577},
+  url={https://arxiv.org/abs/2505.21577}
+}
+```
 
 ---
 
