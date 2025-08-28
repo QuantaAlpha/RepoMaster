@@ -2,7 +2,8 @@
 
   <img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="600"/>
 
-  <h1>RepoMaster: RepoMaster: Autonomous Exploration and Understanding of GitHub Repositories for Complex Task Solving</h1>
+  <h1>RepoMaster</h1>
+  <h3>Autonomous Exploration and Understanding of GitHub Repositories for Complex Task Solving</h3>
 
   <p>
     <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" />
@@ -10,8 +11,14 @@
     <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
     <img src="https://img.shields.io/badge/Code-Coming%20Soon-orange.svg" />
   </p>
-[English](README.md) | [中文](README_CN.md)
+
+  <p>
+    🌐 <a href="README.md">English</a> | <a href="README_CN.md">中文</a>
+  </p>
+
 </div>
+
+---
 
 > **📢 Important Notice**: The complete source code will be open-sourced after paper publication. Currently, we provide project demonstrations and partial code examples.
 
