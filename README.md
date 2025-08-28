@@ -1,26 +1,20 @@
 <div align="center">
+
   <img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="600"/>
-  <p>
-    <img src="docs/assets/images/RepoMaster.logo.png" alt="RepoMaster Logo" width="80" style="vertical-align: middle; margin-right: 12px;" />
-    <span style="font-size: 2em; font-weight: bold; vertical-align: middle;">RepoMaster</span>
-  </p>
 
-  <p style="font-size: 1.2em; margin-top: -8px;">
-    Autonomous Exploration and Understanding of GitHub Repositories
-  </p>
+  <h1 style="margin-bottom: 0.4em;">RepoMaster: Autonomous Exploration and Understanding of GitHub Repositories</h1>
 
-  <p>
+  <p style="margin: 12px 0;">
     <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" />
     <img src="https://img.shields.io/badge/License-MIT-green.svg" />
     <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
   </p>
 
-  <p>
+  <p style="margin-top: 4px;">
     🌐 <a href="README.md">English</a> | <a href="README_CN.md">中文</a>
   </p>
 
 </div>
-
 ---
 
 ## 🚀 Overview
