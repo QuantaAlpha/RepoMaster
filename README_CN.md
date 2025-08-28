@@ -1,23 +1,20 @@
 <div align="center">
 
   <img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="600"/>
-
-  <h1 style="margin-bottom: 0.4em;">RepoMaster</h1>
-  <h3 style="margin-top: 0;">基于GitHub仓库的自主任务解决框架</h3>
-
-  <p style="margin: 12px 0;">
+  
+  <p style="margin: 10px 0;">
     <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" />
     <img src="https://img.shields.io/badge/License-MIT-green.svg" />
     <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
-    <img src="https://img.shields.io/badge/Code-Coming%20Soon-orange.svg" />
   </p>
 
-  <p style="margin-top: 4px;">
+# RepoMaster: 基于GitHub仓库的自主任务解决框架
+  
+  <p style="font-size: 15px; color: gray; margin-top: 4px;">
     🌐 <a href="README.md">English</a> | <a href="README_CN.md">中文</a>
   </p>
 
 </div>
-
 ## 🎯 快速演示
 
 想象一下，您只需用自然语言描述一个任务，RepoMaster就能自动为您完成后续的一切：从找到最合适的GitHub仓库，到理解其复杂的代码结构，再到最终执行并完成任务！无论是简单的数据提取还是复杂的AI模型应用，RepoMaster都能胜任。
