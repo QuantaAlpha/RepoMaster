@@ -221,6 +221,6 @@ pre-commit install
 
 **⭐ 如果 RepoMaster 对您有帮助，请给我们一个星标！**
 
-Made with ❤️ by the RepoMaster Team
+Made with ❤️ by the QuantaAlpha Team
 
 </div> 

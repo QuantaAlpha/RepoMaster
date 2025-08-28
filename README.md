@@ -221,6 +221,6 @@ Special thanks to:
 
 **⭐ If RepoMaster helps you, please give us a star!**
 
-Made with ❤️ by the RepoMaster Team
+Made with ❤️ by the QuantaAlpha Team
 
 </div>
