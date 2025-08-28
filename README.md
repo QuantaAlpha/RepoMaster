@@ -177,7 +177,7 @@ python --version  # Should be 3.11+
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/RepoMaster.git
+git clone https://github.com/QuantaAlpha/RepoMaster.git
 cd RepoMaster
 
 # Install requirements
