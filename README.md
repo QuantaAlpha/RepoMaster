@@ -93,7 +93,7 @@ Imagine describing a task in natural language, and RepoMaster automatically hand
 
 <div align="center">
 
-<img src="docs/assets/images/demo_ultra_hq.gif" alt="RepoMaster Demo" width="800"/>
+https://github.com/user-attachments/assets/a21b2f2e-a31c-4afd-953d-d143beef781a
 
 *Complete process of RepoMaster autonomously executing neural style transfer task*
 
