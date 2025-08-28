@@ -20,7 +20,7 @@
 
 RepoMaster 是一个革命性的自主代理框架，专门设计用于探索、理解和利用 GitHub 仓库来解决复杂的现实世界任务。与传统的从零开始生成代码的方法不同，RepoMaster 将 GitHub 上的开源仓库视为可组合的工具模块，通过智能搜索、层次化分析和自主探索来自动化地利用这些资源。
 
-<img src="docs/assets/images/performance_01.jpg" alt="RepoMaster 效果图" style="width: 600px; padding: 20px; background-color: #ffffff; display: block; margin: 0 auto;" />
+<img src="docs/assets/images/performance_01.jpg" alt="RepoMaster 效果图" style="background-color: #ffffff; display: block; margin: 0 auto;" />
 
 ---
 
@@ -127,45 +127,6 @@ https://github.com/user-attachments/assets/a21b2f2e-a31c-4afd-953d-d143beef781a
 *RepoMaster自主执行神经风格迁移任务的完整过程*
 
 </div>
-
-
----
-
-## 💻 使用方法
-
-### 前端模式
-- 🌐 交互式Web聊天界面
-- 📁 文件上传和管理
-- 👥 多用户会话支持
-- 📊 可视化任务进度跟踪
-
-### 后端模式
-**统一助手**（推荐）：
-```bash
-python launcher.py --mode backend --backend-mode unified
-```
-
-**专业模式**：
-```bash
-# 深度搜索和网络研究
-python launcher.py --mode backend --backend-mode deepsearch
-
-# 通用编程助手  
-python launcher.py --mode backend --backend-mode general_assistant
-
-# 仓库特定任务
-python launcher.py --mode backend --backend-mode repository_agent
-```
-
-### 编程接口
-```python
-from core.agent_scheduler import RepoMasterAgent
-
-task = "使用content.jpg和style.jpg将这张肖像转换成梵高风格"
-result = repo_master.solve_task_with_repo(task)
-```
-
-**高级用法、配置选项和故障排除，请参阅我们的[完整文档](docs/)。**
 
 ---
 
