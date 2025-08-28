@@ -8,7 +8,7 @@
     <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
   </p>
 
-  <h1 style="margin-bottom: 0.4em;">RepoMaster: Autonomous Exploration and Understanding of GitHub Repositories</h1>
+# RepoMaster: Autonomous Exploration and Understanding of GitHub Repositories for Complex Task Solving
   
   <p style="font-size: 15px; color: gray; margin-top: 4px;">
     🌐 <a href="README.md">English</a> | <a href="README_CN.md">中文</a>
