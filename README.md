@@ -1,16 +1,16 @@
 <div align="center">
 
-<img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo"/>
+  <img src="docs/assets/images/RepoMaster.png" alt="RepoMaster Logo" width="600"/>
 
-# RepoMaster: Autonomous Exploration and Understanding of GitHub Repositories for Complex Task Solving
+  <h1>RepoMaster: RepoMaster: Autonomous Exploration and Understanding of GitHub Repositories for Complex Task Solving</h1>
 
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![arXiv](https://img.shields.io/badge/arXiv-2505.21577-red.svg)](https://arxiv.org/abs/2505.21577)
-[![Code](https://img.shields.io/badge/Code-Coming%20Soon-orange.svg)](https://github.com/QuantaAlpha/RepoMaster)
-
+  <p>
+    <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" />
+    <img src="https://img.shields.io/badge/License-MIT-green.svg" />
+    <img src="https://img.shields.io/badge/arXiv-2505.21577-red.svg" />
+    <img src="https://img.shields.io/badge/Code-Coming%20Soon-orange.svg" />
+  </p>
 [English](README.md) | [中文](README_CN.md)
-
 </div>
 
 > **📢 Important Notice**: The complete source code will be open-sourced after paper publication. Currently, we provide project demonstrations and partial code examples.
