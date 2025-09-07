@@ -28,7 +28,10 @@ import subprocess
 from pathlib import Path
 
 
-from configs.mode_config import ModeConfigManager, create_argument_parser, print_config_info
+from configs.mode_config import (
+    ModeConfigManager, create_argument_parser, print_config_info,
+    verify_config
+)
 from src.frontend.terminal_show import (
     print_repomaster_cli, print_startup_banner, print_environment_status, 
     print_api_config_status, print_launch_config, print_service_starting,
@@ -558,6 +561,10 @@ def main():
         
         # Create configuration manager
         config_manager = ModeConfigManager.from_args(args)
+
+        # Verify config_manager.config can meet config_info
+        config_manager = verify_config(config_manager, config_info=config_info, model=model)
+         
         
         # Print optimized startup sequence  
         print_progressive_startup_panel(env_status, api_status, config_manager.config)

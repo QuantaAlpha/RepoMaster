@@ -322,6 +322,21 @@ def print_config_info(config: RunConfig):
     from src.frontend.terminal_show import print_launch_config
     print_launch_config(config)
 
+
+def verify_config(
+    config_manager: ModeConfigManager, 
+    config_info: list,
+    model: str
+    ):
+    """Verify if the configuration manager's config meets the required config_info"""
+    if model in ['gpt-5']:
+        if config_manager.config.temperature != 1.0:
+            print(f"⚠️  Warning: {model} only support temperature=1.0. Resetting...")
+            config_manager.config.temperature = 1.0
+
+    return config_manager
+
+
 if __name__ == "__main__":
     # Example usage
     parser = create_argument_parser()
