@@ -1,0 +1,7 @@
+[fix] Fix bug of gpt-5. Update default api_key.
+
+
+1. gpt-5 only supports `temperature=1`. I fix this bug by add the `configs/model_config.py::verify_config` function, which can also be extended in future dev.
+2. I set the api key value to point to system's default values in `.env`. Users may not need to reconfigure again.
+
+
