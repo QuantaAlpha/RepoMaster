@@ -28,6 +28,7 @@ yarn-error.log*
 
 # configs/.env
 configs/oai_config.py
+!configs/.env
 
 # Cache
 _del/
