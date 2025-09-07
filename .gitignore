@@ -57,6 +57,7 @@ coverage/
 # Temporary files
 tmp/
 temp/
+.temp
 
 # Python
 __pycache__/
