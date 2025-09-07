@@ -434,19 +434,26 @@ def run_unified_mode(config_manager: ModeConfigManager):
     except KeyboardInterrupt:
         print("\n👋 Multi-Agent system service stopped")
 
-def check_api_configuration() -> bool:
+def check_api_configuration(config_manager: ModeConfigManager) -> bool:
     """Check API configuration status"""
     try:
         from configs.oai_config import validate_and_get_fallback_config
         config_name, api_config = validate_and_get_fallback_config()
-        return True
+
+        # Verify if config_manager is valid
+        model = api_config.get('config_list', [{}])[0].get('model', 'N/A')
+        if model in ['gpt-5']:
+            if config_manager.config.temperature != 1.0:
+                print(f"⚠️  Model '{model}' only supports temperature=1.0. Overriding to temperature=1.0")
+                config_manager.config.temperature = 1.0
+        return True, config_manager
             
     except ImportError:
         print("⚠️  oai_config not found, skip configuration check")
-        return False
+        return False, config_manager
     except Exception as e:
         print(f"⚠️  Configuration check error: {e}")
-        return False
+        return False, config_manager
 
 def show_available_modes():
     """Display available Multi-Agent system interfaces"""
@@ -524,10 +531,13 @@ def main():
         
         setup_logging(args.log_level)
         
+        # Create configuration manager
+        config_manager = ModeConfigManager.from_args(args)
+
         # Configuration check (unless user explicitly skips)
         api_status = {'success': False}
         if not getattr(args, 'skip_config_check', False):
-            api_config_success = check_api_configuration()
+            api_config_success, config_manager = check_api_configuration(config_manager)
             if api_config_success:
                 # Get config info for display
                 try:
@@ -556,8 +566,6 @@ def main():
         else:
             api_status = {'success': True, 'provider': 'Skipped (user choice)'}
         
-        # Create configuration manager
-        config_manager = ModeConfigManager.from_args(args)
         
         # Print optimized startup sequence  
         print_progressive_startup_panel(env_status, api_status, config_manager.config)
