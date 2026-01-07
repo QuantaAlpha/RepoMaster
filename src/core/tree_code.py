@@ -163,6 +163,7 @@ class GlobalCodeTreeBuilder:
         
         # Build various relationships
         self._build_call_relationships()
+        self._resolve_base_classes()
         self._build_hierarchical_code_tree()
         
         # Identify key components
@@ -299,6 +300,58 @@ class GlobalCodeTreeBuilder:
                         'name': name.name,
                         'alias': name.asname
                     })
+    
+    def _resolve_base_class(self, base_name: str, module_id: str) -> str:
+        """
+        Resolve base class name to full path
+        
+        Args:
+            base_name: Simple base class name (e.g., 'LLM')
+            module_id: Current module ID
+            
+        Returns:
+            Full path of the base class if found, otherwise the original name
+        """
+        # 1. Check if base class is defined in the same module
+        same_module_class_id = f"{module_id}.{base_name}"
+        if same_module_class_id in self.classes:
+            return same_module_class_id
+        
+        # 2. Check imports for the base class
+        for imp in self.imports.get(module_id, []):
+            if imp['type'] == 'importfrom':
+                # from module import ClassName
+                if imp['name'] == base_name or imp.get('alias') == base_name:
+                    return f"{imp['module']}.{imp['name']}"
+            elif imp['type'] == 'import':
+                # import module (base_name might be module.ClassName)
+                if base_name.startswith(imp['name'] + '.') or (imp.get('alias') and base_name.startswith(imp['alias'] + '.')):
+                    return base_name
+        
+        # 3. Check if any existing class matches this name
+        for class_id in self.classes:
+            if class_id.endswith('.' + base_name):
+                return class_id
+        
+        # Return original name if not resolved
+        return base_name
+    
+    def _resolve_base_classes(self) -> None:
+        """Resolve all base class names to full paths after all classes are parsed"""
+        logger.info("Resolving base class names to full paths...")
+        
+        for class_id, class_info in self.classes.items():
+            module_id = class_info['module']
+            resolved_bases = []
+            
+            for base_name in class_info.get('base_classes', []):
+                # If already a full path (contains '.'), keep it
+                if '.' in base_name:
+                    resolved_bases.append(base_name)
+                else:
+                    resolved_bases.append(self._resolve_base_class(base_name, module_id))
+            
+            class_info['base_classes'] = resolved_bases
     
     def _process_function(self, node: ast.FunctionDef, module_id: str, class_id: Optional[str]) -> None:
         """Process function or method definition"""
