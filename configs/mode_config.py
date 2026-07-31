@@ -61,7 +61,7 @@ class BackendConfig(RunConfig):
     """Backend mode configuration"""
     mode: str = "backend"
     backend_mode: str = "deepsearch"  # deepsearch, general_assistant, repository_agent
-    api_type: str = "basic"  # basic, azure_openai, openai, claude, deepseek
+    api_type: str = "basic"  # basic, azure_openai, openai, claude, deepseek, minimax
     temperature: float = 0.1
     max_tokens: int = 4000
     max_turns: int = 30
@@ -238,7 +238,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     
     parser.add_argument(
         '--api-type', '-a',
-        choices=['basic', 'azure_openai', 'openai', 'claude', 'deepseek', 'basic_claude4', 'basic_deepseek_r1'],
+        choices=['basic', 'azure_openai', 'openai', 'claude', 'deepseek', 'minimax', 'basic_claude4', 'basic_deepseek_r1'],
         default='basic',
         help='API type (default: basic)'
     )

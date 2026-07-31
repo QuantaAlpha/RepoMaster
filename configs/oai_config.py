@@ -4,10 +4,11 @@ import warnings
 # Default provider priority order
 DEFAULT_PROVIDER_PRIORITY = [
     'openai',
-    'claude', 
+    'claude',
     'deepseek',
     'basic',
-    'azure_openai'
+    'azure_openai',
+    'minimax'
 ]
 
 def get_api_config():
@@ -62,6 +63,15 @@ def get_api_config():
                 "api_key": os.environ.get("CLAUDE_API_KEY"),
                 "base_url": os.environ.get("CLAUDE_BASE_URL"),
             }],
+        },
+        'minimax': {
+            "config_list": [{
+                "model": os.environ.get("MINIMAX_MODEL", "MiniMax-M3"),
+                "api_key": os.environ.get("MINIMAX_API_KEY"),
+                # Global endpoint: https://api.minimax.io/v1
+                # CN endpoint:    https://api.minimaxi.com/v1
+                "base_url": os.environ.get("MINIMAX_BASE_URL", "https://api.minimax.io/v1")
+            }]
         }
     }
 

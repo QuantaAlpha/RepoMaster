@@ -39,7 +39,7 @@ nano configs/.env  # or use your preferred editor
 
 **Configuration Template** (from `configs/env.example`):
 ```bash
-# Set the default API provider (openai, claude, deepseek, azure_openai)
+# Set the default API provider (openai, claude, deepseek, azure_openai, minimax)
 DEFAULT_API_PROVIDER=openai
 
 # OpenAI Configuration
@@ -53,6 +53,13 @@ ANTHROPIC_MODEL=claude-4-sonnet
 # DeepSeek Configuration
 DEEPSEEK_API_KEY=your_deepseek_key
 DEEPSEEK_MODEL=deepseek-v3
+
+# MiniMax Configuration
+# Global endpoint: https://api.minimax.io/v1
+# CN endpoint:      https://api.minimaxi.com/v1
+MINIMAX_API_KEY=your_minimax_key
+MINIMAX_MODEL=MiniMax-M3
+MINIMAX_BASE_URL=https://api.minimax.io/v1
 
 # Google Gemini Configuration
 GEMINI_API_KEY=your_gemini_key
